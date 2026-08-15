@@ -75,17 +75,8 @@ public class GoogleDriveConnectionServiceImpl
                 )
         );
 
-        /*
-         * Google may not return a refresh token every
-         * time an already connected account authorizes.
-         *
-         * If a new refresh token is returned:
-         * replace the old one.
-         *
-         * If no refresh token is returned for an existing
-         * connection:
-         * keep the existing encrypted refresh token.
-         */
+        // Google can omit refresh_token for existing grants; keep the stored
+        // token unless a replacement arrives.
         if (tokenResponse.refreshToken() != null
                 && !tokenResponse.refreshToken().isBlank()) {
 

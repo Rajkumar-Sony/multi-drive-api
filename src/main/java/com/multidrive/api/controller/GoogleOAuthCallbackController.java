@@ -51,7 +51,6 @@ public class GoogleOAuthCallbackController {
             @AuthenticationPrincipal OidcUser oidcUser
     ) {
 
-        // 1. Check Google OAuth error
         if (error != null) {
             return ResponseEntity.badRequest()
                     .body(Map.of(
@@ -61,7 +60,6 @@ public class GoogleOAuthCallbackController {
                     ));
         }
 
-        // 2. Make sure application user is logged in
         if (oidcUser == null) {
             return ResponseEntity.status(401)
                     .body(Map.of(
@@ -70,7 +68,6 @@ public class GoogleOAuthCallbackController {
                     ));
         }
 
-        // 3. Validate OAuth state
         String expectedState =
                 (String) session.getAttribute(OAUTH_STATE_SESSION_KEY);
 
@@ -85,10 +82,9 @@ public class GoogleOAuthCallbackController {
                     ));
         }
 
-        // 4. Remove state after validation
+        // OAuth state is single-use to prevent replay.
         session.removeAttribute(OAUTH_STATE_SESSION_KEY);
 
-        // 5. Validate authorization code
         if (code == null || code.isBlank()) {
             return ResponseEntity.badRequest()
                     .body(Map.of(
@@ -99,13 +95,11 @@ public class GoogleOAuthCallbackController {
 
         try {
 
-            // 6. Find our logged-in application user
             User applicationUser =
                     userService.findByGoogleSubjectId(
                             oidcUser.getSubject()
                     );
 
-            // 7. Exchange Google authorization code for tokens
             GoogleTokenResponse tokenResponse =
                     googleDriveOAuthService
                             .exchangeAuthorizationCode(code);
@@ -121,7 +115,6 @@ public class GoogleOAuthCallbackController {
                         ));
             }
 
-            // 8. Find which Google account was connected
             GoogleUserInfoResponse googleUserInfo =
                     googleDriveOAuthService.getUserInfo(
                             tokenResponse.accessToken()
@@ -138,7 +131,6 @@ public class GoogleOAuthCallbackController {
                         ));
             }
 
-            // 9. Save/update Google Drive connection
             GoogleDriveConnection connection =
                     googleDriveConnectionService
                             .saveOrUpdateConnection(
@@ -147,7 +139,6 @@ public class GoogleOAuthCallbackController {
                                     tokenResponse
                             );
 
-            // 10. Return safe response
             Map<String, Object> response =
                     new LinkedHashMap<>();
 

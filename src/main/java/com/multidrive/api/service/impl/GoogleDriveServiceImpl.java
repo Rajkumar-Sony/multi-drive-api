@@ -1,6 +1,7 @@
 package com.multidrive.api.service.impl;
 
 import com.multidrive.api.dto.GoogleDriveFilesResponse;
+import com.multidrive.api.dto.GoogleSharedDrivesResponse;
 import com.multidrive.api.service.GoogleDriveService;
 import com.multidrive.api.service.GoogleTokenService;
 
@@ -17,8 +18,14 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
     private static final String GOOGLE_DRIVE_FILES_URL =
             "https://www.googleapis.com/drive/v3/files";
 
-    private static final int DEFAULT_PAGE_SIZE = 50;
-    private static final int MAX_PAGE_SIZE = 1000;
+    private static final String GOOGLE_SHARED_DRIVES_URL =
+            "https://www.googleapis.com/drive/v3/drives";
+
+    private static final int DEFAULT_FILE_PAGE_SIZE = 50;
+    private static final int MAX_FILE_PAGE_SIZE = 1000;
+
+    private static final int DEFAULT_SHARED_DRIVE_PAGE_SIZE = 50;
+    private static final int MAX_SHARED_DRIVE_PAGE_SIZE = 100;
 
     private final GoogleTokenService googleTokenService;
     private final RestClient restClient;
@@ -45,37 +52,31 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
                 );
 
         int requestedPageSize =
-                normalizePageSize(pageSize);
+                normalizeFilePageSize(pageSize);
 
         UriComponentsBuilder uriBuilder =
                 UriComponentsBuilder
                         .fromUriString(GOOGLE_DRIVE_FILES_URL)
-
                         .queryParam(
                                 "pageSize",
                                 requestedPageSize
                         )
-
                         .queryParam(
                                 "q",
                                 "trashed=false"
                         )
-
                         .queryParam(
                                 "spaces",
                                 "drive"
                         )
-
                         .queryParam(
                                 "includeItemsFromAllDrives",
                                 true
                         )
-
                         .queryParam(
                                 "supportsAllDrives",
                                 true
                         )
-
                         .queryParam(
                                 "fields",
                                 "nextPageToken,"
@@ -92,15 +93,12 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
                         );
 
         if (pageToken != null && !pageToken.isBlank()) {
-
             uriBuilder.queryParam(
                     "pageToken",
                     pageToken
             );
         }
 
-        // Pass a URI to RestClient so the already-encoded query is not encoded
-        // again.
         URI uri =
                 uriBuilder
                         .build()
@@ -122,26 +120,109 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
 
         if (response == null) {
             throw new IllegalStateException(
-                    "Google Drive returned an empty response"
+                    "Google Drive returned an empty file response"
             );
         }
 
         return response;
     }
 
-    private int normalizePageSize(
+    @Override
+    public GoogleSharedDrivesResponse getSharedDrives(
+            Long connectionId,
+            Long userId,
+            Integer pageSize,
+            String pageToken
+    ) {
+
+        String accessToken =
+                googleTokenService.getValidAccessToken(
+                        connectionId,
+                        userId
+                );
+
+        int requestedPageSize =
+                normalizeSharedDrivePageSize(pageSize);
+
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder
+                        .fromUriString(GOOGLE_SHARED_DRIVES_URL)
+                        .queryParam(
+                                "pageSize",
+                                requestedPageSize
+                        )
+                        .queryParam(
+                                "fields",
+                                "nextPageToken,drives(id,name)"
+                        );
+
+        if (pageToken != null && !pageToken.isBlank()) {
+            uriBuilder.queryParam(
+                    "pageToken",
+                    pageToken
+            );
+        }
+
+        URI uri =
+                uriBuilder
+                        .build()
+                        .encode()
+                        .toUri();
+
+        GoogleSharedDrivesResponse response =
+                restClient
+                        .get()
+                        .uri(uri)
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + accessToken
+                        )
+                        .retrieve()
+                        .body(
+                                GoogleSharedDrivesResponse.class
+                        );
+
+        if (response == null) {
+            throw new IllegalStateException(
+                    "Google Drive returned an empty Shared Drives response"
+            );
+        }
+
+        return response;
+    }
+
+    private int normalizeFilePageSize(
             Integer pageSize
     ) {
 
         if (pageSize == null) {
-            return DEFAULT_PAGE_SIZE;
+            return DEFAULT_FILE_PAGE_SIZE;
         }
 
         if (pageSize < 1
-                || pageSize > MAX_PAGE_SIZE) {
+                || pageSize > MAX_FILE_PAGE_SIZE) {
 
             throw new IllegalArgumentException(
-                    "pageSize must be between 1 and 1000"
+                    "File pageSize must be between 1 and 1000"
+            );
+        }
+
+        return pageSize;
+    }
+
+    private int normalizeSharedDrivePageSize(
+            Integer pageSize
+    ) {
+
+        if (pageSize == null) {
+            return DEFAULT_SHARED_DRIVE_PAGE_SIZE;
+        }
+
+        if (pageSize < 1
+                || pageSize > MAX_SHARED_DRIVE_PAGE_SIZE) {
+
+            throw new IllegalArgumentException(
+                    "Shared Drive pageSize must be between 1 and 100"
             );
         }
 

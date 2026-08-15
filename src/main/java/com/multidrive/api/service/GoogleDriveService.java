@@ -1,6 +1,7 @@
 package com.multidrive.api.service;
 
 import com.multidrive.api.dto.GoogleDriveFilesResponse;
+import com.multidrive.api.dto.GoogleSharedDrivesResponse;
 
 public interface GoogleDriveService {
 
@@ -9,5 +10,12 @@ public interface GoogleDriveService {
             Long userId,
             Integer pageSize,
             String pageToken
+    );
+    
+    GoogleSharedDrivesResponse getSharedDrives(
+        Long connectionId,
+        Long userId,
+        Integer pageSize,
+        String pageToken
     );
 }

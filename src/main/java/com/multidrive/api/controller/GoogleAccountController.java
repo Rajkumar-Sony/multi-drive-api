@@ -2,6 +2,7 @@ package com.multidrive.api.controller;
 
 import com.multidrive.api.dto.GoogleDriveAccountResponse;
 import com.multidrive.api.dto.GoogleDriveFilesResponse;
+import com.multidrive.api.dto.GoogleSharedDrivesResponse;
 import com.multidrive.api.entity.User;
 import com.multidrive.api.service.GoogleDriveConnectionService;
 import com.multidrive.api.service.GoogleDriveOAuthService;
@@ -45,10 +46,17 @@ public class GoogleAccountController {
             GoogleDriveService googleDriveService,
             UserService userService
     ) {
-        this.googleDriveOAuthService = googleDriveOAuthService;
-        this.googleDriveConnectionService = googleDriveConnectionService;
-        this.googleDriveService = googleDriveService;
-        this.userService = userService;
+        this.googleDriveOAuthService =
+                googleDriveOAuthService;
+
+        this.googleDriveConnectionService =
+                googleDriveConnectionService;
+
+        this.googleDriveService =
+                googleDriveService;
+
+        this.userService =
+                userService;
     }
 
     @GetMapping("/connect")
@@ -57,7 +65,8 @@ public class GoogleAccountController {
             HttpServletResponse response
     ) throws IOException {
 
-        String state = generateState();
+        String state =
+                generateState();
 
         session.setAttribute(
                 OAUTH_STATE_SESSION_KEY,
@@ -65,9 +74,10 @@ public class GoogleAccountController {
         );
 
         String authorizationUrl =
-                googleDriveOAuthService.buildAuthorizationUrl(
-                        state
-                );
+                googleDriveOAuthService
+                        .buildAuthorizationUrl(
+                                state
+                        );
 
         response.sendRedirect(
                 authorizationUrl
@@ -76,12 +86,14 @@ public class GoogleAccountController {
 
     @GetMapping
     public List<GoogleDriveAccountResponse> getConnectedAccounts(
-            @AuthenticationPrincipal OidcUser oidcUser
+            @AuthenticationPrincipal
+            OidcUser oidcUser
     ) {
 
-        User user = getApplicationUser(
-                oidcUser
-        );
+        User user =
+                getApplicationUser(
+                        oidcUser
+                );
 
         return googleDriveConnectionService
                 .getConnectedAccounts(
@@ -91,25 +103,23 @@ public class GoogleAccountController {
 
     @GetMapping("/{connectionId}/files")
     public GoogleDriveFilesResponse getFiles(
-            @PathVariable Long connectionId,
+            @PathVariable
+            Long connectionId,
 
-            @RequestParam(
-                    defaultValue = "50"
-            )
+            @RequestParam(defaultValue = "50")
             Integer pageSize,
 
-            @RequestParam(
-                    required = false
-            )
+            @RequestParam(required = false)
             String pageToken,
 
             @AuthenticationPrincipal
             OidcUser oidcUser
     ) {
 
-        User user = getApplicationUser(
-                oidcUser
-        );
+        User user =
+                getApplicationUser(
+                        oidcUser
+                );
 
         return googleDriveService.getFiles(
                 connectionId,
@@ -119,19 +129,49 @@ public class GoogleAccountController {
         );
     }
 
+    @GetMapping("/{connectionId}/drives")
+    public GoogleSharedDrivesResponse getSharedDrives(
+            @PathVariable
+            Long connectionId,
+
+            @RequestParam(defaultValue = "50")
+            Integer pageSize,
+
+            @RequestParam(required = false)
+            String pageToken,
+
+            @AuthenticationPrincipal
+            OidcUser oidcUser
+    ) {
+
+        User user =
+                getApplicationUser(
+                        oidcUser
+                );
+
+        return googleDriveService
+                .getSharedDrives(
+                        connectionId,
+                        user.getId(),
+                        pageSize,
+                        pageToken
+                );
+    }
+
     private User getApplicationUser(
             OidcUser oidcUser
     ) {
 
         if (oidcUser == null) {
             throw new IllegalStateException(
-                    "Authenticated user not found"
+                    "Authenticated application user not found"
             );
         }
 
-        return userService.findByGoogleSubjectId(
-                oidcUser.getSubject()
-        );
+        return userService
+                .findByGoogleSubjectId(
+                        oidcUser.getSubject()
+                );
     }
 
     private String generateState() {

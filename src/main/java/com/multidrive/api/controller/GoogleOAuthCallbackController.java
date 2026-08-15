@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -52,7 +53,8 @@ public class GoogleOAuthCallbackController {
             userService;
 
     public GoogleOAuthCallbackController(
-            GoogleDriveOAuthService googleDriveOAuthService,
+            GoogleDriveOAuthService
+                    googleDriveOAuthService,
 
             GoogleDriveConnectionService
                     googleDriveConnectionService,
@@ -60,7 +62,8 @@ public class GoogleOAuthCallbackController {
             GoogleDriveChangeService
                     googleDriveChangeService,
 
-            UserService userService
+            UserService
+                    userService
     ) {
 
         this.googleDriveOAuthService =
@@ -93,7 +96,8 @@ public class GoogleOAuthCallbackController {
             OidcUser oidcUser
     ) {
 
-        if (error != null && !error.isBlank()) {
+        if (error != null
+                && !error.isBlank()) {
 
             return buildErrorResponse(
                     HttpStatus.BAD_REQUEST,
@@ -115,13 +119,14 @@ public class GoogleOAuthCallbackController {
                 );
 
         /*
-         * OAuth state should be single-use.
+         * OAuth state is single-use.
          */
         session.removeAttribute(
                 OAUTH_STATE_SESSION_KEY
         );
 
-        if (!(storedStateObject instanceof String storedState)
+        if (!(storedStateObject
+                instanceof String storedState)
                 || state == null
                 || state.isBlank()
                 || !storedState.equals(state)) {
@@ -132,7 +137,8 @@ public class GoogleOAuthCallbackController {
             );
         }
 
-        if (code == null || code.isBlank()) {
+        if (code == null
+                || code.isBlank()) {
 
             return buildErrorResponse(
                     HttpStatus.BAD_REQUEST,
@@ -187,14 +193,23 @@ public class GoogleOAuthCallbackController {
                             );
 
             /*
-             * Initialize the USER change tracker.
-             *
-             * This stores the current Google Drive
-             * startPageToken for future changes.list calls.
+             * Initialize the user's main change tracker.
              */
-            GoogleDriveChangeTracker tracker =
+            GoogleDriveChangeTracker userTracker =
                     googleDriveChangeService
                             .initializeUserTracker(
+                                    connection.getId(),
+                                    applicationUser.getId()
+                            );
+
+            /*
+             * Initialize one tracker for every
+             * Shared Drive available to this account.
+             */
+            List<GoogleDriveChangeTracker>
+                    sharedDriveTrackers =
+                    googleDriveChangeService
+                            .initializeSharedDriveTrackers(
                                     connection.getId(),
                                     applicationUser.getId()
                             );
@@ -228,18 +243,18 @@ public class GoogleOAuthCallbackController {
             );
 
             response.put(
-                    "syncTrackerId",
-                    tracker.getId()
+                    "userTrackerId",
+                    userTracker.getId()
             );
 
             response.put(
-                    "syncTrackerType",
-                    tracker.getTrackerType().name()
+                    "userTrackerStatus",
+                    userTracker.getStatus()
             );
 
             response.put(
-                    "syncStatus",
-                    tracker.getStatus()
+                    "sharedDriveTrackerCount",
+                    sharedDriveTrackers.size()
             );
 
             return ResponseEntity.ok(

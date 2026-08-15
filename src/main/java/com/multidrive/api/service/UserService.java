@@ -10,4 +10,6 @@ public interface UserService {
             String name,
             String pictureUrl
     );
+
+    User findByGoogleSubjectId(String googleSubjectId);
 }

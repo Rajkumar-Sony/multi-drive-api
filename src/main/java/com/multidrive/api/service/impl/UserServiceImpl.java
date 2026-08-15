@@ -36,4 +36,12 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.save(user);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User findByGoogleSubjectId(String googleSubjectId) {
+
+        return userRepository.findByGoogleSubjectId(googleSubjectId)
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+    }
 }

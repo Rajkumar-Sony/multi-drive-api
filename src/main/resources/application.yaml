@@ -1,3 +1,13 @@
 spring:
   application:
     name: multi-drive-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/multi_drive_db
+    username: multi_drive_user
+    password: "admin123"
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true

@@ -1,11 +1,14 @@
 spring:
+  config:
+    import: optional:file:./.env[.properties]
+
   application:
     name: multi-drive-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/multi_drive_db
-    username: multi_drive_user
-    password: "admin123"
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
@@ -23,3 +26,11 @@ spring:
               - openid
               - email
               - profile
+
+google:
+  oauth2:
+    drive-redirect-uri: ${GOOGLE_DRIVE_REDIRECT_URI}
+
+app:
+  security:
+    token-encryption-key: ${TOKEN_ENCRYPTION_KEY}

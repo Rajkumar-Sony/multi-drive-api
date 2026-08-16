@@ -52,16 +52,35 @@ public interface GoogleDriveSourceRepository
     );
 
     /*
-     * DTO projection.
+     * Single-operation lookup.
      *
-     * This deliberately returns all required connection
-     * information in the same SQL query so the controller
-     * does not cause:
+     * Source + connection + application owner are fetched
+     * in one SQL query.
      *
-     * 1 source query
-     * +
-     * N connection queries.
+     * This avoids lazy-loading extra queries during
+     * create-folder operations.
      */
+    @Query("""
+            SELECT source
+            FROM GoogleDriveSource source
+            JOIN FETCH source.connection connection
+            JOIN FETCH connection.user owner
+            WHERE source.id = :sourceId
+              AND source.status = :status
+              AND owner.googleSubjectId = :googleSubjectId
+            """)
+    Optional<GoogleDriveSource>
+    findOwnedSourceForOperation(
+            @Param("sourceId")
+            Long sourceId,
+
+            @Param("googleSubjectId")
+            String googleSubjectId,
+
+            @Param("status")
+            GoogleDriveSourceStatus status
+    );
+
     @Query("""
             SELECT new com.multidrive.api.dto.GoogleDriveSourceResponse(
                 source.id,

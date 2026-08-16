@@ -1,12 +1,9 @@
 package com.multidrive.api.service.impl;
 
 import com.multidrive.api.dto.DriveItemDetailsResponse;
-import com.multidrive.api.entity.GoogleDriveConnection;
 import com.multidrive.api.entity.GoogleDriveItem;
-import com.multidrive.api.entity.GoogleDriveItemCategory;
-import com.multidrive.api.entity.GoogleDriveSource;
 import com.multidrive.api.exception.DriveItemNotFoundException;
-import com.multidrive.api.mapper.DriveItemCapabilityResponseMapper;
+import com.multidrive.api.mapper.DriveItemDetailsMapper;
 import com.multidrive.api.repository.GoogleDriveItemRepository;
 import com.multidrive.api.service.DriveItemLookupService;
 
@@ -20,27 +17,56 @@ public class DriveItemLookupServiceImpl
     private final GoogleDriveItemRepository
             googleDriveItemRepository;
 
-    private final DriveItemCapabilityResponseMapper
-            driveItemCapabilityResponseMapper;
+    private final DriveItemDetailsMapper
+            driveItemDetailsMapper;
 
     public DriveItemLookupServiceImpl(
             GoogleDriveItemRepository
                     googleDriveItemRepository,
 
-            DriveItemCapabilityResponseMapper
-                    driveItemCapabilityResponseMapper
+            DriveItemDetailsMapper
+                    driveItemDetailsMapper
     ) {
 
         this.googleDriveItemRepository =
                 googleDriveItemRepository;
 
-        this.driveItemCapabilityResponseMapper =
-                driveItemCapabilityResponseMapper;
+        this.driveItemDetailsMapper =
+                driveItemDetailsMapper;
     }
 
     @Override
     @Transactional(readOnly = true)
     public DriveItemDetailsResponse getItem(
+            String googleSubjectId,
+            Long itemId
+    ) {
+
+        validateInput(
+                googleSubjectId,
+                itemId
+        );
+
+        GoogleDriveItem item =
+                googleDriveItemRepository
+                        .findOwnedItemForDetails(
+                                itemId,
+                                googleSubjectId
+                        )
+                        .orElseThrow(
+                                () ->
+                                        new DriveItemNotFoundException(
+                                                itemId
+                                        )
+                        );
+
+        return driveItemDetailsMapper
+                .toResponse(
+                        item
+                );
+    }
+
+    private void validateInput(
             String googleSubjectId,
             Long itemId
     ) {
@@ -59,83 +85,5 @@ public class DriveItemLookupServiceImpl
                     "itemId is required"
             );
         }
-
-        GoogleDriveItem item =
-                googleDriveItemRepository
-                        .findOwnedItemForDetails(
-                                itemId,
-                                googleSubjectId
-                        )
-                        .orElseThrow(
-                                () ->
-                                        new DriveItemNotFoundException(
-                                                itemId
-                                        )
-                        );
-
-        GoogleDriveConnection connection =
-                item.getConnection();
-
-        GoogleDriveSource source =
-                item.getSource();
-
-        if (connection == null
-                || source == null) {
-
-            throw new IllegalStateException(
-                    "Drive item source information is incomplete"
-            );
-        }
-
-        return new DriveItemDetailsResponse(
-
-                item.getId(),
-
-                connection.getId(),
-
-                connection.getGoogleEmail(),
-
-                source.getId(),
-
-                source.getName(),
-
-                item.getSourceType(),
-
-                source.getGoogleDriveId(),
-
-                source.getRootFolderId(),
-
-                item.getGoogleFileId(),
-
-                item.getParentId(),
-
-                item.getName(),
-
-                item.getMimeType(),
-
-                item.getCategory(),
-
-                item.getCategory()
-                        == GoogleDriveItemCategory.FOLDER,
-
-                item.isTrashed(),
-
-                item.getWebViewLink(),
-
-                item.getThumbnailLink(),
-
-                item.getIconLink(),
-
-                item.getSizeBytes(),
-
-                item.getGoogleCreatedTime(),
-
-                item.getGoogleModifiedTime(),
-
-                driveItemCapabilityResponseMapper
-                        .toResponse(
-                                item.getCapabilities()
-                        )
-        );
     }
 }

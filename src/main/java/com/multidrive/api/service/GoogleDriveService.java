@@ -1,6 +1,7 @@
 package com.multidrive.api.service;
 
 import com.multidrive.api.dto.GoogleDriveFilesResponse;
+import com.multidrive.api.dto.GoogleDriveRootResponse;
 import com.multidrive.api.dto.GoogleSharedDrivesResponse;
 
 public interface GoogleDriveService {
@@ -32,5 +33,10 @@ public interface GoogleDriveService {
             Long userId,
             Integer pageSize,
             String pageToken
+    );
+
+    GoogleDriveRootResponse getMyDriveRoot(
+            Long connectionId,
+            Long userId
     );
 }

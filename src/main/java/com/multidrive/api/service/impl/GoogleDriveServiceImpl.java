@@ -1,6 +1,7 @@
 package com.multidrive.api.service.impl;
 
 import com.multidrive.api.dto.GoogleDriveFilesResponse;
+import com.multidrive.api.dto.GoogleDriveRootResponse;
 import com.multidrive.api.dto.GoogleSharedDrivesResponse;
 import com.multidrive.api.service.GoogleDriveService;
 import com.multidrive.api.service.GoogleTokenService;
@@ -187,6 +188,58 @@ public class GoogleDriveServiceImpl
 
             throw new IllegalStateException(
                     "Google Drive returned an empty Shared Drives response"
+            );
+        }
+
+        return response;
+    }
+
+    @Override
+    public GoogleDriveRootResponse getMyDriveRoot(
+            Long connectionId,
+            Long userId
+    ) {
+
+        String accessToken =
+                googleTokenService
+                        .getValidAccessToken(
+                                connectionId,
+                                userId
+                        );
+
+        URI uri =
+                UriComponentsBuilder
+                        .fromUriString(
+                                GOOGLE_DRIVE_FILES_URL
+                                        + "/root"
+                        )
+                        .queryParam(
+                                "fields",
+                                "id,name"
+                        )
+                        .build()
+                        .encode()
+                        .toUri();
+
+        GoogleDriveRootResponse response =
+                restClient
+                        .get()
+                        .uri(uri)
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + accessToken
+                        )
+                        .retrieve()
+                        .body(
+                                GoogleDriveRootResponse.class
+                        );
+
+        if (response == null
+                || response.id() == null
+                || response.id().isBlank()) {
+
+            throw new IllegalStateException(
+                    "Google Drive root folder could not be resolved"
             );
         }
 

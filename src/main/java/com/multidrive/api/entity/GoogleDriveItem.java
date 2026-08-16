@@ -139,6 +139,12 @@ public class GoogleDriveItem {
     private boolean trashed;
 
     @Column(
+            name = "sync_run_id",
+            length = 36
+    )
+    private String syncRunId;
+
+    @Column(
             name = "created_at",
             nullable = false
     )
@@ -168,11 +174,8 @@ public class GoogleDriveItem {
                     GoogleDriveItemSourceType.MY_DRIVE;
         }
 
-        createdAt =
-                now;
-
-        updatedAt =
-                now;
+        createdAt = now;
+        updatedAt = now;
     }
 
     @PreUpdate
@@ -342,6 +345,16 @@ public class GoogleDriveItem {
             boolean trashed
     ) {
         this.trashed = trashed;
+    }
+
+    public String getSyncRunId() {
+        return syncRunId;
+    }
+
+    public void setSyncRunId(
+            String syncRunId
+    ) {
+        this.syncRunId = syncRunId;
     }
 
     public LocalDateTime getCreatedAt() {

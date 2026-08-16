@@ -6,7 +6,11 @@ import com.multidrive.api.entity.GoogleDriveItemCategory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +29,12 @@ public interface GoogleDriveItemRepository
     List<GoogleDriveItem>
     findAllByConnection_Id(
             Long connectionId
+    );
+
+    List<GoogleDriveItem>
+    findAllByConnection_IdAndGoogleFileIdIn(
+            Long connectionId,
+            Collection<String> googleFileIds
     );
 
     Page<GoogleDriveItem>
@@ -54,5 +64,22 @@ public interface GoogleDriveItemRepository
     void deleteByConnection_IdAndGoogleFileId(
             Long connectionId,
             String googleFileId
+    );
+
+    @Modifying
+    @Query("""
+            DELETE FROM GoogleDriveItem item
+            WHERE item.connection.id = :connectionId
+              AND (
+                    item.syncRunId IS NULL
+                    OR item.syncRunId <> :syncRunId
+              )
+            """)
+    int deleteStaleItems(
+            @Param("connectionId")
+            Long connectionId,
+
+            @Param("syncRunId")
+            String syncRunId
     );
 }

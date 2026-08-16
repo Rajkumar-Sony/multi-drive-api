@@ -13,7 +13,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 
 @Service
-public class GoogleDriveServiceImpl implements GoogleDriveService {
+public class GoogleDriveServiceImpl
+        implements GoogleDriveService {
 
     private static final String GOOGLE_DRIVE_FILES_URL =
             "https://www.googleapis.com/drive/v3/files";
@@ -58,95 +59,62 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
             String pageToken
     ) {
 
-        String accessToken =
-                googleTokenService
-                        .getValidAccessToken(
-                                connectionId,
-                                userId
-                        );
+        return fetchFiles(
+                connectionId,
+                userId,
+                pageSize,
+                pageToken,
+                null,
+                null,
+                true
+        );
+    }
 
-        int requestedPageSize =
-                normalizeFilePageSize(
-                        pageSize
-                );
+    @Override
+    public GoogleDriveFilesResponse getMyDriveFiles(
+            Long connectionId,
+            Long userId,
+            Integer pageSize,
+            String pageToken
+    ) {
 
-        UriComponentsBuilder uriBuilder =
-                UriComponentsBuilder
-                        .fromUriString(
-                                GOOGLE_DRIVE_FILES_URL
-                        )
-                        .queryParam(
-                                "pageSize",
-                                requestedPageSize
-                        )
-                        .queryParam(
-                                "q",
-                                "trashed=false"
-                        )
-                        .queryParam(
-                                "spaces",
-                                "drive"
-                        )
-                        .queryParam(
-                                "includeItemsFromAllDrives",
-                                true
-                        )
-                        .queryParam(
-                                "supportsAllDrives",
-                                true
-                        )
-                        .queryParam(
-                                "fields",
-                                "nextPageToken,"
-                                        + "incompleteSearch,"
-                                        + "files("
-                                        + "id,"
-                                        + "name,"
-                                        + "mimeType,"
-                                        + "modifiedTime,"
-                                        + "parents,"
-                                        + "webViewLink,"
-                                        + "driveId,"
-                                        + "trashed"
-                                        + ")"
-                        );
+        return fetchFiles(
+                connectionId,
+                userId,
+                pageSize,
+                pageToken,
+                "user",
+                null,
+                false
+        );
+    }
 
-        if (pageToken != null
-                && !pageToken.isBlank()) {
+    @Override
+    public GoogleDriveFilesResponse getSharedDriveFiles(
+            Long connectionId,
+            Long userId,
+            String driveId,
+            Integer pageSize,
+            String pageToken
+    ) {
 
-            uriBuilder.queryParam(
-                    "pageToken",
-                    pageToken
+        if (driveId == null
+                || driveId.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "driveId is required"
             );
         }
 
-        URI uri =
-                uriBuilder
-                        .build()
-                        .encode()
-                        .toUri();
-
-        GoogleDriveFilesResponse response =
-                restClient
-                        .get()
-                        .uri(uri)
-                        .header(
-                                HttpHeaders.AUTHORIZATION,
-                                "Bearer " + accessToken
-                        )
-                        .retrieve()
-                        .body(
-                                GoogleDriveFilesResponse.class
-                        );
-
-        if (response == null) {
-
-            throw new IllegalStateException(
-                    "Google Drive returned an empty file response"
-            );
-        }
-
-        return response;
+        return fetchFiles(
+                connectionId,
+                userId,
+                pageSize,
+                pageToken,
+                "drive",
+                driveId,
+                true
+        );
     }
 
     @Override
@@ -223,6 +191,134 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
         }
 
         return response;
+    }
+
+    private GoogleDriveFilesResponse fetchFiles(
+            Long connectionId,
+            Long userId,
+            Integer pageSize,
+            String pageToken,
+            String corpora,
+            String driveId,
+            boolean includeItemsFromAllDrives
+    ) {
+
+        String accessToken =
+                googleTokenService
+                        .getValidAccessToken(
+                                connectionId,
+                                userId
+                        );
+
+        int requestedPageSize =
+                normalizeFilePageSize(
+                        pageSize
+                );
+
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder
+                        .fromUriString(
+                                GOOGLE_DRIVE_FILES_URL
+                        )
+                        .queryParam(
+                                "pageSize",
+                                requestedPageSize
+                        )
+                        .queryParam(
+                                "q",
+                                "trashed=false"
+                        )
+                        .queryParam(
+                                "spaces",
+                                "drive"
+                        )
+                        .queryParam(
+                                "includeItemsFromAllDrives",
+                                includeItemsFromAllDrives
+                        )
+                        .queryParam(
+                                "supportsAllDrives",
+                                true
+                        )
+                        .queryParam(
+                                "fields",
+                                buildFileFields()
+                        );
+
+        if (corpora != null
+                && !corpora.isBlank()) {
+
+            uriBuilder.queryParam(
+                    "corpora",
+                    corpora
+            );
+        }
+
+        if (driveId != null
+                && !driveId.isBlank()) {
+
+            uriBuilder.queryParam(
+                    "driveId",
+                    driveId
+            );
+        }
+
+        if (pageToken != null
+                && !pageToken.isBlank()) {
+
+            uriBuilder.queryParam(
+                    "pageToken",
+                    pageToken
+            );
+        }
+
+        URI uri =
+                uriBuilder
+                        .build()
+                        .encode()
+                        .toUri();
+
+        GoogleDriveFilesResponse response =
+                restClient
+                        .get()
+                        .uri(uri)
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + accessToken
+                        )
+                        .retrieve()
+                        .body(
+                                GoogleDriveFilesResponse.class
+                        );
+
+        if (response == null) {
+
+            throw new IllegalStateException(
+                    "Google Drive returned an empty file response"
+            );
+        }
+
+        return response;
+    }
+
+    private String buildFileFields() {
+
+        return "nextPageToken,"
+                + "incompleteSearch,"
+                + "files("
+                + "id,"
+                + "name,"
+                + "mimeType,"
+                + "createdTime,"
+                + "modifiedTime,"
+                + "parents,"
+                + "webViewLink,"
+                + "thumbnailLink,"
+                + "iconLink,"
+                + "size,"
+                + "driveId,"
+                + "trashed"
+                + ")";
     }
 
     private int normalizeFilePageSize(

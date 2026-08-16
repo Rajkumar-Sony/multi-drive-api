@@ -11,11 +11,26 @@ public interface GoogleDriveService {
             Integer pageSize,
             String pageToken
     );
-    
+
+    GoogleDriveFilesResponse getMyDriveFiles(
+            Long connectionId,
+            Long userId,
+            Integer pageSize,
+            String pageToken
+    );
+
+    GoogleDriveFilesResponse getSharedDriveFiles(
+            Long connectionId,
+            Long userId,
+            String driveId,
+            Integer pageSize,
+            String pageToken
+    );
+
     GoogleSharedDrivesResponse getSharedDrives(
-        Long connectionId,
-        Long userId,
-        Integer pageSize,
-        String pageToken
+            Long connectionId,
+            Long userId,
+            Integer pageSize,
+            String pageToken
     );
 }

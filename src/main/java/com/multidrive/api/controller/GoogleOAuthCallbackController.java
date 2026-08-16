@@ -1,5 +1,6 @@
 package com.multidrive.api.controller;
 
+import com.multidrive.api.dto.GoogleDriveInitialSyncResponse;
 import com.multidrive.api.dto.GoogleTokenResponse;
 import com.multidrive.api.dto.GoogleUserInfoResponse;
 import com.multidrive.api.entity.GoogleDriveChangeTracker;
@@ -8,6 +9,7 @@ import com.multidrive.api.entity.GoogleDriveWatchChannel;
 import com.multidrive.api.entity.User;
 import com.multidrive.api.service.GoogleDriveChangeService;
 import com.multidrive.api.service.GoogleDriveConnectionService;
+import com.multidrive.api.service.GoogleDriveInitialSyncService;
 import com.multidrive.api.service.GoogleDriveOAuthService;
 import com.multidrive.api.service.GoogleDriveWatchService;
 import com.multidrive.api.service.UserService;
@@ -51,6 +53,9 @@ public class GoogleOAuthCallbackController {
     private final GoogleDriveChangeService
             googleDriveChangeService;
 
+    private final GoogleDriveInitialSyncService
+            googleDriveInitialSyncService;
+
     private final GoogleDriveWatchService
             googleDriveWatchService;
 
@@ -67,6 +72,9 @@ public class GoogleOAuthCallbackController {
             GoogleDriveChangeService
                     googleDriveChangeService,
 
+            GoogleDriveInitialSyncService
+                    googleDriveInitialSyncService,
+
             GoogleDriveWatchService
                     googleDriveWatchService,
 
@@ -82,6 +90,9 @@ public class GoogleOAuthCallbackController {
 
         this.googleDriveChangeService =
                 googleDriveChangeService;
+
+        this.googleDriveInitialSyncService =
+                googleDriveInitialSyncService;
 
         this.googleDriveWatchService =
                 googleDriveWatchService;
@@ -216,20 +227,42 @@ public class GoogleOAuthCallbackController {
                                     applicationUser.getId()
                             );
 
+            String initialSyncStatus =
+                    "COMPLETED";
+
+            GoogleDriveInitialSyncResponse
+                    initialSyncResponse =
+                    null;
+
+            try {
+
+                initialSyncResponse =
+                        googleDriveInitialSyncService
+                                .syncConnection(
+                                        connection.getId(),
+                                        applicationUser.getId()
+                                );
+
+            } catch (Exception syncException) {
+
+                initialSyncStatus =
+                        "FAILED";
+
+                LOGGER.error(
+                        "Google Drive connected, but initial "
+                                + "file synchronization failed. "
+                                + "connectionId={}",
+                        connection.getId(),
+                        syncException
+                );
+            }
+
             String realTimeSyncStatus =
                     "ACTIVE";
 
             int watchChannelCount =
                     0;
 
-            /*
-             * Google Drive account connection should
-             * still succeed even if webhook registration
-             * temporarily fails.
-             *
-             * Example:
-             * public HTTPS tunnel is not running.
-             */
             try {
 
                 List<GoogleDriveWatchChannel> watchChannels =
@@ -249,7 +282,8 @@ public class GoogleOAuthCallbackController {
 
                 LOGGER.error(
                         "Google Drive connected, but real-time "
-                                + "watch registration failed. connectionId={}",
+                                + "watch registration failed. "
+                                + "connectionId={}",
                         connection.getId(),
                         watchException
                 );
@@ -297,6 +331,44 @@ public class GoogleOAuthCallbackController {
                     "sharedDriveTrackerCount",
                     sharedDriveTrackers.size()
             );
+
+            response.put(
+                    "initialSyncStatus",
+                    initialSyncStatus
+            );
+
+            if (initialSyncResponse != null) {
+
+                response.put(
+                        "myDriveItemCount",
+                        initialSyncResponse
+                                .myDriveItemCount()
+                );
+
+                response.put(
+                        "sharedDriveCount",
+                        initialSyncResponse
+                                .sharedDriveCount()
+                );
+
+                response.put(
+                        "sharedDriveItemCount",
+                        initialSyncResponse
+                                .sharedDriveItemCount()
+                );
+
+                response.put(
+                        "totalItemCount",
+                        initialSyncResponse
+                                .totalItemCount()
+                );
+
+                response.put(
+                        "staleItemCount",
+                        initialSyncResponse
+                                .staleItemCount()
+                );
+            }
 
             response.put(
                     "watchChannelCount",

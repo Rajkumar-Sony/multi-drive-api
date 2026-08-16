@@ -15,6 +15,12 @@ spring:
       ddl-auto: none
     show-sql: true
 
+  servlet:
+    multipart:
+      max-file-size: ${APP_MAX_UPLOAD_SIZE:2GB}
+      max-request-size: ${APP_MAX_UPLOAD_REQUEST_SIZE:3GB}
+      file-size-threshold: ${APP_UPLOAD_FILE_SIZE_THRESHOLD:2MB}
+
   security:
     oauth2:
       client:

@@ -11,6 +11,7 @@ import com.multidrive.api.repository.GoogleDriveConnectionRepository;
 import com.multidrive.api.repository.GoogleDriveItemRepository;
 import com.multidrive.api.repository.GoogleDriveSourceRepository;
 import com.multidrive.api.service.DriveOperationLocalStateService;
+import com.multidrive.api.service.GoogleDriveItemCategoryResolver;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,9 @@ public class DriveOperationLocalStateServiceImpl
     private static final String GOOGLE_FOLDER_MIME_TYPE =
             "application/vnd.google-apps.folder";
 
+    private static final String DEFAULT_BINARY_MIME_TYPE =
+            "application/octet-stream";
+
     private final GoogleDriveItemRepository
             googleDriveItemRepository;
 
@@ -38,11 +42,15 @@ public class DriveOperationLocalStateServiceImpl
     private final GoogleDriveCapabilityMapper
             googleDriveCapabilityMapper;
 
+    private final GoogleDriveItemCategoryResolver
+            googleDriveItemCategoryResolver;
+
     public DriveOperationLocalStateServiceImpl(
             GoogleDriveItemRepository googleDriveItemRepository,
             GoogleDriveConnectionRepository googleDriveConnectionRepository,
             GoogleDriveSourceRepository googleDriveSourceRepository,
-            GoogleDriveCapabilityMapper googleDriveCapabilityMapper
+            GoogleDriveCapabilityMapper googleDriveCapabilityMapper,
+            GoogleDriveItemCategoryResolver googleDriveItemCategoryResolver
     ) {
 
         this.googleDriveItemRepository =
@@ -56,6 +64,9 @@ public class DriveOperationLocalStateServiceImpl
 
         this.googleDriveCapabilityMapper =
                 googleDriveCapabilityMapper;
+
+        this.googleDriveItemCategoryResolver =
+                googleDriveItemCategoryResolver;
     }
 
     @Override
@@ -68,81 +79,36 @@ public class DriveOperationLocalStateServiceImpl
             GoogleDriveFileResponse remoteFile
     ) {
 
-        if (connectionId == null
-                || sourceId == null
-                || sourceType == null
-                || remoteFile == null) {
-
-            throw new IllegalArgumentException(
-                    "Folder persistence information is incomplete"
-            );
-        }
-
-        GoogleDriveConnection connection =
-                googleDriveConnectionRepository
-                        .getReferenceById(
-                                connectionId
-                        );
-
-        GoogleDriveSource source =
-                googleDriveSourceRepository
-                        .getReferenceById(
-                                sourceId
-                        );
-
-        GoogleDriveItem item =
-                new GoogleDriveItem();
-
-        item.setConnection(
-                connection
+        return upsertCreatedItem(
+                connectionId,
+                sourceId,
+                sourceType,
+                driveId,
+                remoteFile,
+                GoogleDriveItemCategory.FOLDER,
+                GOOGLE_FOLDER_MIME_TYPE
         );
+    }
 
-        item.setSource(
-                source
+    @Override
+    @Transactional
+    public Long createUploadedItem(
+            Long connectionId,
+            Long sourceId,
+            GoogleDriveItemSourceType sourceType,
+            String driveId,
+            GoogleDriveFileResponse remoteFile
+    ) {
+
+        return upsertCreatedItem(
+                connectionId,
+                sourceId,
+                sourceType,
+                driveId,
+                remoteFile,
+                null,
+                DEFAULT_BINARY_MIME_TYPE
         );
-
-        item.setGoogleFileId(
-                remoteFile.id()
-        );
-
-        item.setName(
-                normalizeRemoteName(
-                        remoteFile.name()
-                )
-        );
-
-        item.setMimeType(
-                hasText(
-                        remoteFile.mimeType()
-                )
-                        ? remoteFile.mimeType()
-                        : GOOGLE_FOLDER_MIME_TYPE
-        );
-
-        item.setCategory(
-                GoogleDriveItemCategory.FOLDER
-        );
-
-        item.setSourceType(
-                sourceType
-        );
-
-        item.setDriveId(
-                sourceType == GoogleDriveItemSourceType.SHARED_DRIVE
-                        ? driveId
-                        : null
-        );
-
-        applyRemoteState(
-                item,
-                remoteFile
-        );
-
-        return googleDriveItemRepository
-                .saveAndFlush(
-                        item
-                )
-                .getId();
     }
 
     @Override
@@ -255,6 +221,109 @@ public class DriveOperationLocalStateServiceImpl
                 );
     }
 
+    private Long upsertCreatedItem(
+            Long connectionId,
+            Long sourceId,
+            GoogleDriveItemSourceType sourceType,
+            String driveId,
+            GoogleDriveFileResponse remoteFile,
+            GoogleDriveItemCategory forcedCategory,
+            String fallbackMimeType
+    ) {
+
+        validateCreateRequest(
+                connectionId,
+                sourceId,
+                sourceType,
+                remoteFile
+        );
+
+        GoogleDriveConnection connection =
+                googleDriveConnectionRepository
+                        .getReferenceById(
+                                connectionId
+                        );
+
+        GoogleDriveSource source =
+                googleDriveSourceRepository
+                        .getReferenceById(
+                                sourceId
+                        );
+
+        GoogleDriveItem item =
+                googleDriveItemRepository
+                        .findByConnection_IdAndGoogleFileId(
+                                connectionId,
+                                remoteFile.id()
+                        )
+                        .orElseGet(
+                                GoogleDriveItem::new
+                        );
+
+        item.setConnection(
+                connection
+        );
+
+        item.setSource(
+                source
+        );
+
+        item.setGoogleFileId(
+                remoteFile.id()
+        );
+
+        item.setName(
+                normalizeRemoteName(
+                        remoteFile.name()
+                )
+        );
+
+        String mimeType =
+                hasText(
+                        remoteFile.mimeType()
+                )
+                        ? remoteFile.mimeType()
+                        : fallbackMimeType;
+
+        item.setMimeType(
+                mimeType
+        );
+
+        item.setCategory(
+                forcedCategory != null
+                        ? forcedCategory
+                        : googleDriveItemCategoryResolver
+                        .resolve(
+                                mimeType
+                        )
+        );
+
+        item.setSourceType(
+                sourceType
+        );
+
+        item.setDriveId(
+                sourceType
+                        == GoogleDriveItemSourceType.SHARED_DRIVE
+                        ? resolveDriveId(
+                        driveId,
+                        remoteFile
+                )
+                        : null
+        );
+
+        applyRemoteState(
+                item,
+                remoteFile
+        );
+
+        return googleDriveItemRepository
+                .saveAndFlush(
+                        item
+                )
+                .getId();
+    }
+
     private void applyRemoteState(
             GoogleDriveItem item,
             GoogleDriveFileResponse remoteFile
@@ -360,6 +429,59 @@ public class DriveOperationLocalStateServiceImpl
                                         + itemId
                         )
                 );
+    }
+
+    private void validateCreateRequest(
+            Long connectionId,
+            Long sourceId,
+            GoogleDriveItemSourceType sourceType,
+            GoogleDriveFileResponse remoteFile
+    ) {
+
+        if (connectionId == null) {
+
+            throw new IllegalArgumentException(
+                    "connectionId is required"
+            );
+        }
+
+        if (sourceId == null) {
+
+            throw new IllegalArgumentException(
+                    "sourceId is required"
+            );
+        }
+
+        if (sourceType == null) {
+
+            throw new IllegalArgumentException(
+                    "sourceType is required"
+            );
+        }
+
+        if (remoteFile == null
+                || remoteFile.id() == null
+                || remoteFile.id().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Google Drive file response is incomplete"
+            );
+        }
+    }
+
+    private String resolveDriveId(
+            String requestedDriveId,
+            GoogleDriveFileResponse remoteFile
+    ) {
+
+        if (hasText(
+                remoteFile.driveId()
+        )) {
+
+            return remoteFile.driveId();
+        }
+
+        return requestedDriveId;
     }
 
     private String extractParentId(

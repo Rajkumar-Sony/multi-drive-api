@@ -2,7 +2,8 @@ package com.multidrive.api.entity;
 
 public enum GoogleDriveTrackerType {
 
-    USER,
+	USER,
 
-    SHARED_DRIVE
+	SHARED_DRIVE
+
 }

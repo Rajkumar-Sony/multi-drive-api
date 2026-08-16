@@ -13,231 +13,108 @@ import java.time.ZoneOffset;
 @Service
 public class DriveOperationJobStateService {
 
-    public static final Duration LEASE_DURATION =
-            Duration.ofSeconds(
-                    90
-            );
+	public static final Duration LEASE_DURATION = Duration.ofSeconds(90);
 
-    private final DriveOperationJobExecutionStore
-            driveOperationJobExecutionStore;
+	private final DriveOperationJobExecutionStore driveOperationJobExecutionStore;
 
-    private final DriveOperationJobProgressPublisher
-            driveOperationJobProgressPublisher;
+	private final DriveOperationJobProgressPublisher driveOperationJobProgressPublisher;
 
-    public DriveOperationJobStateService(
-            DriveOperationJobExecutionStore
-                    driveOperationJobExecutionStore,
-            DriveOperationJobProgressPublisher
-                    driveOperationJobProgressPublisher
-    ) {
+	public DriveOperationJobStateService(DriveOperationJobExecutionStore driveOperationJobExecutionStore,
+			DriveOperationJobProgressPublisher driveOperationJobProgressPublisher) {
 
-        this.driveOperationJobExecutionStore =
-                driveOperationJobExecutionStore;
+		this.driveOperationJobExecutionStore = driveOperationJobExecutionStore;
 
-        this.driveOperationJobProgressPublisher =
-                driveOperationJobProgressPublisher;
-    }
+		this.driveOperationJobProgressPublisher = driveOperationJobProgressPublisher;
+	}
 
-    public void publishClaimed(
-            Long jobId
-    ) {
+	public void publishClaimed(Long jobId) {
 
-        driveOperationJobProgressPublisher
-                .publish(
-                        jobId,
-                        "Job claimed by background worker"
-                );
-    }
+		driveOperationJobProgressPublisher.publish(jobId, "Job claimed by background worker");
+	}
 
-    public void transition(
-            Long jobId,
-            String workerId,
-            DriveOperationJobStatus status,
-            String message
-    ) {
+	public void transition(Long jobId, String workerId, DriveOperationJobStatus status, String message) {
 
-        LocalDateTime now =
-                now();
+		LocalDateTime now = now();
 
-        boolean updated =
-                driveOperationJobExecutionStore
-                        .transition(
-                                jobId,
-                                workerId,
-                                status,
-                                now,
-                                now.plus(
-                                        LEASE_DURATION
-                                )
-                        );
+		boolean updated = driveOperationJobExecutionStore.transition(jobId, workerId, status, now,
+				now.plus(LEASE_DURATION));
 
-        if (!updated) {
+		if (!updated) {
 
-            throw new DriveOperationLeaseLostException(
-                    jobId
-            );
-        }
+			throw new DriveOperationLeaseLostException(jobId);
+		}
 
-        driveOperationJobProgressPublisher
-                .publish(
-                        jobId,
-                        message
-                );
-    }
+		driveOperationJobProgressPublisher.publish(jobId, message);
+	}
 
-    public boolean cancelIfRequested(
-            Long jobId,
-            String workerId
-    ) {
+	public boolean cancelIfRequested(Long jobId, String workerId) {
 
-        if (!driveOperationJobExecutionStore
-                .isCancelRequested(
-                        jobId
-                )) {
+		if (!driveOperationJobExecutionStore.isCancelRequested(jobId)) {
 
-            return false;
-        }
+			return false;
+		}
 
-        boolean cancelled =
-                driveOperationJobExecutionStore
-                        .cancelOwnedJob(
-                                jobId,
-                                workerId,
-                                now()
-                        );
+		boolean cancelled = driveOperationJobExecutionStore.cancelOwnedJob(jobId, workerId, now());
 
-        if (!cancelled) {
+		if (!cancelled) {
 
-            throw new DriveOperationLeaseLostException(
-                    jobId
-            );
-        }
+			throw new DriveOperationLeaseLostException(jobId);
+		}
 
-        driveOperationJobProgressPublisher
-                .publish(
-                        jobId,
-                        "Operation cancelled before Google mutation"
-                );
+		driveOperationJobProgressPublisher.publish(jobId, "Operation cancelled before Google mutation");
 
-        return true;
-    }
+		return true;
+	}
 
-    public void markRootItemRunning(
-            Long jobId
-    ) {
+	public void markRootItemRunning(Long jobId) {
 
-        driveOperationJobExecutionStore
-                .markRootItemRunning(
-                        jobId
-                );
-    }
+		driveOperationJobExecutionStore.markRootItemRunning(jobId);
+	}
 
-    public void markRootItemVerifying(
-            Long jobId
-    ) {
+	public void markRootItemVerifying(Long jobId) {
 
-        driveOperationJobExecutionStore
-                .markRootItemVerifying(
-                        jobId
-                );
-    }
+		driveOperationJobExecutionStore.markRootItemVerifying(jobId);
+	}
 
-    public void completeNativeMove(
-            Long jobId,
-            String workerId,
-            Long resultItemId,
-            String resultGoogleFileId
-    ) {
+	public void completeNativeMove(Long jobId, String workerId, Long resultItemId, String resultGoogleFileId) {
 
-        driveOperationJobExecutionStore
-                .completeNativeMove(
-                        jobId,
-                        workerId,
-                        resultItemId,
-                        resultGoogleFileId,
-                        now()
-                );
+		driveOperationJobExecutionStore.completeNativeMove(jobId, workerId, resultItemId, resultGoogleFileId, now());
 
-        driveOperationJobProgressPublisher
-                .publish(
-                        jobId,
-                        "Native Drive move completed"
-                );
-    }
+		driveOperationJobProgressPublisher.publish(jobId, "Native Drive move completed");
+	}
 
-    public void scheduleRetry(
-            Long jobId,
-            String workerId,
-            LocalDateTime nextAttemptAt,
-            String errorCode,
-            String errorMessage
-    ) {
+	public void scheduleRetry(Long jobId, String workerId, LocalDateTime nextAttemptAt, String errorCode,
+			String errorMessage) {
 
-        boolean updated =
-                driveOperationJobExecutionStore
-                        .scheduleRetry(
-                                jobId,
-                                workerId,
-                                nextAttemptAt,
-                                errorCode,
-                                errorMessage,
-                                now()
-                        );
+		boolean updated = driveOperationJobExecutionStore.scheduleRetry(jobId, workerId, nextAttemptAt, errorCode,
+				errorMessage, now());
 
-        if (!updated) {
+		if (!updated) {
 
-            throw new DriveOperationLeaseLostException(
-                    jobId
-            );
-        }
+			throw new DriveOperationLeaseLostException(jobId);
+		}
 
-        driveOperationJobProgressPublisher
-                .publish(
-                        jobId,
-                        "Operation scheduled for retry"
-                );
-    }
+		driveOperationJobProgressPublisher.publish(jobId, "Operation scheduled for retry");
+	}
 
-    public void fail(
-            Long jobId,
-            String workerId,
-            DriveOperationJobStatus terminalStatus,
-            String errorCode,
-            String errorMessage
-    ) {
+	public void fail(Long jobId, String workerId, DriveOperationJobStatus terminalStatus, String errorCode,
+			String errorMessage) {
 
-        boolean updated =
-                driveOperationJobExecutionStore
-                        .markFailure(
-                                jobId,
-                                workerId,
-                                terminalStatus,
-                                errorCode,
-                                errorMessage,
-                                now()
-                        );
+		boolean updated = driveOperationJobExecutionStore.markFailure(jobId, workerId, terminalStatus, errorCode,
+				errorMessage, now());
 
-        if (!updated) {
+		if (!updated) {
 
-            throw new DriveOperationLeaseLostException(
-                    jobId
-            );
-        }
+			throw new DriveOperationLeaseLostException(jobId);
+		}
 
-        driveOperationJobProgressPublisher
-                .publish(
-                        jobId,
-                        terminalStatus
-                                == DriveOperationJobStatus.CLEANUP_REQUIRED
-                                ? "Operation requires reconciliation or cleanup"
-                                : "Operation failed"
-                );
-    }
+		driveOperationJobProgressPublisher.publish(jobId, terminalStatus == DriveOperationJobStatus.CLEANUP_REQUIRED
+				? "Operation requires reconciliation or cleanup" : "Operation failed");
+	}
 
-    private LocalDateTime now() {
+	private LocalDateTime now() {
 
-        return LocalDateTime.now(
-                ZoneOffset.UTC
-        );
-    }
+		return LocalDateTime.now(ZoneOffset.UTC);
+	}
+
 }

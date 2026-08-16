@@ -2,13 +2,14 @@ package com.multidrive.api.entity;
 
 public enum GoogleDriveItemCategory {
 
-    FOLDER,
+	FOLDER,
 
-    DOCUMENT,
+	DOCUMENT,
 
-    IMAGE,
+	IMAGE,
 
-    VIDEO,
+	VIDEO,
 
-    OTHER
+	OTHER
+
 }

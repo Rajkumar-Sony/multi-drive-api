@@ -6,10 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleStartPageTokenResponse(
 
-        @JsonProperty("startPageToken")
-        String startPageToken,
+		@JsonProperty("startPageToken") String startPageToken,
 
-        @JsonProperty("kind")
-        String kind
-) {
+		@JsonProperty("kind") String kind) {
 }

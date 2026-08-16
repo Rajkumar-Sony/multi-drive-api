@@ -11,79 +11,44 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class DriveItemLookupServiceImpl
-        implements DriveItemLookupService {
+public class DriveItemLookupServiceImpl implements DriveItemLookupService {
 
-    private final GoogleDriveItemRepository
-            googleDriveItemRepository;
+	private final GoogleDriveItemRepository googleDriveItemRepository;
 
-    private final DriveItemDetailsMapper
-            driveItemDetailsMapper;
+	private final DriveItemDetailsMapper driveItemDetailsMapper;
 
-    public DriveItemLookupServiceImpl(
-            GoogleDriveItemRepository
-                    googleDriveItemRepository,
+	public DriveItemLookupServiceImpl(GoogleDriveItemRepository googleDriveItemRepository,
 
-            DriveItemDetailsMapper
-                    driveItemDetailsMapper
-    ) {
+			DriveItemDetailsMapper driveItemDetailsMapper) {
 
-        this.googleDriveItemRepository =
-                googleDriveItemRepository;
+		this.googleDriveItemRepository = googleDriveItemRepository;
 
-        this.driveItemDetailsMapper =
-                driveItemDetailsMapper;
-    }
+		this.driveItemDetailsMapper = driveItemDetailsMapper;
+	}
 
-    @Override
-    @Transactional(readOnly = true)
-    public DriveItemDetailsResponse getItem(
-            String googleSubjectId,
-            Long itemId
-    ) {
+	@Override
+	@Transactional(readOnly = true)
+	public DriveItemDetailsResponse getItem(String googleSubjectId, Long itemId) {
 
-        validateInput(
-                googleSubjectId,
-                itemId
-        );
+		validateInput(googleSubjectId, itemId);
 
-        GoogleDriveItem item =
-                googleDriveItemRepository
-                        .findOwnedItemForDetails(
-                                itemId,
-                                googleSubjectId
-                        )
-                        .orElseThrow(
-                                () ->
-                                        new DriveItemNotFoundException(
-                                                itemId
-                                        )
-                        );
+		GoogleDriveItem item = googleDriveItemRepository.findOwnedItemForDetails(itemId, googleSubjectId)
+			.orElseThrow(() -> new DriveItemNotFoundException(itemId));
 
-        return driveItemDetailsMapper
-                .toResponse(
-                        item
-                );
-    }
+		return driveItemDetailsMapper.toResponse(item);
+	}
 
-    private void validateInput(
-            String googleSubjectId,
-            Long itemId
-    ) {
+	private void validateInput(String googleSubjectId, Long itemId) {
 
-        if (googleSubjectId == null
-                || googleSubjectId.isBlank()) {
+		if (googleSubjectId == null || googleSubjectId.isBlank()) {
 
-            throw new IllegalArgumentException(
-                    "googleSubjectId is required"
-            );
-        }
+			throw new IllegalArgumentException("googleSubjectId is required");
+		}
 
-        if (itemId == null) {
+		if (itemId == null) {
 
-            throw new IllegalArgumentException(
-                    "itemId is required"
-            );
-        }
-    }
+			throw new IllegalArgumentException("itemId is required");
+		}
+	}
+
 }

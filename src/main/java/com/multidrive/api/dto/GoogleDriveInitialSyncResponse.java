@@ -2,16 +2,15 @@ package com.multidrive.api.dto;
 
 public record GoogleDriveInitialSyncResponse(
 
-        Long connectionId,
+		Long connectionId,
 
-        long myDriveItemCount,
+		long myDriveItemCount,
 
-        long sharedDriveCount,
+		long sharedDriveCount,
 
-        long sharedDriveItemCount,
+		long sharedDriveItemCount,
 
-        long totalItemCount,
+		long totalItemCount,
 
-        int staleItemCount
-) {
+		int staleItemCount) {
 }

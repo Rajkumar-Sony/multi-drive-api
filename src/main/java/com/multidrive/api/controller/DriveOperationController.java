@@ -5,11 +5,16 @@ import com.multidrive.api.dto.DriveCreateFolderRequest;
 import com.multidrive.api.dto.DriveItemDetailsResponse;
 import com.multidrive.api.dto.DriveMoveRequest;
 import com.multidrive.api.dto.DriveRenameRequest;
+import com.multidrive.api.security.AuthenticatedUserResolver;
 import com.multidrive.api.service.DriveOperationService;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,196 +24,99 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(
-        "/api/drive"
-)
+@Validated
+@RequestMapping("/api/drive")
 public class DriveOperationController {
 
-    private final DriveOperationService
-            driveOperationService;
+	private final DriveOperationService driveOperationService;
 
-    public DriveOperationController(
-            DriveOperationService driveOperationService
-    ) {
+	private final AuthenticatedUserResolver authenticatedUserResolver;
 
-        this.driveOperationService =
-                driveOperationService;
-    }
+	public DriveOperationController(DriveOperationService driveOperationService,
+			AuthenticatedUserResolver authenticatedUserResolver) {
 
-    @PostMapping("/folders")
-    public DriveItemDetailsResponse createFolder(
+		this.driveOperationService = driveOperationService;
 
-            @RequestBody
-            DriveCreateFolderRequest request,
+		this.authenticatedUserResolver = authenticatedUserResolver;
+	}
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+	@PostMapping("/folders")
+	public DriveItemDetailsResponse createFolder(
 
-        return driveOperationService
-                .createFolder(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        request
-                );
-    }
+			@RequestBody @Valid @NotNull(message = "request is required") DriveCreateFolderRequest request,
 
-    @PatchMapping(
-            "/items/{itemId}/rename"
-    )
-    public DriveItemDetailsResponse rename(
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-            @PathVariable
-            Long itemId,
+		return driveOperationService.createFolder(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), request);
+	}
 
-            @RequestBody
-            DriveRenameRequest request,
+	@PatchMapping("/items/{itemId}/rename")
+	public DriveItemDetailsResponse rename(
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@PathVariable Long itemId,
 
-        return driveOperationService
-                .rename(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        itemId,
-                        request
-                );
-    }
+			@RequestBody @Valid @NotNull(message = "request is required") DriveRenameRequest request,
 
-    @PostMapping(
-            "/items/{itemId}/move"
-    )
-    public DriveItemDetailsResponse move(
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-            @PathVariable
-            Long itemId,
+		return driveOperationService.rename(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), itemId,
+				request);
+	}
 
-            @RequestBody
-            DriveMoveRequest request,
+	@PostMapping("/items/{itemId}/move")
+	public DriveItemDetailsResponse move(
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@PathVariable Long itemId,
 
-        return driveOperationService
-                .move(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        itemId,
-                        request
-                );
-    }
+			@RequestBody @Valid @NotNull(message = "request is required") DriveMoveRequest request,
 
-    @PostMapping(
-            "/items/{itemId}/copy"
-    )
-    public DriveItemDetailsResponse copy(
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-            @PathVariable
-            Long itemId,
+		return driveOperationService.move(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), itemId, request);
+	}
 
-            @RequestBody
-            DriveCopyRequest request,
+	@PostMapping("/items/{itemId}/copy")
+	public DriveItemDetailsResponse copy(
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@PathVariable Long itemId,
 
-        return driveOperationService
-                .copy(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        itemId,
-                        request
-                );
-    }
+			@RequestBody @Valid @NotNull(message = "request is required") DriveCopyRequest request,
 
-    @PostMapping(
-            "/items/{itemId}/trash"
-    )
-    public DriveItemDetailsResponse trash(
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-            @PathVariable
-            Long itemId,
+		return driveOperationService.copy(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), itemId, request);
+	}
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+	@PostMapping("/items/{itemId}/trash")
+	public DriveItemDetailsResponse trash(
 
-        return driveOperationService
-                .trash(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        itemId
-                );
-    }
+			@PathVariable Long itemId,
 
-    @PostMapping(
-            "/items/{itemId}/restore"
-    )
-    public DriveItemDetailsResponse restore(
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-            @PathVariable
-            Long itemId,
+		return driveOperationService.trash(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), itemId);
+	}
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+	@PostMapping("/items/{itemId}/restore")
+	public DriveItemDetailsResponse restore(
 
-        return driveOperationService
-                .restore(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        itemId
-                );
-    }
+			@PathVariable Long itemId,
 
-    @DeleteMapping(
-            "/items/{itemId}/permanent"
-    )
-    public ResponseEntity<Void> permanentlyDelete(
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-            @PathVariable
-            Long itemId,
+		return driveOperationService.restore(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), itemId);
+	}
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+	@DeleteMapping("/items/{itemId}/permanent")
+	public ResponseEntity<Void> permanentlyDelete(
 
-        driveOperationService
-                .permanentlyDelete(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        itemId
-                );
+			@PathVariable Long itemId,
 
-        return ResponseEntity
-                .noContent()
-                .build();
-    }
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-    private String requireGoogleSubjectId(
-            OidcUser oidcUser
-    ) {
+		driveOperationService.permanentlyDelete(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), itemId);
 
-        if (oidcUser == null
-                || oidcUser.getSubject() == null
-                || oidcUser.getSubject().isBlank()) {
+		return ResponseEntity.noContent().build();
+	}
 
-            throw new IllegalStateException(
-                    "Authenticated application user not found"
-            );
-        }
-
-        return oidcUser.getSubject();
-    }
 }

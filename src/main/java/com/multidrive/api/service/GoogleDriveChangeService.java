@@ -6,13 +6,8 @@ import java.util.List;
 
 public interface GoogleDriveChangeService {
 
-    GoogleDriveChangeTracker initializeUserTracker(
-            Long connectionId,
-            Long userId
-    );
+	GoogleDriveChangeTracker initializeUserTracker(Long connectionId, Long userId);
 
-    List<GoogleDriveChangeTracker> initializeSharedDriveTrackers(
-            Long connectionId,
-            Long userId
-    );
+	List<GoogleDriveChangeTracker> initializeSharedDriveTrackers(Long connectionId, Long userId);
+
 }

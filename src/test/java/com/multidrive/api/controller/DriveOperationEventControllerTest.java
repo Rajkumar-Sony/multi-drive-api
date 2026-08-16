@@ -16,61 +16,28 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(
-        DriveOperationEventController.class
-)
+@WebMvcTest(DriveOperationEventController.class)
 class DriveOperationEventControllerTest {
 
-    private static final String GOOGLE_SUBJECT_ID =
-            "google-subject-123";
+	private static final String GOOGLE_SUBJECT_ID = "google-subject-123";
 
-    @Autowired
-    private MockMvc mockMvc;
+	@Autowired
+	private MockMvc mockMvc;
 
-    @MockitoBean
-    private DriveOperationSseService driveOperationSseService;
+	@MockitoBean
+	private DriveOperationSseService driveOperationSseService;
 
-    @Test
-    void subscribeUsesAuthenticatedGoogleSubjectId() throws Exception {
+	@Test
+	void subscribeUsesAuthenticatedGoogleSubjectId() throws Exception {
 
-        when(
-                driveOperationSseService
-                        .subscribe(
-                                GOOGLE_SUBJECT_ID
-                        )
-        )
-                .thenReturn(
-                        new SseEmitter()
-                );
+		when(driveOperationSseService.subscribe(GOOGLE_SUBJECT_ID)).thenReturn(new SseEmitter());
 
-        mockMvc.perform(
-                        get(
-                                "/api/events/operations"
-                        )
-                                .with(
-                                        oidcLogin()
-                                                .idToken(
-                                                        token -> token
-                                                                .subject(
-                                                                        GOOGLE_SUBJECT_ID
-                                                                )
-                                                )
-                                )
-                )
-                .andExpect(
-                        status()
-                                .isOk()
-                )
-                .andExpect(
-                        request()
-                                .asyncStarted()
-                );
+		mockMvc
+			.perform(get("/api/events/operations").with(oidcLogin().idToken(token -> token.subject(GOOGLE_SUBJECT_ID))))
+			.andExpect(status().isOk())
+			.andExpect(request().asyncStarted());
 
-        verify(
-                driveOperationSseService
-        )
-                .subscribe(
-                        GOOGLE_SUBJECT_ID
-                );
-    }
+		verify(driveOperationSseService).subscribe(GOOGLE_SUBJECT_ID);
+	}
+
 }

@@ -6,14 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface DriveOperationItemRepository
-        extends JpaRepository<
-                DriveOperationItem,
-                Long
-        > {
+public interface DriveOperationItemRepository extends JpaRepository<DriveOperationItem, Long> {
 
-    List<DriveOperationItem>
-    findAllByJob_IdOrderBySequenceNoAsc(
-            Long jobId
-    );
+	List<DriveOperationItem> findAllByJob_IdOrderBySequenceNoAsc(Long jobId);
+
 }

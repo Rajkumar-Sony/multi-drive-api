@@ -6,8 +6,6 @@ import java.util.List;
 
 public interface GoogleDriveWatchService {
 
-    List<GoogleDriveWatchChannel> registerWatchChannels(
-            Long connectionId,
-            Long userId
-    );
+	List<GoogleDriveWatchChannel> registerWatchChannels(Long connectionId, Long userId);
+
 }

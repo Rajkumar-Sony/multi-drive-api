@@ -5,16 +5,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleDriveSharedDriveRestrictionsResponse(
 
-        Boolean copyRequiresWriterPermission,
+		Boolean copyRequiresWriterPermission,
 
-        Boolean domainUsersOnly,
+		Boolean domainUsersOnly,
 
-        Boolean driveMembersOnly,
+		Boolean driveMembersOnly,
 
-        Boolean adminManagedRestrictions,
+		Boolean adminManagedRestrictions,
 
-        Boolean sharingFoldersRequiresOrganizerPermission,
+		Boolean sharingFoldersRequiresOrganizerPermission,
 
-        GoogleDriveDownloadRestrictionResponse downloadRestriction
-) {
+		GoogleDriveDownloadRestrictionResponse downloadRestriction) {
 }

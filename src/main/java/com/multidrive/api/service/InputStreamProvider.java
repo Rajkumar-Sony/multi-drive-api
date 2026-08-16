@@ -6,6 +6,6 @@ import java.io.InputStream;
 @FunctionalInterface
 public interface InputStreamProvider {
 
-    InputStream openStream()
-            throws IOException;
+	InputStream openStream() throws IOException;
+
 }

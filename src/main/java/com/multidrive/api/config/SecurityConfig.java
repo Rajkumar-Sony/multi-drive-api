@@ -11,57 +11,32 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
-    private final OAuth2LoginSuccessHandler
-            oauth2LoginSuccessHandler;
+	private final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
 
-    public SecurityConfig(
-            OAuth2LoginSuccessHandler
-                    oauth2LoginSuccessHandler
-    ) {
+	public SecurityConfig(OAuth2LoginSuccessHandler oauth2LoginSuccessHandler) {
 
-        this.oauth2LoginSuccessHandler =
-                oauth2LoginSuccessHandler;
-    }
+		this.oauth2LoginSuccessHandler = oauth2LoginSuccessHandler;
+	}
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
-                .csrf(
-                        csrf -> csrf
-                                .ignoringRequestMatchers(
-                                        "/api/google/webhooks/drive"
-                                )
-                )
+		http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/google/webhooks/drive"))
 
-                .authorizeHttpRequests(
-                        auth -> auth
+			.authorizeHttpRequests(auth -> auth
 
-                                .requestMatchers(
-                                        "/",
-                                        "/error"
-                                )
-                                .permitAll()
+				.requestMatchers("/", "/error")
+				.permitAll()
 
-                                .requestMatchers(
-                                        HttpMethod.POST,
-                                        "/api/google/webhooks/drive"
-                                )
-                                .permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/google/webhooks/drive")
+				.permitAll()
 
-                                .anyRequest()
-                                .authenticated()
-                )
+				.anyRequest()
+				.authenticated())
 
-                .oauth2Login(
-                        oauth2 -> oauth2
-                                .successHandler(
-                                        oauth2LoginSuccessHandler
-                                )
-                );
+			.oauth2Login(oauth2 -> oauth2.successHandler(oauth2LoginSuccessHandler));
 
-        return http.build();
-    }
+		return http.build();
+	}
+
 }

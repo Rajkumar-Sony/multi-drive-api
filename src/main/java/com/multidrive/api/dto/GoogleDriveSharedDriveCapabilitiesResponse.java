@@ -5,46 +5,45 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleDriveSharedDriveCapabilitiesResponse(
 
-        Boolean canAddChildren,
+		Boolean canAddChildren,
 
-        Boolean canComment,
+		Boolean canComment,
 
-        Boolean canCopy,
+		Boolean canCopy,
 
-        Boolean canDeleteDrive,
+		Boolean canDeleteDrive,
 
-        Boolean canDownload,
+		Boolean canDownload,
 
-        Boolean canEdit,
+		Boolean canEdit,
 
-        Boolean canListChildren,
+		Boolean canListChildren,
 
-        Boolean canManageMembers,
+		Boolean canManageMembers,
 
-        Boolean canReadRevisions,
+		Boolean canReadRevisions,
 
-        Boolean canRename,
+		Boolean canRename,
 
-        Boolean canRenameDrive,
+		Boolean canRenameDrive,
 
-        Boolean canChangeDriveBackground,
+		Boolean canChangeDriveBackground,
 
-        Boolean canShare,
+		Boolean canShare,
 
-        Boolean canChangeCopyRequiresWriterPermissionRestriction,
+		Boolean canChangeCopyRequiresWriterPermissionRestriction,
 
-        Boolean canChangeDomainUsersOnlyRestriction,
+		Boolean canChangeDomainUsersOnlyRestriction,
 
-        Boolean canChangeDriveMembersOnlyRestriction,
+		Boolean canChangeDriveMembersOnlyRestriction,
 
-        Boolean canChangeSharingFoldersRequiresOrganizerPermissionRestriction,
+		Boolean canChangeSharingFoldersRequiresOrganizerPermissionRestriction,
 
-        Boolean canResetDriveRestrictions,
+		Boolean canResetDriveRestrictions,
 
-        Boolean canDeleteChildren,
+		Boolean canDeleteChildren,
 
-        Boolean canTrashChildren,
+		Boolean canTrashChildren,
 
-        Boolean canChangeDownloadRestriction
-) {
+		Boolean canChangeDownloadRestriction) {
 }

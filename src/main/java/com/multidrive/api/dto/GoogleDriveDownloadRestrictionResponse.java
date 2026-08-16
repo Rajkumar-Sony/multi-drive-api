@@ -5,8 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleDriveDownloadRestrictionResponse(
 
-        Boolean restrictedForReaders,
+		Boolean restrictedForReaders,
 
-        Boolean restrictedForWriters
-) {
+		Boolean restrictedForWriters) {
 }

@@ -2,7 +2,8 @@ package com.multidrive.api.entity;
 
 public enum GoogleDriveItemSourceType {
 
-    MY_DRIVE,
+	MY_DRIVE,
 
-    SHARED_DRIVE
+	SHARED_DRIVE
+
 }

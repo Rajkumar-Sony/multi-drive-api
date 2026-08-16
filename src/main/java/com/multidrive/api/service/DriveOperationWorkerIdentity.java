@@ -7,11 +7,10 @@ import java.util.UUID;
 @Component
 public class DriveOperationWorkerIdentity {
 
-    private final String workerId =
-            "worker-"
-                    + UUID.randomUUID();
+	private final String workerId = "worker-" + UUID.randomUUID();
 
-    public String getWorkerId() {
-        return workerId;
-    }
+	public String getWorkerId() {
+		return workerId;
+	}
+
 }

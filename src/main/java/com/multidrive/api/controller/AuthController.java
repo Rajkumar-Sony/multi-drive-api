@@ -14,26 +14,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UserService userService;
+	private final UserService userService;
 
-    public AuthController(UserService userService) {
-        this.userService = userService;
-    }
+	public AuthController(UserService userService) {
+		this.userService = userService;
+	}
 
-    @GetMapping("/me")
-    public CurrentUserResponse getCurrentUser(
-            @AuthenticationPrincipal OidcUser oidcUser
-    ) {
+	@GetMapping("/me")
+	public CurrentUserResponse getCurrentUser(@AuthenticationPrincipal OidcUser oidcUser) {
 
-        User user = userService.findByGoogleSubjectId(
-                oidcUser.getSubject()
-        );
+		User user = userService.findByGoogleSubjectId(oidcUser.getSubject());
 
-        return new CurrentUserResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getName(),
-                user.getPictureUrl()
-        );
-    }
+		return new CurrentUserResponse(user.getId(), user.getEmail(), user.getName(), user.getPictureUrl());
+	}
+
 }

@@ -5,16 +5,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleSharedDriveResponse(
 
-        String id,
+		String id,
 
-        String name,
+		String name,
 
-        Boolean hidden,
+		Boolean hidden,
 
-        String createdTime,
+		String createdTime,
 
-        GoogleDriveSharedDriveCapabilitiesResponse capabilities,
+		GoogleDriveSharedDriveCapabilitiesResponse capabilities,
 
-        GoogleDriveSharedDriveRestrictionsResponse restrictions
-) {
+		GoogleDriveSharedDriveRestrictionsResponse restrictions) {
 }

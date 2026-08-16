@@ -2,19 +2,20 @@ package com.multidrive.api.entity;
 
 public enum DriveOperationItemStatus {
 
-    QUEUED,
+	QUEUED,
 
-    RUNNING,
+	RUNNING,
 
-    VERIFYING,
+	VERIFYING,
 
-    COMPLETED,
+	COMPLETED,
 
-    SKIPPED,
+	SKIPPED,
 
-    FAILED,
+	FAILED,
 
-    CANCELLED,
+	CANCELLED,
 
-    CLEANUP_REQUIRED
+	CLEANUP_REQUIRED
+
 }

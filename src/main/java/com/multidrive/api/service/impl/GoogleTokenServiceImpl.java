@@ -18,192 +18,115 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 @Service
-public class GoogleTokenServiceImpl
-        implements GoogleTokenService {
+public class GoogleTokenServiceImpl implements GoogleTokenService {
 
-    private static final String GOOGLE_TOKEN_URL =
-            "https://oauth2.googleapis.com/token";
+	private static final String GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 
-    // Refresh early so a token does not expire during an in-flight Drive request.
-    private static final long EXPIRY_BUFFER_MINUTES = 1;
+	// Refresh early so a token does not expire during an in-flight Drive request.
+	private static final long EXPIRY_BUFFER_MINUTES = 1;
 
-    private final GoogleDriveConnectionRepository
-            googleDriveConnectionRepository;
+	private final GoogleDriveConnectionRepository googleDriveConnectionRepository;
 
-    private final TokenEncryptionService tokenEncryptionService;
+	private final TokenEncryptionService tokenEncryptionService;
 
-    private final RestClient restClient;
+	private final RestClient restClient;
 
-    private final String clientId;
-    private final String clientSecret;
+	private final String clientId;
 
-    public GoogleTokenServiceImpl(
-            GoogleDriveConnectionRepository googleDriveConnectionRepository,
-            TokenEncryptionService tokenEncryptionService,
+	private final String clientSecret;
 
-            @Value("${spring.security.oauth2.client.registration.google.client-id}")
-            String clientId,
+	public GoogleTokenServiceImpl(GoogleDriveConnectionRepository googleDriveConnectionRepository,
+			TokenEncryptionService tokenEncryptionService,
 
-            @Value("${spring.security.oauth2.client.registration.google.client-secret}")
-            String clientSecret
-    ) {
+			@Value("${spring.security.oauth2.client.registration.google.client-id}") String clientId,
 
-        this.googleDriveConnectionRepository =
-                googleDriveConnectionRepository;
+			@Value("${spring.security.oauth2.client.registration.google.client-secret}") String clientSecret) {
 
-        this.tokenEncryptionService =
-                tokenEncryptionService;
+		this.googleDriveConnectionRepository = googleDriveConnectionRepository;
 
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
+		this.tokenEncryptionService = tokenEncryptionService;
 
-        this.restClient = RestClient.create();
-    }
+		this.clientId = clientId;
+		this.clientSecret = clientSecret;
 
-    @Override
-    @Transactional
-    public String getValidAccessToken(
-            Long connectionId,
-            Long userId
-    ) {
+		this.restClient = RestClient.create();
+	}
 
-        GoogleDriveConnection connection =
-                googleDriveConnectionRepository
-                        .findByIdAndUserId(
-                                connectionId,
-                                userId
-                        )
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Google Drive connection not found"
-                                )
-                        );
+	@Override
+	@Transactional
+	public String getValidAccessToken(Long connectionId, Long userId) {
 
-        if (isAccessTokenValid(connection)) {
+		GoogleDriveConnection connection = googleDriveConnectionRepository.findByIdAndUserId(connectionId, userId)
+			.orElseThrow(() -> new IllegalArgumentException("Google Drive connection not found"));
 
-            return tokenEncryptionService.decrypt(
-                    connection.getEncryptedAccessToken()
-            );
-        }
+		if (isAccessTokenValid(connection)) {
 
-        return refreshAccessToken(connection);
-    }
+			return tokenEncryptionService.decrypt(connection.getEncryptedAccessToken());
+		}
 
-    private boolean isAccessTokenValid(
-            GoogleDriveConnection connection
-    ) {
+		return refreshAccessToken(connection);
+	}
 
-        if (connection.getEncryptedAccessToken() == null
-                || connection.getAccessTokenExpiry() == null) {
+	private boolean isAccessTokenValid(GoogleDriveConnection connection) {
 
-            return false;
-        }
+		if (connection.getEncryptedAccessToken() == null || connection.getAccessTokenExpiry() == null) {
 
-        LocalDateTime now =
-                LocalDateTime.now(ZoneOffset.UTC);
+			return false;
+		}
 
-        return connection
-                .getAccessTokenExpiry()
-                .isAfter(
-                        now.plusMinutes(
-                                EXPIRY_BUFFER_MINUTES
-                        )
-                );
-    }
+		LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
-    private String refreshAccessToken(
-            GoogleDriveConnection connection
-    ) {
+		return connection.getAccessTokenExpiry().isAfter(now.plusMinutes(EXPIRY_BUFFER_MINUTES));
+	}
 
-        String refreshToken =
-                tokenEncryptionService.decrypt(
-                        connection.getEncryptedRefreshToken()
-                );
+	private String refreshAccessToken(GoogleDriveConnection connection) {
 
-        if (refreshToken == null
-                || refreshToken.isBlank()) {
+		String refreshToken = tokenEncryptionService.decrypt(connection.getEncryptedRefreshToken());
 
-            throw new IllegalStateException(
-                    "Refresh token is not available. Reconnect the Google Drive account."
-            );
-        }
+		if (refreshToken == null || refreshToken.isBlank()) {
 
-        MultiValueMap<String, String> formData =
-                new LinkedMultiValueMap<>();
+			throw new IllegalStateException("Refresh token is not available. Reconnect the Google Drive account.");
+		}
 
-        formData.add(
-                "client_id",
-                clientId
-        );
+		MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
 
-        formData.add(
-                "client_secret",
-                clientSecret
-        );
+		formData.add("client_id", clientId);
 
-        formData.add(
-                "refresh_token",
-                refreshToken
-        );
+		formData.add("client_secret", clientSecret);
 
-        formData.add(
-                "grant_type",
-                "refresh_token"
-        );
+		formData.add("refresh_token", refreshToken);
 
-        GoogleRefreshTokenResponse response =
-                restClient
-                        .post()
-                        .uri(GOOGLE_TOKEN_URL)
-                        .contentType(
-                                MediaType.APPLICATION_FORM_URLENCODED
-                        )
-                        .body(formData)
-                        .retrieve()
-                        .body(
-                                GoogleRefreshTokenResponse.class
-                        );
+		formData.add("grant_type", "refresh_token");
 
-        if (response == null
-                || response.accessToken() == null
-                || response.accessToken().isBlank()) {
+		GoogleRefreshTokenResponse response = restClient.post()
+			.uri(GOOGLE_TOKEN_URL)
+			.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+			.body(formData)
+			.retrieve()
+			.body(GoogleRefreshTokenResponse.class);
 
-            throw new IllegalStateException(
-                    "Google access token refresh failed"
-            );
-        }
+		if (response == null || response.accessToken() == null || response.accessToken().isBlank()) {
 
-        connection.setEncryptedAccessToken(
-                tokenEncryptionService.encrypt(
-                        response.accessToken()
-                )
-        );
+			throw new IllegalStateException("Google access token refresh failed");
+		}
 
-        if (response.expiresIn() != null) {
+		connection.setEncryptedAccessToken(tokenEncryptionService.encrypt(response.accessToken()));
 
-            connection.setAccessTokenExpiry(
-                    LocalDateTime
-                            .now(ZoneOffset.UTC)
-                            .plusSeconds(
-                                    response.expiresIn()
-                            )
-            );
-        }
+		if (response.expiresIn() != null) {
 
-        if (response.scope() != null
-                && !response.scope().isBlank()) {
+			connection.setAccessTokenExpiry(LocalDateTime.now(ZoneOffset.UTC).plusSeconds(response.expiresIn()));
+		}
 
-            connection.setScopes(
-                    response.scope()
-            );
-        }
+		if (response.scope() != null && !response.scope().isBlank()) {
 
-        connection.setStatus("CONNECTED");
+			connection.setScopes(response.scope());
+		}
 
-        googleDriveConnectionRepository.save(
-                connection
-        );
+		connection.setStatus("CONNECTED");
 
-        return response.accessToken();
-    }
+		googleDriveConnectionRepository.save(connection);
+
+		return response.accessToken();
+	}
+
 }

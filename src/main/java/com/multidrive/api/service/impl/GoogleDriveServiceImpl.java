@@ -15,386 +15,190 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 
 @Service
-public class GoogleDriveServiceImpl
-        implements GoogleDriveService {
-
-    private static final String GOOGLE_DRIVE_FILES_URL =
-            "https://www.googleapis.com/drive/v3/files";
-
-    private static final String GOOGLE_SHARED_DRIVES_URL =
-            "https://www.googleapis.com/drive/v3/drives";
-
-    private static final int DEFAULT_FILE_PAGE_SIZE =
-            50;
-
-    private static final int MAX_FILE_PAGE_SIZE =
-            1000;
-
-    private static final int DEFAULT_SHARED_DRIVE_PAGE_SIZE =
-            50;
-
-    private static final int MAX_SHARED_DRIVE_PAGE_SIZE =
-            100;
-
-    private final GoogleTokenService
-            googleTokenService;
-
-    private final RestClient
-            restClient;
-
-    public GoogleDriveServiceImpl(
-            GoogleTokenService googleTokenService
-    ) {
-
-        this.googleTokenService =
-                googleTokenService;
-
-        this.restClient =
-                RestClient.create();
-    }
-
-    @Override
-    public GoogleDriveFilesResponse getFiles(
-            Long connectionId,
-            Long userId,
-            Integer pageSize,
-            String pageToken
-    ) {
-
-        return fetchFiles(
-                connectionId,
-                userId,
-                pageSize,
-                pageToken,
-                null,
-                null,
-                true,
-                "trashed=false"
-        );
-    }
-
-    @Override
-    public GoogleDriveFilesResponse getMyDriveFiles(
-            Long connectionId,
-            Long userId,
-            Integer pageSize,
-            String pageToken
-    ) {
-
-        return fetchFiles(
-                connectionId,
-                userId,
-                pageSize,
-                pageToken,
-                "user",
-                null,
-                false,
-                null
-        );
-    }
-
-    @Override
-    public GoogleDriveFilesResponse getSharedDriveFiles(
-            Long connectionId,
-            Long userId,
-            String driveId,
-            Integer pageSize,
-            String pageToken
-    ) {
-
-        if (driveId == null
-                || driveId.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "driveId is required"
-            );
-        }
-
-        return fetchFiles(
-                connectionId,
-                userId,
-                pageSize,
-                pageToken,
-                "drive",
-                driveId,
-                true,
-                null
-        );
-    }
-
-    @Override
-    public GoogleSharedDrivesResponse getSharedDrives(
-            Long connectionId,
-            Long userId,
-            Integer pageSize,
-            String pageToken
-    ) {
-
-        String accessToken =
-                googleTokenService
-                        .getValidAccessToken(
-                                connectionId,
-                                userId
-                        );
-
-        int requestedPageSize =
-                normalizeSharedDrivePageSize(
-                        pageSize
-                );
-
-        UriComponentsBuilder uriBuilder =
-                UriComponentsBuilder
-                        .fromUriString(
-                                GOOGLE_SHARED_DRIVES_URL
-                        )
-                        .queryParam(
-                                "pageSize",
-                                requestedPageSize
-                        )
-                        .queryParam(
-                                "fields",
-                                GoogleDriveFieldMasks.SHARED_DRIVE_LIST
-                        );
-
-        if (pageToken != null
-                && !pageToken.isBlank()) {
-
-            uriBuilder.queryParam(
-                    "pageToken",
-                    pageToken
-            );
-        }
-
-        URI uri =
-                uriBuilder
-                        .build()
-                        .encode()
-                        .toUri();
-
-        GoogleSharedDrivesResponse response =
-                restClient
-                        .get()
-                        .uri(uri)
-                        .header(
-                                HttpHeaders.AUTHORIZATION,
-                                "Bearer " + accessToken
-                        )
-                        .retrieve()
-                        .body(
-                                GoogleSharedDrivesResponse.class
-                        );
-
-        if (response == null) {
-
-            throw new IllegalStateException(
-                    "Google Drive returned an empty Shared Drives response"
-            );
-        }
-
-        return response;
-    }
-
-    @Override
-    public GoogleDriveRootResponse getMyDriveRoot(
-            Long connectionId,
-            Long userId
-    ) {
-
-        String accessToken =
-                googleTokenService
-                        .getValidAccessToken(
-                                connectionId,
-                                userId
-                        );
-
-        URI uri =
-                UriComponentsBuilder
-                        .fromUriString(
-                                GOOGLE_DRIVE_FILES_URL
-                                        + "/root"
-                        )
-                        .queryParam(
-                                "fields",
-                                GoogleDriveFieldMasks.MY_DRIVE_ROOT
-                        )
-                        .build()
-                        .encode()
-                        .toUri();
-
-        GoogleDriveRootResponse response =
-                restClient
-                        .get()
-                        .uri(uri)
-                        .header(
-                                HttpHeaders.AUTHORIZATION,
-                                "Bearer " + accessToken
-                        )
-                        .retrieve()
-                        .body(
-                                GoogleDriveRootResponse.class
-                        );
-
-        if (response == null
-                || response.id() == null
-                || response.id().isBlank()) {
-
-            throw new IllegalStateException(
-                    "Google Drive root folder could not be resolved"
-            );
-        }
-
-        return response;
-    }
-
-    private GoogleDriveFilesResponse fetchFiles(
-            Long connectionId,
-            Long userId,
-            Integer pageSize,
-            String pageToken,
-            String corpora,
-            String driveId,
-            boolean includeItemsFromAllDrives,
-            String query
-    ) {
-
-        String accessToken =
-                googleTokenService
-                        .getValidAccessToken(
-                                connectionId,
-                                userId
-                        );
-
-        int requestedPageSize =
-                normalizeFilePageSize(
-                        pageSize
-                );
-
-        UriComponentsBuilder uriBuilder =
-                UriComponentsBuilder
-                        .fromUriString(
-                                GOOGLE_DRIVE_FILES_URL
-                        )
-                        .queryParam(
-                                "pageSize",
-                                requestedPageSize
-                        )
-                        .queryParam(
-                                "spaces",
-                                "drive"
-                        )
-                        .queryParam(
-                                "includeItemsFromAllDrives",
-                                includeItemsFromAllDrives
-                        )
-                        .queryParam(
-                                "supportsAllDrives",
-                                true
-                        )
-                        .queryParam(
-                                "fields",
-                                GoogleDriveFieldMasks.FILE_LIST
-                        );
-
-        if (query != null
-                && !query.isBlank()) {
-
-            uriBuilder.queryParam(
-                    "q",
-                    query
-            );
-        }
-
-        if (corpora != null
-                && !corpora.isBlank()) {
-
-            uriBuilder.queryParam(
-                    "corpora",
-                    corpora
-            );
-        }
-
-        if (driveId != null
-                && !driveId.isBlank()) {
-
-            uriBuilder.queryParam(
-                    "driveId",
-                    driveId
-            );
-        }
-
-        if (pageToken != null
-                && !pageToken.isBlank()) {
-
-            uriBuilder.queryParam(
-                    "pageToken",
-                    pageToken
-            );
-        }
-
-        URI uri =
-                uriBuilder
-                        .build()
-                        .encode()
-                        .toUri();
-
-        GoogleDriveFilesResponse response =
-                restClient
-                        .get()
-                        .uri(uri)
-                        .header(
-                                HttpHeaders.AUTHORIZATION,
-                                "Bearer " + accessToken
-                        )
-                        .retrieve()
-                        .body(
-                                GoogleDriveFilesResponse.class
-                        );
-
-        if (response == null) {
-
-            throw new IllegalStateException(
-                    "Google Drive returned an empty file response"
-            );
-        }
-
-        return response;
-    }
-
-    private int normalizeFilePageSize(
-            Integer pageSize
-    ) {
-
-        if (pageSize == null) {
-            return DEFAULT_FILE_PAGE_SIZE;
-        }
-
-        if (pageSize < 1
-                || pageSize > MAX_FILE_PAGE_SIZE) {
-
-            throw new IllegalArgumentException(
-                    "File pageSize must be between 1 and 1000"
-            );
-        }
-
-        return pageSize;
-    }
-
-    private int normalizeSharedDrivePageSize(
-            Integer pageSize
-    ) {
-
-        if (pageSize == null) {
-            return DEFAULT_SHARED_DRIVE_PAGE_SIZE;
-        }
-
-        if (pageSize < 1
-                || pageSize > MAX_SHARED_DRIVE_PAGE_SIZE) {
-
-            throw new IllegalArgumentException(
-                    "Shared Drive pageSize must be between 1 and 100"
-            );
-        }
-
-        return pageSize;
-    }
+public class GoogleDriveServiceImpl implements GoogleDriveService {
+
+	private static final String GOOGLE_DRIVE_FILES_URL = "https://www.googleapis.com/drive/v3/files";
+
+	private static final String GOOGLE_SHARED_DRIVES_URL = "https://www.googleapis.com/drive/v3/drives";
+
+	private static final int DEFAULT_FILE_PAGE_SIZE = 50;
+
+	private static final int MAX_FILE_PAGE_SIZE = 1000;
+
+	private static final int DEFAULT_SHARED_DRIVE_PAGE_SIZE = 50;
+
+	private static final int MAX_SHARED_DRIVE_PAGE_SIZE = 100;
+
+	private final GoogleTokenService googleTokenService;
+
+	private final RestClient restClient;
+
+	public GoogleDriveServiceImpl(GoogleTokenService googleTokenService) {
+
+		this.googleTokenService = googleTokenService;
+
+		this.restClient = RestClient.create();
+	}
+
+	@Override
+	public GoogleDriveFilesResponse getFiles(Long connectionId, Long userId, Integer pageSize, String pageToken) {
+
+		return fetchFiles(connectionId, userId, pageSize, pageToken, null, null, true, "trashed=false");
+	}
+
+	@Override
+	public GoogleDriveFilesResponse getMyDriveFiles(Long connectionId, Long userId, Integer pageSize,
+			String pageToken) {
+
+		return fetchFiles(connectionId, userId, pageSize, pageToken, "user", null, false, null);
+	}
+
+	@Override
+	public GoogleDriveFilesResponse getSharedDriveFiles(Long connectionId, Long userId, String driveId,
+			Integer pageSize, String pageToken) {
+
+		if (driveId == null || driveId.isBlank()) {
+
+			throw new IllegalArgumentException("driveId is required");
+		}
+
+		return fetchFiles(connectionId, userId, pageSize, pageToken, "drive", driveId, true, null);
+	}
+
+	@Override
+	public GoogleSharedDrivesResponse getSharedDrives(Long connectionId, Long userId, Integer pageSize,
+			String pageToken) {
+
+		String accessToken = googleTokenService.getValidAccessToken(connectionId, userId);
+
+		int requestedPageSize = normalizeSharedDrivePageSize(pageSize);
+
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(GOOGLE_SHARED_DRIVES_URL)
+			.queryParam("pageSize", requestedPageSize)
+			.queryParam("fields", GoogleDriveFieldMasks.SHARED_DRIVE_LIST);
+
+		if (pageToken != null && !pageToken.isBlank()) {
+
+			uriBuilder.queryParam("pageToken", pageToken);
+		}
+
+		URI uri = uriBuilder.build().encode().toUri();
+
+		GoogleSharedDrivesResponse response = restClient.get()
+			.uri(uri)
+			.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+			.retrieve()
+			.body(GoogleSharedDrivesResponse.class);
+
+		if (response == null) {
+
+			throw new IllegalStateException("Google Drive returned an empty Shared Drives response");
+		}
+
+		return response;
+	}
+
+	@Override
+	public GoogleDriveRootResponse getMyDriveRoot(Long connectionId, Long userId) {
+
+		String accessToken = googleTokenService.getValidAccessToken(connectionId, userId);
+
+		URI uri = UriComponentsBuilder.fromUriString(GOOGLE_DRIVE_FILES_URL + "/root")
+			.queryParam("fields", GoogleDriveFieldMasks.MY_DRIVE_ROOT)
+			.build()
+			.encode()
+			.toUri();
+
+		GoogleDriveRootResponse response = restClient.get()
+			.uri(uri)
+			.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+			.retrieve()
+			.body(GoogleDriveRootResponse.class);
+
+		if (response == null || response.id() == null || response.id().isBlank()) {
+
+			throw new IllegalStateException("Google Drive root folder could not be resolved");
+		}
+
+		return response;
+	}
+
+	private GoogleDriveFilesResponse fetchFiles(Long connectionId, Long userId, Integer pageSize, String pageToken,
+			String corpora, String driveId, boolean includeItemsFromAllDrives, String query) {
+
+		String accessToken = googleTokenService.getValidAccessToken(connectionId, userId);
+
+		int requestedPageSize = normalizeFilePageSize(pageSize);
+
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(GOOGLE_DRIVE_FILES_URL)
+			.queryParam("pageSize", requestedPageSize)
+			.queryParam("spaces", "drive")
+			.queryParam("includeItemsFromAllDrives", includeItemsFromAllDrives)
+			.queryParam("supportsAllDrives", true)
+			.queryParam("fields", GoogleDriveFieldMasks.FILE_LIST);
+
+		if (query != null && !query.isBlank()) {
+
+			uriBuilder.queryParam("q", query);
+		}
+
+		if (corpora != null && !corpora.isBlank()) {
+
+			uriBuilder.queryParam("corpora", corpora);
+		}
+
+		if (driveId != null && !driveId.isBlank()) {
+
+			uriBuilder.queryParam("driveId", driveId);
+		}
+
+		if (pageToken != null && !pageToken.isBlank()) {
+
+			uriBuilder.queryParam("pageToken", pageToken);
+		}
+
+		URI uri = uriBuilder.build().encode().toUri();
+
+		GoogleDriveFilesResponse response = restClient.get()
+			.uri(uri)
+			.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+			.retrieve()
+			.body(GoogleDriveFilesResponse.class);
+
+		if (response == null) {
+
+			throw new IllegalStateException("Google Drive returned an empty file response");
+		}
+
+		return response;
+	}
+
+	private int normalizeFilePageSize(Integer pageSize) {
+
+		if (pageSize == null) {
+			return DEFAULT_FILE_PAGE_SIZE;
+		}
+
+		if (pageSize < 1 || pageSize > MAX_FILE_PAGE_SIZE) {
+
+			throw new IllegalArgumentException("File pageSize must be between 1 and 1000");
+		}
+
+		return pageSize;
+	}
+
+	private int normalizeSharedDrivePageSize(Integer pageSize) {
+
+		if (pageSize == null) {
+			return DEFAULT_SHARED_DRIVE_PAGE_SIZE;
+		}
+
+		if (pageSize < 1 || pageSize > MAX_SHARED_DRIVE_PAGE_SIZE) {
+
+			throw new IllegalArgumentException("Shared Drive pageSize must be between 1 and 100");
+		}
+
+		return pageSize;
+	}
+
 }

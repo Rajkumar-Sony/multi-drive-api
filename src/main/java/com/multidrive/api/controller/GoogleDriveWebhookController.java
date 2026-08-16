@@ -13,80 +13,43 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/google/webhooks")
 public class GoogleDriveWebhookController {
 
-    private final GoogleDriveWebhookService
-            googleDriveWebhookService;
+	private final GoogleDriveWebhookService googleDriveWebhookService;
 
-    public GoogleDriveWebhookController(
-            GoogleDriveWebhookService
-                    googleDriveWebhookService
-    ) {
+	public GoogleDriveWebhookController(GoogleDriveWebhookService googleDriveWebhookService) {
 
-        this.googleDriveWebhookService =
-                googleDriveWebhookService;
-    }
+		this.googleDriveWebhookService = googleDriveWebhookService;
+	}
 
-    @PostMapping("/drive")
-    public ResponseEntity<Void> receiveDriveNotification(
+	@PostMapping("/drive")
+	public ResponseEntity<Void> receiveDriveNotification(
 
-            @RequestHeader(
-                    name = "X-Goog-Channel-ID",
-                    required = false
-            )
-            String channelId,
+			@RequestHeader(name = "X-Goog-Channel-ID", required = false) String channelId,
 
-            @RequestHeader(
-                    name = "X-Goog-Channel-Token",
-                    required = false
-            )
-            String channelToken,
+			@RequestHeader(name = "X-Goog-Channel-Token", required = false) String channelToken,
 
-            @RequestHeader(
-                    name = "X-Goog-Resource-ID",
-                    required = false
-            )
-            String resourceId,
+			@RequestHeader(name = "X-Goog-Resource-ID", required = false) String resourceId,
 
-            @RequestHeader(
-                    name = "X-Goog-Resource-State",
-                    required = false
-            )
-            String resourceState,
+			@RequestHeader(name = "X-Goog-Resource-State", required = false) String resourceState,
 
-            @RequestHeader(
-                    name = "X-Goog-Message-Number",
-                    required = false
-            )
-            String messageNumber
-    ) {
+			@RequestHeader(name = "X-Goog-Message-Number", required = false) String messageNumber) {
 
-        try {
+		try {
 
-            googleDriveWebhookService
-                    .handleNotification(
-                            channelId,
-                            channelToken,
-                            resourceId,
-                            resourceState,
-                            messageNumber
-                    );
+			googleDriveWebhookService.handleNotification(channelId, channelToken, resourceId, resourceState,
+					messageNumber);
 
-            return ResponseEntity
-                    .noContent()
-                    .build();
+			return ResponseEntity.noContent().build();
 
-        } catch (SecurityException exception) {
+		}
+		catch (SecurityException exception) {
 
-            return ResponseEntity
-                    .status(
-                            HttpStatus.FORBIDDEN
-                    )
-                    .build();
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
-        } catch (IllegalArgumentException exception) {
+		}
+		catch (IllegalArgumentException exception) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .build();
-        }
-    }
+			return ResponseEntity.badRequest().build();
+		}
+	}
+
 }

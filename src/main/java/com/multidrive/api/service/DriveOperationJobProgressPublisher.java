@@ -11,72 +11,32 @@ import java.time.Instant;
 @Service
 public class DriveOperationJobProgressPublisher {
 
-    private final DriveOperationJobExecutionStore
-            driveOperationJobExecutionStore;
+	private final DriveOperationJobExecutionStore driveOperationJobExecutionStore;
 
-    private final DriveOperationSseService
-            driveOperationSseService;
+	private final DriveOperationSseService driveOperationSseService;
 
-    public DriveOperationJobProgressPublisher(
-            DriveOperationJobExecutionStore
-                    driveOperationJobExecutionStore,
-            DriveOperationSseService
-                    driveOperationSseService
-    ) {
+	public DriveOperationJobProgressPublisher(DriveOperationJobExecutionStore driveOperationJobExecutionStore,
+			DriveOperationSseService driveOperationSseService) {
 
-        this.driveOperationJobExecutionStore =
-                driveOperationJobExecutionStore;
+		this.driveOperationJobExecutionStore = driveOperationJobExecutionStore;
 
-        this.driveOperationSseService =
-                driveOperationSseService;
-    }
+		this.driveOperationSseService = driveOperationSseService;
+	}
 
-    public void publish(
-            Long jobId,
-            String message
-    ) {
+	public void publish(Long jobId, String message) {
 
-        driveOperationJobExecutionStore
-                .findProgressSnapshot(
-                        jobId
-                )
-                .ifPresent(
-                        snapshot ->
-                                publishSnapshot(
-                                        snapshot,
-                                        message
-                                )
-                );
-    }
+		driveOperationJobExecutionStore.findProgressSnapshot(jobId)
+			.ifPresent(snapshot -> publishSnapshot(snapshot, message));
+	}
 
-    private void publishSnapshot(
-            DriveOperationJobProgressSnapshot snapshot,
-            String message
-    ) {
+	private void publishSnapshot(DriveOperationJobProgressSnapshot snapshot, String message) {
 
-        DriveOperationEventResponse event =
-                new DriveOperationEventResponse(
-                        "DRIVE_OPERATION",
-                        snapshot.jobId(),
-                        snapshot.status(),
-                        snapshot.totalItems(),
-                        snapshot.completedItems(),
-                        snapshot.failedItems(),
-                        snapshot.totalBytes(),
-                        snapshot.transferredBytes(),
-                        snapshot.attemptCount(),
-                        snapshot.maxAttempts(),
-                        snapshot.cancelRequested(),
-                        snapshot.errorCode(),
-                        snapshot.errorMessage(),
-                        message,
-                        Instant.now()
-                );
+		DriveOperationEventResponse event = new DriveOperationEventResponse("DRIVE_OPERATION", snapshot.jobId(),
+				snapshot.status(), snapshot.totalItems(), snapshot.completedItems(), snapshot.failedItems(),
+				snapshot.totalBytes(), snapshot.transferredBytes(), snapshot.attemptCount(), snapshot.maxAttempts(),
+				snapshot.cancelRequested(), snapshot.errorCode(), snapshot.errorMessage(), message, Instant.now());
 
-        driveOperationSseService
-                .publish(
-                        snapshot.googleSubjectId(),
-                        event
-                );
-    }
+		driveOperationSseService.publish(snapshot.googleSubjectId(), event);
+	}
+
 }

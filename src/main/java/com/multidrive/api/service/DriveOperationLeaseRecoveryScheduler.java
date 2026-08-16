@@ -14,48 +14,26 @@ import java.time.ZoneOffset;
 @Service
 public class DriveOperationLeaseRecoveryScheduler {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(
-                    DriveOperationLeaseRecoveryScheduler.class
-            );
+	private static final Logger LOGGER = LoggerFactory.getLogger(DriveOperationLeaseRecoveryScheduler.class);
 
-    private final DriveOperationJobExecutionStore
-            driveOperationJobExecutionStore;
+	private final DriveOperationJobExecutionStore driveOperationJobExecutionStore;
 
-    public DriveOperationLeaseRecoveryScheduler(
-            DriveOperationJobExecutionStore
-                    driveOperationJobExecutionStore
-    ) {
+	public DriveOperationLeaseRecoveryScheduler(DriveOperationJobExecutionStore driveOperationJobExecutionStore) {
 
-        this.driveOperationJobExecutionStore =
-                driveOperationJobExecutionStore;
-    }
+		this.driveOperationJobExecutionStore = driveOperationJobExecutionStore;
+	}
 
-    @Scheduled(
-            fixedDelay = 30_000
-    )
-    public void recoverExpiredLeases() {
+	@Scheduled(fixedDelay = 30_000)
+	public void recoverExpiredLeases() {
 
-        LocalDateTime now =
-                LocalDateTime.now(
-                        ZoneOffset.UTC
-                );
+		LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
-        int recovered =
-                driveOperationJobExecutionStore
-                        .recoverExpiredLeases(
-                                now,
-                                now.plusSeconds(
-                                        5
-                                )
-                        );
+		int recovered = driveOperationJobExecutionStore.recoverExpiredLeases(now, now.plusSeconds(5));
 
-        if (recovered > 0) {
+		if (recovered > 0) {
 
-            LOGGER.warn(
-                    "Recovered expired Drive operation worker leases. count={}",
-                    recovered
-            );
-        }
-    }
+			LOGGER.warn("Recovered expired Drive operation worker leases. count={}", recovered);
+		}
+	}
+
 }

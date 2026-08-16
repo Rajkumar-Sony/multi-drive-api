@@ -18,183 +18,128 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 @Entity
-@Table(
-        name = "google_drive_change_trackers"
-)
+@Table(name = "google_drive_change_trackers")
 public class GoogleDriveChangeTracker {
 
-    @Id
-    @GeneratedValue(
-            strategy = GenerationType.IDENTITY
-    )
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(
-            name = "connection_id",
-            nullable = false
-    )
-    private GoogleDriveConnection connection;
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "connection_id", nullable = false)
+	private GoogleDriveConnection connection;
 
-    @Enumerated(EnumType.STRING)
-    @Column(
-            name = "tracker_type",
-            nullable = false,
-            length = 30
-    )
-    private GoogleDriveTrackerType trackerType;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "tracker_type", nullable = false, length = 30)
+	private GoogleDriveTrackerType trackerType;
 
-    @Column(
-            name = "drive_id",
-            length = 255
-    )
-    private String driveId;
+	@Column(name = "drive_id", length = 255)
+	private String driveId;
 
-    @Column(
-            name = "page_token",
-            columnDefinition = "TEXT"
-    )
-    private String pageToken;
+	@Column(name = "page_token", columnDefinition = "TEXT")
+	private String pageToken;
 
-    @Column(
-            name = "last_synced_at"
-    )
-    private LocalDateTime lastSyncedAt;
+	@Column(name = "last_synced_at")
+	private LocalDateTime lastSyncedAt;
 
-    @Column(
-            name = "status",
-            nullable = false,
-            length = 30
-    )
-    private String status;
+	@Column(name = "status", nullable = false, length = 30)
+	private String status;
 
-    @Column(
-            name = "created_at",
-            nullable = false
-    )
-    private LocalDateTime createdAt;
+	@Column(name = "created_at", nullable = false)
+	private LocalDateTime createdAt;
 
-    @Column(
-            name = "updated_at",
-            nullable = false
-    )
-    private LocalDateTime updatedAt;
+	@Column(name = "updated_at", nullable = false)
+	private LocalDateTime updatedAt;
 
-    @PrePersist
-    public void prePersist() {
+	@PrePersist
+	public void prePersist() {
 
-        LocalDateTime now =
-                LocalDateTime.now(
-                        ZoneOffset.UTC
-                );
+		LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
-        if (status == null || status.isBlank()) {
-            status = "ACTIVE";
-        }
+		if (status == null || status.isBlank()) {
+			status = "ACTIVE";
+		}
 
-        createdAt = now;
-        updatedAt = now;
-    }
+		createdAt = now;
+		updatedAt = now;
+	}
 
-    @PreUpdate
-    public void preUpdate() {
+	@PreUpdate
+	public void preUpdate() {
 
-        updatedAt =
-                LocalDateTime.now(
-                        ZoneOffset.UTC
-                );
-    }
+		updatedAt = LocalDateTime.now(ZoneOffset.UTC);
+	}
 
-    public Long getId() {
-        return id;
-    }
+	public Long getId() {
+		return id;
+	}
 
-    public void setId(
-            Long id
-    ) {
-        this.id = id;
-    }
+	public void setId(Long id) {
+		this.id = id;
+	}
 
-    public GoogleDriveConnection getConnection() {
-        return connection;
-    }
+	public GoogleDriveConnection getConnection() {
+		return connection;
+	}
 
-    public void setConnection(
-            GoogleDriveConnection connection
-    ) {
-        this.connection = connection;
-    }
+	public void setConnection(GoogleDriveConnection connection) {
+		this.connection = connection;
+	}
 
-    public GoogleDriveTrackerType getTrackerType() {
-        return trackerType;
-    }
+	public GoogleDriveTrackerType getTrackerType() {
+		return trackerType;
+	}
 
-    public void setTrackerType(
-            GoogleDriveTrackerType trackerType
-    ) {
-        this.trackerType = trackerType;
-    }
+	public void setTrackerType(GoogleDriveTrackerType trackerType) {
+		this.trackerType = trackerType;
+	}
 
-    public String getDriveId() {
-        return driveId;
-    }
+	public String getDriveId() {
+		return driveId;
+	}
 
-    public void setDriveId(
-            String driveId
-    ) {
-        this.driveId = driveId;
-    }
+	public void setDriveId(String driveId) {
+		this.driveId = driveId;
+	}
 
-    public String getPageToken() {
-        return pageToken;
-    }
+	public String getPageToken() {
+		return pageToken;
+	}
 
-    public void setPageToken(
-            String pageToken
-    ) {
-        this.pageToken = pageToken;
-    }
+	public void setPageToken(String pageToken) {
+		this.pageToken = pageToken;
+	}
 
-    public LocalDateTime getLastSyncedAt() {
-        return lastSyncedAt;
-    }
+	public LocalDateTime getLastSyncedAt() {
+		return lastSyncedAt;
+	}
 
-    public void setLastSyncedAt(
-            LocalDateTime lastSyncedAt
-    ) {
-        this.lastSyncedAt = lastSyncedAt;
-    }
+	public void setLastSyncedAt(LocalDateTime lastSyncedAt) {
+		this.lastSyncedAt = lastSyncedAt;
+	}
 
-    public String getStatus() {
-        return status;
-    }
+	public String getStatus() {
+		return status;
+	}
 
-    public void setStatus(
-            String status
-    ) {
-        this.status = status;
-    }
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
 
-    public void setCreatedAt(
-            LocalDateTime createdAt
-    ) {
-        this.createdAt = createdAt;
-    }
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
 
-    public void setUpdatedAt(
-            LocalDateTime updatedAt
-    ) {
-        this.updatedAt = updatedAt;
-    }
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
 }

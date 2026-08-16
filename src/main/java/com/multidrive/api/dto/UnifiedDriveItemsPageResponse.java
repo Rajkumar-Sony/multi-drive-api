@@ -4,18 +4,17 @@ import java.util.List;
 
 public record UnifiedDriveItemsPageResponse(
 
-        List<UnifiedDriveItemResponse> items,
+		List<UnifiedDriveItemResponse> items,
 
-        int page,
+		int page,
 
-        int size,
+		int size,
 
-        long totalElements,
+		long totalElements,
 
-        int totalPages,
+		int totalPages,
 
-        boolean first,
+		boolean first,
 
-        boolean last
-) {
+		boolean last) {
 }

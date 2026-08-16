@@ -15,78 +15,42 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping(
-        "/api/drive/files"
-)
+@RequestMapping("/api/drive/files")
 public class DriveUploadController {
 
-    private final DriveUploadService
-            driveUploadService;
+	private final DriveUploadService driveUploadService;
 
-    public DriveUploadController(
-            DriveUploadService driveUploadService
-    ) {
+	public DriveUploadController(DriveUploadService driveUploadService) {
 
-        this.driveUploadService =
-                driveUploadService;
-    }
+		this.driveUploadService = driveUploadService;
+	}
 
-    @PostMapping(
-            value = "/upload",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
-    public DriveItemDetailsResponse upload(
+	@PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public DriveItemDetailsResponse upload(
 
-            @RequestParam
-            Long sourceId,
+			@RequestParam Long sourceId,
 
-            @RequestParam(
-                    required = false
-            )
-            Long parentItemId,
+			@RequestParam(required = false) Long parentItemId,
 
-            @RequestParam(
-                    required = false
-            )
-            String name,
+			@RequestParam(required = false) String name,
 
-            @RequestPart("file")
-            MultipartFile file,
+			@RequestPart("file") MultipartFile file,
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-        DriveUploadRequest request =
-                new DriveUploadRequest(
-                        sourceId,
-                        parentItemId,
-                        name,
-                        file
-                );
+		DriveUploadRequest request = new DriveUploadRequest(sourceId, parentItemId, name, file);
 
-        return driveUploadService
-                .upload(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        request
-                );
-    }
+		return driveUploadService.upload(requireGoogleSubjectId(oidcUser), request);
+	}
 
-    private String requireGoogleSubjectId(
-            OidcUser oidcUser
-    ) {
+	private String requireGoogleSubjectId(OidcUser oidcUser) {
 
-        if (oidcUser == null
-                || oidcUser.getSubject() == null
-                || oidcUser.getSubject().isBlank()) {
+		if (oidcUser == null || oidcUser.getSubject() == null || oidcUser.getSubject().isBlank()) {
 
-            throw new IllegalStateException(
-                    "Authenticated application user not found"
-            );
-        }
+			throw new IllegalStateException("Authenticated application user not found");
+		}
 
-        return oidcUser.getSubject();
-    }
+		return oidcUser.getSubject();
+	}
+
 }

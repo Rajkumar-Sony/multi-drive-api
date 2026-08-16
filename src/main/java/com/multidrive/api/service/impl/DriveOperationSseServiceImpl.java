@@ -13,214 +13,117 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
-public class DriveOperationSseServiceImpl
-        implements DriveOperationSseService {
+public class DriveOperationSseServiceImpl implements DriveOperationSseService {
 
-    private static final long EMITTER_TIMEOUT_MS =
-            30L * 60L * 1000L;
+	private static final long EMITTER_TIMEOUT_MS = 30L * 60L * 1000L;
 
-    private static final long RECONNECT_TIME_MS =
-            3000L;
+	private static final long RECONNECT_TIME_MS = 3000L;
 
-    private final ConcurrentHashMap<
-            String,
-            CopyOnWriteArrayList<SseEmitter>
-            > emitters =
-            new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
 
-    @Override
-    public SseEmitter subscribe(
-            String googleSubjectId
-    ) {
+	@Override
+	public SseEmitter subscribe(String googleSubjectId) {
 
-        if (googleSubjectId == null
-                || googleSubjectId.isBlank()) {
+		if (googleSubjectId == null || googleSubjectId.isBlank()) {
 
-            throw new IllegalArgumentException(
-                    "googleSubjectId is required"
-            );
-        }
+			throw new IllegalArgumentException("googleSubjectId is required");
+		}
 
-        SseEmitter emitter =
-                new SseEmitter(
-                        EMITTER_TIMEOUT_MS
-                );
+		SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MS);
 
-        CopyOnWriteArrayList<SseEmitter> userEmitters =
-                emitters.computeIfAbsent(
-                        googleSubjectId,
-                        ignored ->
-                                new CopyOnWriteArrayList<>()
-                );
+		CopyOnWriteArrayList<SseEmitter> userEmitters = emitters.computeIfAbsent(googleSubjectId,
+				ignored -> new CopyOnWriteArrayList<>());
 
-        userEmitters.add(
-                emitter
-        );
+		userEmitters.add(emitter);
 
-        Runnable cleanup =
-                () ->
-                        removeEmitter(
-                                googleSubjectId,
-                                emitter
-                        );
+		Runnable cleanup = () -> removeEmitter(googleSubjectId, emitter);
 
-        emitter.onCompletion(
-                cleanup
-        );
+		emitter.onCompletion(cleanup);
 
-        emitter.onTimeout(
-                cleanup
-        );
+		emitter.onTimeout(cleanup);
 
-        emitter.onError(
-                ignored ->
-                        cleanup.run()
-        );
+		emitter.onError(ignored -> cleanup.run());
 
-        try {
+		try {
 
-            emitter.send(
-                    SseEmitter
-                            .event()
-                            .name(
-                                    "operation-connected"
-                            )
-                            .data(
-                                    "connected"
-                            )
-                            .reconnectTime(
-                                    RECONNECT_TIME_MS
-                            )
-            );
+			emitter.send(
+					SseEmitter.event().name("operation-connected").data("connected").reconnectTime(RECONNECT_TIME_MS));
 
-        } catch (IOException exception) {
+		}
+		catch (IOException exception) {
 
-            removeEmitter(
-                    googleSubjectId,
-                    emitter
-            );
-        }
+			removeEmitter(googleSubjectId, emitter);
+		}
 
-        return emitter;
-    }
+		return emitter;
+	}
 
-    @Override
-    public void publish(
-            String googleSubjectId,
-            DriveOperationEventResponse event
-    ) {
+	@Override
+	public void publish(String googleSubjectId, DriveOperationEventResponse event) {
 
-        if (googleSubjectId == null
-                || event == null) {
+		if (googleSubjectId == null || event == null) {
 
-            return;
-        }
+			return;
+		}
 
-        List<SseEmitter> userEmitters =
-                emitters.get(
-                        googleSubjectId
-                );
+		List<SseEmitter> userEmitters = emitters.get(googleSubjectId);
 
-        if (userEmitters == null
-                || userEmitters.isEmpty()) {
+		if (userEmitters == null || userEmitters.isEmpty()) {
 
-            return;
-        }
+			return;
+		}
 
-        for (SseEmitter emitter
-                : userEmitters) {
+		for (SseEmitter emitter : userEmitters) {
 
-            try {
+			try {
 
-                emitter.send(
-                        SseEmitter
-                                .event()
-                                .name(
-                                        "operation-progress"
-                                )
-                                .id(
-                                        event.jobId()
-                                                + "-"
-                                                + System.nanoTime()
-                                )
-                                .data(
-                                        event
-                                )
-                );
+				emitter.send(SseEmitter.event()
+					.name("operation-progress")
+					.id(event.jobId() + "-" + System.nanoTime())
+					.data(event));
 
-            } catch (Exception exception) {
+			}
+			catch (Exception exception) {
 
-                removeEmitter(
-                        googleSubjectId,
-                        emitter
-                );
-            }
-        }
-    }
+				removeEmitter(googleSubjectId, emitter);
+			}
+		}
+	}
 
-    @Scheduled(
-            fixedDelay = 25_000
-    )
-    public void heartbeat() {
+	@Scheduled(fixedDelay = 25_000)
+	public void heartbeat() {
 
-        emitters.forEach(
-                (
-                        googleSubjectId,
-                        userEmitters
-                ) -> {
+		emitters.forEach((googleSubjectId, userEmitters) -> {
 
-                    for (SseEmitter emitter
-                            : userEmitters) {
+			for (SseEmitter emitter : userEmitters) {
 
-                        try {
+				try {
 
-                            emitter.send(
-                                    SseEmitter
-                                            .event()
-                                            .name(
-                                                    "heartbeat"
-                                            )
-                                            .data(
-                                                    "ping"
-                                            )
-                            );
+					emitter.send(SseEmitter.event().name("heartbeat").data("ping"));
 
-                        } catch (Exception exception) {
+				}
+				catch (Exception exception) {
 
-                            removeEmitter(
-                                    googleSubjectId,
-                                    emitter
-                            );
-                        }
-                    }
-                }
-        );
-    }
+					removeEmitter(googleSubjectId, emitter);
+				}
+			}
+		});
+	}
 
-    private void removeEmitter(
-            String googleSubjectId,
-            SseEmitter emitter
-    ) {
+	private void removeEmitter(String googleSubjectId, SseEmitter emitter) {
 
-        CopyOnWriteArrayList<SseEmitter> userEmitters =
-                emitters.get(
-                        googleSubjectId
-                );
+		CopyOnWriteArrayList<SseEmitter> userEmitters = emitters.get(googleSubjectId);
 
-        if (userEmitters == null) {
-            return;
-        }
+		if (userEmitters == null) {
+			return;
+		}
 
-        userEmitters.remove(
-                emitter
-        );
+		userEmitters.remove(emitter);
 
-        if (userEmitters.isEmpty()) {
+		if (userEmitters.isEmpty()) {
 
-            emitters.remove(
-                    googleSubjectId,
-                    userEmitters
-            );
-        }
-    }
+			emitters.remove(googleSubjectId, userEmitters);
+		}
+	}
+
 }

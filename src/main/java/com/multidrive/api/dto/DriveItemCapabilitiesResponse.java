@@ -2,68 +2,67 @@ package com.multidrive.api.dto;
 
 public record DriveItemCapabilitiesResponse(
 
-        Boolean readDrive,
+		Boolean readDrive,
 
-        Boolean edit,
+		Boolean edit,
 
-        Boolean modifyContent,
+		Boolean modifyContent,
 
-        Boolean rename,
+		Boolean rename,
 
-        Boolean copy,
+		Boolean copy,
 
-        Boolean download,
+		Boolean download,
 
-        Boolean comment,
+		Boolean comment,
 
-        Boolean share,
+		Boolean share,
 
-        Boolean trash,
+		Boolean trash,
 
-        Boolean untrash,
+		Boolean untrash,
 
-        Boolean delete,
+		Boolean delete,
 
-        Boolean addChildren,
+		Boolean addChildren,
 
-        Boolean deleteChildren,
+		Boolean deleteChildren,
 
-        Boolean trashChildren,
+		Boolean trashChildren,
 
-        Boolean listChildren,
+		Boolean listChildren,
 
-        Boolean removeChildren,
+		Boolean removeChildren,
 
-        Boolean readRevisions,
+		Boolean readRevisions,
 
-        Boolean readLabels,
+		Boolean readLabels,
 
-        Boolean modifyLabels,
+		Boolean modifyLabels,
 
-        Boolean moveWithinDrive,
+		Boolean moveWithinDrive,
 
-        Boolean moveOutOfDrive,
+		Boolean moveOutOfDrive,
 
-        Boolean moveChildrenWithinDrive,
+		Boolean moveChildrenWithinDrive,
 
-        Boolean moveChildrenOutOfDrive,
+		Boolean moveChildrenOutOfDrive,
 
-        Boolean addFolderFromAnotherDrive,
+		Boolean addFolderFromAnotherDrive,
 
-        Boolean addMyDriveParent,
+		Boolean addMyDriveParent,
 
-        Boolean removeMyDriveParent,
+		Boolean removeMyDriveParent,
 
-        Boolean changeSecurityUpdateEnabled,
+		Boolean changeSecurityUpdateEnabled,
 
-        Boolean changeItemDownloadRestriction,
+		Boolean changeItemDownloadRestriction,
 
-        Boolean acceptOwnership,
+		Boolean acceptOwnership,
 
-        Boolean disableInheritedPermissions,
+		Boolean disableInheritedPermissions,
 
-        Boolean enableInheritedPermissions,
+		Boolean enableInheritedPermissions,
 
-        Boolean startApproval
-) {
+		Boolean startApproval) {
 }

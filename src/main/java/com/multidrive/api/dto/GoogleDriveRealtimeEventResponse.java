@@ -6,18 +6,17 @@ import java.time.Instant;
 
 public record GoogleDriveRealtimeEventResponse(
 
-        String eventType,
+		String eventType,
 
-        Long connectionId,
+		Long connectionId,
 
-        Long trackerId,
+		Long trackerId,
 
-        GoogleDriveTrackerType trackerType,
+		GoogleDriveTrackerType trackerType,
 
-        String driveId,
+		String driveId,
 
-        int changeCount,
+		int changeCount,
 
-        Instant occurredAt
-) {
+		Instant occurredAt) {
 }

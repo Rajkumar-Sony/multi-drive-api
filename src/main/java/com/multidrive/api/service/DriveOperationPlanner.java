@@ -6,13 +6,8 @@ import com.multidrive.api.model.DriveOperationPlan;
 
 public interface DriveOperationPlanner {
 
-    DriveOperationPlan planMove(
-            GoogleDriveItem sourceItem,
-            GoogleDriveSource destinationSource
-    );
+	DriveOperationPlan planMove(GoogleDriveItem sourceItem, GoogleDriveSource destinationSource);
 
-    DriveOperationPlan planCopy(
-            GoogleDriveItem sourceItem,
-            GoogleDriveSource destinationSource
-    );
+	DriveOperationPlan planCopy(GoogleDriveItem sourceItem, GoogleDriveSource destinationSource);
+
 }

@@ -7,26 +7,14 @@ import com.multidrive.api.entity.DriveOperationJobStatus;
 
 public interface DriveOperationJobService {
 
-    DriveOperationJobResponse submit(
-            String googleSubjectId,
-            String idempotencyKey,
-            DriveOperationJobSubmitRequest request
-    );
+	DriveOperationJobResponse submit(String googleSubjectId, String idempotencyKey,
+			DriveOperationJobSubmitRequest request);
 
-    DriveOperationJobResponse getJob(
-            String googleSubjectId,
-            Long jobId
-    );
+	DriveOperationJobResponse getJob(String googleSubjectId, Long jobId);
 
-    DriveOperationJobsPageResponse getJobs(
-            String googleSubjectId,
-            DriveOperationJobStatus status,
-            Integer page,
-            Integer size
-    );
+	DriveOperationJobsPageResponse getJobs(String googleSubjectId, DriveOperationJobStatus status, Integer page,
+			Integer size);
 
-    DriveOperationJobResponse cancel(
-            String googleSubjectId,
-            Long jobId
-    );
+	DriveOperationJobResponse cancel(String googleSubjectId, Long jobId);
+
 }

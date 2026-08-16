@@ -8,113 +8,80 @@ import org.springframework.stereotype.Component;
 @Component
 public class DriveItemCapabilityResponseMapper {
 
-    public DriveItemCapabilitiesResponse toResponse(
-            GoogleDriveItemCapabilities capabilities
-    ) {
+	public DriveItemCapabilitiesResponse toResponse(GoogleDriveItemCapabilities capabilities) {
 
-        if (capabilities == null) {
+		if (capabilities == null) {
 
-            return new DriveItemCapabilitiesResponse(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-        }
+			return new DriveItemCapabilitiesResponse(null, null, null, null, null, null, null, null, null, null, null,
+					null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+					null, null, null, null, null);
+		}
 
-        return new DriveItemCapabilitiesResponse(
+		return new DriveItemCapabilitiesResponse(
 
-                capabilities.getCanReadDrive(),
+				capabilities.getCanReadDrive(),
 
-                capabilities.getCanEdit(),
+				capabilities.getCanEdit(),
 
-                capabilities.getCanModifyContent(),
+				capabilities.getCanModifyContent(),
 
-                capabilities.getCanRename(),
+				capabilities.getCanRename(),
 
-                capabilities.getCanCopy(),
+				capabilities.getCanCopy(),
 
-                capabilities.getCanDownload(),
+				capabilities.getCanDownload(),
 
-                capabilities.getCanComment(),
+				capabilities.getCanComment(),
 
-                capabilities.getCanShare(),
+				capabilities.getCanShare(),
 
-                capabilities.getCanTrash(),
+				capabilities.getCanTrash(),
 
-                capabilities.getCanUntrash(),
+				capabilities.getCanUntrash(),
 
-                capabilities.getCanDelete(),
+				capabilities.getCanDelete(),
 
-                capabilities.getCanAddChildren(),
+				capabilities.getCanAddChildren(),
 
-                capabilities.getCanDeleteChildren(),
+				capabilities.getCanDeleteChildren(),
 
-                capabilities.getCanTrashChildren(),
+				capabilities.getCanTrashChildren(),
 
-                capabilities.getCanListChildren(),
+				capabilities.getCanListChildren(),
 
-                capabilities.getCanRemoveChildren(),
+				capabilities.getCanRemoveChildren(),
 
-                capabilities.getCanReadRevisions(),
+				capabilities.getCanReadRevisions(),
 
-                capabilities.getCanReadLabels(),
+				capabilities.getCanReadLabels(),
 
-                capabilities.getCanModifyLabels(),
+				capabilities.getCanModifyLabels(),
 
-                capabilities.getCanMoveItemWithinDrive(),
+				capabilities.getCanMoveItemWithinDrive(),
 
-                capabilities.getCanMoveItemOutOfDrive(),
+				capabilities.getCanMoveItemOutOfDrive(),
 
-                capabilities.getCanMoveChildrenWithinDrive(),
+				capabilities.getCanMoveChildrenWithinDrive(),
 
-                capabilities.getCanMoveChildrenOutOfDrive(),
+				capabilities.getCanMoveChildrenOutOfDrive(),
 
-                capabilities.getCanAddFolderFromAnotherDrive(),
+				capabilities.getCanAddFolderFromAnotherDrive(),
 
-                capabilities.getCanAddMyDriveParent(),
+				capabilities.getCanAddMyDriveParent(),
 
-                capabilities.getCanRemoveMyDriveParent(),
+				capabilities.getCanRemoveMyDriveParent(),
 
-                capabilities.getCanChangeSecurityUpdateEnabled(),
+				capabilities.getCanChangeSecurityUpdateEnabled(),
 
-                capabilities.getCanChangeItemDownloadRestriction(),
+				capabilities.getCanChangeItemDownloadRestriction(),
 
-                capabilities.getCanAcceptOwnership(),
+				capabilities.getCanAcceptOwnership(),
 
-                capabilities.getCanDisableInheritedPermissions(),
+				capabilities.getCanDisableInheritedPermissions(),
 
-                capabilities.getCanEnableInheritedPermissions(),
+				capabilities.getCanEnableInheritedPermissions(),
 
-                capabilities.getCanStartApproval()
-        );
-    }
+				capabilities.getCanStartApproval());
+	}
+
 }

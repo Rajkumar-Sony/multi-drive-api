@@ -13,87 +13,50 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 @Service
-public class DriveOperationJobControlServiceImpl
-        implements DriveOperationJobControlService {
+public class DriveOperationJobControlServiceImpl implements DriveOperationJobControlService {
 
-    private final DriveOperationJobExecutionStore
-            driveOperationJobExecutionStore;
+	private final DriveOperationJobExecutionStore driveOperationJobExecutionStore;
 
-    private final DriveOperationJobService
-            driveOperationJobService;
+	private final DriveOperationJobService driveOperationJobService;
 
-    private final DriveOperationJobProgressPublisher
-            driveOperationJobProgressPublisher;
+	private final DriveOperationJobProgressPublisher driveOperationJobProgressPublisher;
 
-    public DriveOperationJobControlServiceImpl(
-            DriveOperationJobExecutionStore
-                    driveOperationJobExecutionStore,
-            DriveOperationJobService
-                    driveOperationJobService,
-            DriveOperationJobProgressPublisher
-                    driveOperationJobProgressPublisher
-    ) {
+	public DriveOperationJobControlServiceImpl(DriveOperationJobExecutionStore driveOperationJobExecutionStore,
+			DriveOperationJobService driveOperationJobService,
+			DriveOperationJobProgressPublisher driveOperationJobProgressPublisher) {
 
-        this.driveOperationJobExecutionStore =
-                driveOperationJobExecutionStore;
+		this.driveOperationJobExecutionStore = driveOperationJobExecutionStore;
 
-        this.driveOperationJobService =
-                driveOperationJobService;
+		this.driveOperationJobService = driveOperationJobService;
 
-        this.driveOperationJobProgressPublisher =
-                driveOperationJobProgressPublisher;
-    }
+		this.driveOperationJobProgressPublisher = driveOperationJobProgressPublisher;
+	}
 
-    @Override
-    public DriveOperationJobResponse requestCancellation(
-            String googleSubjectId,
-            Long jobId
-    ) {
+	@Override
+	public DriveOperationJobResponse requestCancellation(String googleSubjectId, Long jobId) {
 
-        if (googleSubjectId == null
-                || googleSubjectId.isBlank()) {
+		if (googleSubjectId == null || googleSubjectId.isBlank()) {
 
-            throw new IllegalArgumentException(
-                    "googleSubjectId is required"
-            );
-        }
+			throw new IllegalArgumentException("googleSubjectId is required");
+		}
 
-        if (jobId == null) {
+		if (jobId == null) {
 
-            throw new IllegalArgumentException(
-                    "jobId is required"
-            );
-        }
+			throw new IllegalArgumentException("jobId is required");
+		}
 
-        boolean changed =
-                driveOperationJobExecutionStore
-                        .requestCancellation(
-                                googleSubjectId,
-                                jobId,
-                                LocalDateTime.now(
-                                        ZoneOffset.UTC
-                                )
-                        );
+		boolean changed = driveOperationJobExecutionStore.requestCancellation(googleSubjectId, jobId,
+				LocalDateTime.now(ZoneOffset.UTC));
 
-        DriveOperationJobResponse response =
-                driveOperationJobService
-                        .getJob(
-                                googleSubjectId,
-                                jobId
-                        );
+		DriveOperationJobResponse response = driveOperationJobService.getJob(googleSubjectId, jobId);
 
-        if (changed) {
+		if (changed) {
 
-            driveOperationJobProgressPublisher
-                    .publish(
-                            jobId,
-                            response.status()
-                                    == DriveOperationJobStatus.CANCELLED
-                                    ? "Queued operation cancelled"
-                                    : "Cancellation requested"
-                    );
-        }
+			driveOperationJobProgressPublisher.publish(jobId, response.status() == DriveOperationJobStatus.CANCELLED
+					? "Queued operation cancelled" : "Cancellation requested");
+		}
 
-        return response;
-    }
+		return response;
+	}
+
 }

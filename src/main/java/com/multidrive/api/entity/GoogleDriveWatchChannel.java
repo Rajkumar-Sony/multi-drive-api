@@ -16,216 +16,149 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 @Entity
-@Table(
-        name = "google_drive_watch_channels"
-)
+@Table(name = "google_drive_watch_channels")
 public class GoogleDriveWatchChannel {
 
-    @Id
-    @GeneratedValue(
-            strategy = GenerationType.IDENTITY
-    )
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(
-            name = "tracker_id",
-            nullable = false
-    )
-    private GoogleDriveChangeTracker tracker;
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "tracker_id", nullable = false)
+	private GoogleDriveChangeTracker tracker;
 
-    @Column(
-            name = "channel_id",
-            nullable = false,
-            unique = true,
-            length = 64
-    )
-    private String channelId;
+	@Column(name = "channel_id", nullable = false, unique = true, length = 64)
+	private String channelId;
 
-    @Column(
-            name = "channel_token",
-            nullable = false,
-            length = 256
-    )
-    private String channelToken;
+	@Column(name = "channel_token", nullable = false, length = 256)
+	private String channelToken;
 
-    @Column(
-            name = "resource_id",
-            length = 255
-    )
-    private String resourceId;
+	@Column(name = "resource_id", length = 255)
+	private String resourceId;
 
-    @Column(
-            name = "resource_uri",
-            columnDefinition = "TEXT"
-    )
-    private String resourceUri;
+	@Column(name = "resource_uri", columnDefinition = "TEXT")
+	private String resourceUri;
 
-    @Column(
-            name = "expiration",
-            nullable = false
-    )
-    private LocalDateTime expiration;
+	@Column(name = "expiration", nullable = false)
+	private LocalDateTime expiration;
 
-    @Column(
-            name = "last_message_number"
-    )
-    private Long lastMessageNumber;
+	@Column(name = "last_message_number")
+	private Long lastMessageNumber;
 
-    @Column(
-            name = "status",
-            nullable = false,
-            length = 30
-    )
-    private String status;
+	@Column(name = "status", nullable = false, length = 30)
+	private String status;
 
-    @Column(
-            name = "created_at",
-            nullable = false
-    )
-    private LocalDateTime createdAt;
+	@Column(name = "created_at", nullable = false)
+	private LocalDateTime createdAt;
 
-    @Column(
-            name = "updated_at",
-            nullable = false
-    )
-    private LocalDateTime updatedAt;
+	@Column(name = "updated_at", nullable = false)
+	private LocalDateTime updatedAt;
 
-    @PrePersist
-    public void prePersist() {
+	@PrePersist
+	public void prePersist() {
 
-        LocalDateTime now =
-                LocalDateTime.now(
-                        ZoneOffset.UTC
-                );
+		LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
-        if (status == null || status.isBlank()) {
-            status = "ACTIVE";
-        }
+		if (status == null || status.isBlank()) {
+			status = "ACTIVE";
+		}
 
-        createdAt = now;
-        updatedAt = now;
-    }
+		createdAt = now;
+		updatedAt = now;
+	}
 
-    @PreUpdate
-    public void preUpdate() {
+	@PreUpdate
+	public void preUpdate() {
 
-        updatedAt =
-                LocalDateTime.now(
-                        ZoneOffset.UTC
-                );
-    }
+		updatedAt = LocalDateTime.now(ZoneOffset.UTC);
+	}
 
-    public Long getId() {
-        return id;
-    }
+	public Long getId() {
+		return id;
+	}
 
-    public void setId(
-            Long id
-    ) {
-        this.id = id;
-    }
+	public void setId(Long id) {
+		this.id = id;
+	}
 
-    public GoogleDriveChangeTracker getTracker() {
-        return tracker;
-    }
+	public GoogleDriveChangeTracker getTracker() {
+		return tracker;
+	}
 
-    public void setTracker(
-            GoogleDriveChangeTracker tracker
-    ) {
-        this.tracker = tracker;
-    }
+	public void setTracker(GoogleDriveChangeTracker tracker) {
+		this.tracker = tracker;
+	}
 
-    public String getChannelId() {
-        return channelId;
-    }
+	public String getChannelId() {
+		return channelId;
+	}
 
-    public void setChannelId(
-            String channelId
-    ) {
-        this.channelId = channelId;
-    }
+	public void setChannelId(String channelId) {
+		this.channelId = channelId;
+	}
 
-    public String getChannelToken() {
-        return channelToken;
-    }
+	public String getChannelToken() {
+		return channelToken;
+	}
 
-    public void setChannelToken(
-            String channelToken
-    ) {
-        this.channelToken = channelToken;
-    }
+	public void setChannelToken(String channelToken) {
+		this.channelToken = channelToken;
+	}
 
-    public String getResourceId() {
-        return resourceId;
-    }
+	public String getResourceId() {
+		return resourceId;
+	}
 
-    public void setResourceId(
-            String resourceId
-    ) {
-        this.resourceId = resourceId;
-    }
+	public void setResourceId(String resourceId) {
+		this.resourceId = resourceId;
+	}
 
-    public String getResourceUri() {
-        return resourceUri;
-    }
+	public String getResourceUri() {
+		return resourceUri;
+	}
 
-    public void setResourceUri(
-            String resourceUri
-    ) {
-        this.resourceUri = resourceUri;
-    }
+	public void setResourceUri(String resourceUri) {
+		this.resourceUri = resourceUri;
+	}
 
-    public LocalDateTime getExpiration() {
-        return expiration;
-    }
+	public LocalDateTime getExpiration() {
+		return expiration;
+	}
 
-    public void setExpiration(
-            LocalDateTime expiration
-    ) {
-        this.expiration = expiration;
-    }
+	public void setExpiration(LocalDateTime expiration) {
+		this.expiration = expiration;
+	}
 
-    public Long getLastMessageNumber() {
-        return lastMessageNumber;
-    }
+	public Long getLastMessageNumber() {
+		return lastMessageNumber;
+	}
 
-    public void setLastMessageNumber(
-            Long lastMessageNumber
-    ) {
-        this.lastMessageNumber = lastMessageNumber;
-    }
+	public void setLastMessageNumber(Long lastMessageNumber) {
+		this.lastMessageNumber = lastMessageNumber;
+	}
 
-    public String getStatus() {
-        return status;
-    }
+	public String getStatus() {
+		return status;
+	}
 
-    public void setStatus(
-            String status
-    ) {
-        this.status = status;
-    }
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
 
-    public void setCreatedAt(
-            LocalDateTime createdAt
-    ) {
-        this.createdAt = createdAt;
-    }
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
 
-    public void setUpdatedAt(
-            LocalDateTime updatedAt
-    ) {
-        this.updatedAt = updatedAt;
-    }
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
 }

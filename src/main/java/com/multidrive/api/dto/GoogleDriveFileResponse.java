@@ -7,32 +7,31 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleDriveFileResponse(
 
-        String id,
+		String id,
 
-        String name,
+		String name,
 
-        String mimeType,
+		String mimeType,
 
-        String createdTime,
+		String createdTime,
 
-        String modifiedTime,
+		String modifiedTime,
 
-        List<String> parents,
+		List<String> parents,
 
-        String webViewLink,
+		String webViewLink,
 
-        String thumbnailLink,
+		String thumbnailLink,
 
-        String iconLink,
+		String iconLink,
 
-        String size,
+		String size,
 
-        String driveId,
+		String driveId,
 
-        Boolean trashed,
+		Boolean trashed,
 
-        Boolean explicitlyTrashed,
+		Boolean explicitlyTrashed,
 
-        GoogleDriveFileCapabilitiesResponse capabilities
-) {
+		GoogleDriveFileCapabilitiesResponse capabilities) {
 }

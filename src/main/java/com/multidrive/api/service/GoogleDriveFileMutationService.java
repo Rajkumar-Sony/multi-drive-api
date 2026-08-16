@@ -6,57 +6,22 @@ import java.util.List;
 
 public interface GoogleDriveFileMutationService {
 
-    GoogleDriveFileResponse getFile(
-            Long connectionId,
-            Long userId,
-            String googleFileId
-    );
+	GoogleDriveFileResponse getFile(Long connectionId, Long userId, String googleFileId);
 
-    GoogleDriveFileResponse createFolder(
-            Long connectionId,
-            Long userId,
-            String parentGoogleFileId,
-            String name
-    );
+	GoogleDriveFileResponse createFolder(Long connectionId, Long userId, String parentGoogleFileId, String name);
 
-    GoogleDriveFileResponse rename(
-            Long connectionId,
-            Long userId,
-            String googleFileId,
-            String name
-    );
+	GoogleDriveFileResponse rename(Long connectionId, Long userId, String googleFileId, String name);
 
-    GoogleDriveFileResponse move(
-            Long connectionId,
-            Long userId,
-            String googleFileId,
-            String destinationParentGoogleFileId,
-            List<String> currentParentGoogleFileIds
-    );
+	GoogleDriveFileResponse move(Long connectionId, Long userId, String googleFileId,
+			String destinationParentGoogleFileId, List<String> currentParentGoogleFileIds);
 
-    GoogleDriveFileResponse copy(
-            Long connectionId,
-            Long userId,
-            String googleFileId,
-            String destinationParentGoogleFileId,
-            String name
-    );
+	GoogleDriveFileResponse copy(Long connectionId, Long userId, String googleFileId,
+			String destinationParentGoogleFileId, String name);
 
-    GoogleDriveFileResponse trash(
-            Long connectionId,
-            Long userId,
-            String googleFileId
-    );
+	GoogleDriveFileResponse trash(Long connectionId, Long userId, String googleFileId);
 
-    GoogleDriveFileResponse restore(
-            Long connectionId,
-            Long userId,
-            String googleFileId
-    );
+	GoogleDriveFileResponse restore(Long connectionId, Long userId, String googleFileId);
 
-    void permanentlyDelete(
-            Long connectionId,
-            Long userId,
-            String googleFileId
-    );
+	void permanentlyDelete(Long connectionId, Long userId, String googleFileId);
+
 }

@@ -4,10 +4,9 @@ import java.util.List;
 
 public record DriveExportOptionsResponse(
 
-        Long itemId,
+		Long itemId,
 
-        String sourceMimeType,
+		String sourceMimeType,
 
-        List<DriveExportFormatResponse> formats
-) {
+		List<DriveExportFormatResponse> formats) {
 }

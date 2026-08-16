@@ -7,42 +7,41 @@ import java.time.Instant;
 
 public record UnifiedDriveItemResponse(
 
-        Long id,
+		Long id,
 
-        Long connectionId,
+		Long connectionId,
 
-        String accountEmail,
+		String accountEmail,
 
-        Long sourceId,
+		Long sourceId,
 
-        String sourceName,
+		String sourceName,
 
-        String googleFileId,
+		String googleFileId,
 
-        String name,
+		String name,
 
-        String mimeType,
+		String mimeType,
 
-        GoogleDriveItemCategory category,
+		GoogleDriveItemCategory category,
 
-        GoogleDriveItemSourceType sourceType,
+		GoogleDriveItemSourceType sourceType,
 
-        String parentId,
+		String parentId,
 
-        String driveId,
+		String driveId,
 
-        String webViewLink,
+		String webViewLink,
 
-        String thumbnailLink,
+		String thumbnailLink,
 
-        String iconLink,
+		String iconLink,
 
-        Long sizeBytes,
+		Long sizeBytes,
 
-        Instant createdTime,
+		Instant createdTime,
 
-        Instant modifiedTime,
+		Instant modifiedTime,
 
-        DriveItemCapabilitiesResponse capabilities
-) {
+		DriveItemCapabilitiesResponse capabilities) {
 }

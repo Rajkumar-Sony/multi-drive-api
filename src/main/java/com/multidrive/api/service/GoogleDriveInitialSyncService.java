@@ -4,8 +4,6 @@ import com.multidrive.api.dto.GoogleDriveInitialSyncResponse;
 
 public interface GoogleDriveInitialSyncService {
 
-    GoogleDriveInitialSyncResponse syncConnection(
-            Long connectionId,
-            Long userId
-    );
+	GoogleDriveInitialSyncResponse syncConnection(Long connectionId, Long userId);
+
 }

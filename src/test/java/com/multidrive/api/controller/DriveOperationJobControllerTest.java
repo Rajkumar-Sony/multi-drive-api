@@ -6,14 +6,17 @@ import com.multidrive.api.entity.DriveConflictStrategy;
 import com.multidrive.api.entity.DriveOperationJobStatus;
 import com.multidrive.api.entity.DriveOperationType;
 import com.multidrive.api.model.DriveOperationStrategyType;
+import com.multidrive.api.security.AuthenticatedUserResolver;
 import com.multidrive.api.service.DriveOperationJobControlService;
 import com.multidrive.api.service.DriveOperationJobService;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,6 +26,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -33,486 +37,214 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(
-        DriveOperationJobController.class
-)
+@WebMvcTest(DriveOperationJobController.class)
 class DriveOperationJobControllerTest {
 
-    private static final String GOOGLE_SUBJECT_ID =
-            "google-subject-123";
+	private static final String GOOGLE_SUBJECT_ID = "google-subject-123";
 
-    @Autowired
-    private MockMvc mockMvc;
+	@Autowired
+	private MockMvc mockMvc;
 
-    @MockitoBean
-    private DriveOperationJobService driveOperationJobService;
+	@MockitoBean
+	private DriveOperationJobService driveOperationJobService;
 
-    @MockitoBean
-    private DriveOperationJobControlService driveOperationJobControlService;
+	@MockitoBean
+	private DriveOperationJobControlService driveOperationJobControlService;
 
-    @Test
-    void submitCreatesQueuedJob() throws Exception {
+	@MockitoBean
+	private AuthenticatedUserResolver authenticatedUserResolver;
 
-        DriveOperationJobResponse response =
-                response(
-                        10L,
-                        DriveOperationJobStatus.QUEUED
-                );
+	@BeforeEach
+	void setUp() {
 
-        when(
-                driveOperationJobService
-                        .submit(
-                                eq(
-                                        GOOGLE_SUBJECT_ID
-                                ),
-                                eq(
-                                        "submit-key-1"
-                                ),
-                                any()
-                        )
-        )
-                .thenReturn(
-                        response
-                );
+		when(authenticatedUserResolver.requireGoogleSubjectId(any(OidcUser.class))).thenReturn(GOOGLE_SUBJECT_ID);
+	}
 
-        mockMvc.perform(
-                        post(
-                                "/api/drive/operation-jobs"
-                        )
-                                .with(
-                                        oidcLogin()
-                                                .idToken(
-                                                        token -> token
-                                                                .subject(
-                                                                        GOOGLE_SUBJECT_ID
-                                                                )
-                                                )
-                                )
-                                .with(
-                                        csrf()
-                                )
-                                .header(
-                                        "Idempotency-Key",
-                                        "submit-key-1"
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        """
-                                                {
-                                                  "operationType": "COPY",
-                                                  "sourceItemId": 123,
-                                                  "destinationSourceId": 456,
-                                                  "destinationParentItemId": 789,
-                                                  "name": "Quarterly Report Copy",
-                                                  "conflictStrategy": "KEEP_BOTH"
-                                                }
-                                                """
-                                )
-                )
-                .andExpect(
-                        status()
-                                .isAccepted()
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.id"
-                        )
-                                .value(
-                                        10
-                                )
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.status"
-                        )
-                                .value(
-                                        "QUEUED"
-                                )
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.operationType"
-                        )
-                                .value(
-                                        "COPY"
-                                )
-                );
+	@Test
+	void submitCreatesQueuedJob() throws Exception {
 
-        ArgumentCaptor<com.multidrive.api.dto.DriveOperationJobSubmitRequest>
-                requestCaptor =
-                        ArgumentCaptor.forClass(
-                                com.multidrive.api.dto.DriveOperationJobSubmitRequest.class
-                        );
+		DriveOperationJobResponse response = response(10L, DriveOperationJobStatus.QUEUED);
 
-        verify(
-                driveOperationJobService
-        )
-                .submit(
-                        eq(
-                                GOOGLE_SUBJECT_ID
-                        ),
-                        eq(
-                                "submit-key-1"
-                        ),
-                        requestCaptor.capture()
-                );
+		when(driveOperationJobService.submit(eq(GOOGLE_SUBJECT_ID), eq("submit-key-1"), any())).thenReturn(response);
 
-        assertThat(
-                requestCaptor
-                        .getValue()
-                        .operationType()
-        )
-                .isEqualTo(
-                        DriveOperationType.COPY
-                );
+		mockMvc
+			.perform(post("/api/drive/operation-jobs")
+				.with(oidcLogin().idToken(token -> token.subject(GOOGLE_SUBJECT_ID)))
+				.with(csrf())
+				.header("Idempotency-Key", "submit-key-1")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+						  "operationType": "COPY",
+						  "sourceItemId": 123,
+						  "destinationSourceId": 456,
+						  "destinationParentItemId": 789,
+						  "name": "Quarterly Report Copy",
+						  "conflictStrategy": "KEEP_BOTH"
+						}
+						"""))
+			.andExpect(status().isAccepted())
+			.andExpect(jsonPath("$.id").value(10))
+			.andExpect(jsonPath("$.status").value("QUEUED"))
+			.andExpect(jsonPath("$.operationType").value("COPY"));
 
-        assertThat(
-                requestCaptor
-                        .getValue()
-                        .destinationParentItemId()
-        )
-                .isEqualTo(
-                        789L
-                );
-    }
+		ArgumentCaptor<com.multidrive.api.dto.DriveOperationJobSubmitRequest> requestCaptor = ArgumentCaptor
+			.forClass(com.multidrive.api.dto.DriveOperationJobSubmitRequest.class);
 
-    @Test
-    void getJobReturnsSingleJob() throws Exception {
+		verify(driveOperationJobService).submit(eq(GOOGLE_SUBJECT_ID), eq("submit-key-1"), requestCaptor.capture());
 
-        when(
-                driveOperationJobService
-                        .getJob(
-                                GOOGLE_SUBJECT_ID,
-                                10L
-                        )
-        )
-                .thenReturn(
-                        response(
-                                10L,
-                                DriveOperationJobStatus.QUEUED
-                        )
-                );
+		assertThat(requestCaptor.getValue().operationType()).isEqualTo(DriveOperationType.COPY);
 
-        mockMvc.perform(
-                        get(
-                                "/api/drive/operation-jobs/{jobId}",
-                                10L
-                        )
-                                .with(
-                                        oidcLogin()
-                                                .idToken(
-                                                        token -> token
-                                                                .subject(
-                                                                        GOOGLE_SUBJECT_ID
-                                                                )
-                                                )
-                                )
-                )
-                .andExpect(
-                        status()
-                                .isOk()
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.id"
-                        )
-                                .value(
-                                        10
-                                )
-                );
+		assertThat(requestCaptor.getValue().destinationParentItemId()).isEqualTo(789L);
+	}
 
-        verify(
-                driveOperationJobService
-        )
-                .getJob(
-                        GOOGLE_SUBJECT_ID,
-                        10L
-                );
-    }
+	@Test
+	void submitRejectsMissingOperationTypeBeforeService() throws Exception {
 
-    @Test
-    void getJobsReturnsPage() throws Exception {
+		mockMvc
+			.perform(post("/api/drive/operation-jobs").with(oidcLogin())
+				.with(csrf())
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+						  "sourceItemId": 123,
+						  "destinationSourceId": 456
+						}
+						"""))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.title").value("Validation failed"))
+			.andExpect(jsonPath("$.errors[0].field").value("operationType"))
+			.andExpect(jsonPath("$.errors[0].message").value("operationType is required"));
 
-        DriveOperationJobResponse job =
-                response(
-                        10L,
-                        DriveOperationJobStatus.QUEUED
-                );
+		verifyNoInteractions(driveOperationJobService, driveOperationJobControlService);
+	}
 
-        when(
-                driveOperationJobService
-                        .getJobs(
-                                GOOGLE_SUBJECT_ID,
-                                null,
-                                1,
-                                2
-                        )
-        )
-                .thenReturn(
-                        new DriveOperationJobsPageResponse(
-                                List.of(
-                                        job
-                                ),
-                                1,
-                                2,
-                                3,
-                                2,
-                                false,
-                                true
-                        )
-                );
+	@Test
+	void submitRejectsOversizedIdempotencyKeyBeforeService() throws Exception {
 
-        mockMvc.perform(
-                        get(
-                                "/api/drive/operation-jobs"
-                        )
-                                .param(
-                                        "page",
-                                        "1"
-                                )
-                                .param(
-                                        "size",
-                                        "2"
-                                )
-                                .with(
-                                        oidcLogin()
-                                                .idToken(
-                                                        token -> token
-                                                                .subject(
-                                                                        GOOGLE_SUBJECT_ID
-                                                                )
-                                                )
-                                )
-                )
-                .andExpect(
-                        status()
-                                .isOk()
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.items[0].id"
-                        )
-                                .value(
-                                        10
-                                )
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.page"
-                        )
-                                .value(
-                                        1
-                                )
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.totalElements"
-                        )
-                                .value(
-                                        3
-                                )
-                );
+		mockMvc
+			.perform(post("/api/drive/operation-jobs").with(oidcLogin())
+				.with(csrf())
+				.header("Idempotency-Key", "x".repeat(129))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+						  "operationType": "COPY",
+						  "sourceItemId": 123,
+						  "destinationSourceId": 456
+						}
+						"""))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.title").value("Validation failed"));
 
-        verify(
-                driveOperationJobService
-        )
-                .getJobs(
-                        GOOGLE_SUBJECT_ID,
-                        null,
-                        1,
-                        2
-                );
-    }
+		verifyNoInteractions(driveOperationJobService, driveOperationJobControlService);
+	}
 
-    @Test
-    void getJobsFiltersByStatus() throws Exception {
+	@Test
+	void getJobReturnsSingleJob() throws Exception {
 
-        when(
-                driveOperationJobService
-                        .getJobs(
-                                GOOGLE_SUBJECT_ID,
-                                DriveOperationJobStatus.CANCELLED,
-                                null,
-                                null
-                        )
-        )
-                .thenReturn(
-                        new DriveOperationJobsPageResponse(
-                                List.of(),
-                                0,
-                                20,
-                                0,
-                                0,
-                                true,
-                                true
-                        )
-                );
+		when(driveOperationJobService.getJob(GOOGLE_SUBJECT_ID, 10L))
+			.thenReturn(response(10L, DriveOperationJobStatus.QUEUED));
 
-        mockMvc.perform(
-                        get(
-                                "/api/drive/operation-jobs"
-                        )
-                                .param(
-                                        "status",
-                                        "CANCELLED"
-                                )
-                                .with(
-                                        oidcLogin()
-                                                .idToken(
-                                                        token -> token
-                                                                .subject(
-                                                                        GOOGLE_SUBJECT_ID
-                                                                )
-                                                )
-                                )
-                )
-                .andExpect(
-                        status()
-                                .isOk()
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.items"
-                        )
-                                .isArray()
-                );
+		mockMvc
+			.perform(get("/api/drive/operation-jobs/{jobId}", 10L)
+				.with(oidcLogin().idToken(token -> token.subject(GOOGLE_SUBJECT_ID))))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.id").value(10));
 
-        verify(
-                driveOperationJobService
-        )
-                .getJobs(
-                        GOOGLE_SUBJECT_ID,
-                        DriveOperationJobStatus.CANCELLED,
-                        null,
-                        null
-                );
-    }
+		verify(driveOperationJobService).getJob(GOOGLE_SUBJECT_ID, 10L);
+	}
 
-    @Test
-    void cancelRequestsCancellation() throws Exception {
+	@Test
+	void getJobsReturnsPage() throws Exception {
 
-        when(
-                driveOperationJobControlService
-                        .requestCancellation(
-                                GOOGLE_SUBJECT_ID,
-                                10L
-                        )
-        )
-                .thenReturn(
-                        response(
-                                10L,
-                                DriveOperationJobStatus.CANCELLED
-                        )
-                );
+		DriveOperationJobResponse job = response(10L, DriveOperationJobStatus.QUEUED);
 
-        mockMvc.perform(
-                        post(
-                                "/api/drive/operation-jobs/{jobId}/cancel",
-                                10L
-                        )
-                                .with(
-                                        oidcLogin()
-                                                .idToken(
-                                                        token -> token
-                                                                .subject(
-                                                                        GOOGLE_SUBJECT_ID
-                                                                )
-                                                )
-                                )
-                                .with(
-                                        csrf()
-                                )
-                )
-                .andExpect(
-                        status()
-                                .isOk()
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.status"
-                        )
-                                .value(
-                                        "CANCELLED"
-                                )
-                );
+		when(driveOperationJobService.getJobs(GOOGLE_SUBJECT_ID, null, 1, 2))
+			.thenReturn(new DriveOperationJobsPageResponse(List.of(job), 1, 2, 3, 2, false, true));
 
-        verify(
-                driveOperationJobControlService
-        )
-                .requestCancellation(
-                        GOOGLE_SUBJECT_ID,
-                        10L
-                );
-    }
+		mockMvc
+			.perform(get("/api/drive/operation-jobs").param("page", "1")
+				.param("size", "2")
+				.with(oidcLogin().idToken(token -> token.subject(GOOGLE_SUBJECT_ID))))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.items[0].id").value(10))
+			.andExpect(jsonPath("$.page").value(1))
+			.andExpect(jsonPath("$.totalElements").value(3));
 
-    @Test
-    void endpointRequiresAuthentication() throws Exception {
+		verify(driveOperationJobService).getJobs(GOOGLE_SUBJECT_ID, null, 1, 2);
+	}
 
-        mockMvc.perform(
-                        get(
-                                "/api/drive/operation-jobs"
-                        )
-                )
-                .andExpect(
-                        status()
-                                .is3xxRedirection()
-                )
-                .andExpect(
-                        redirectedUrlPattern(
-                                "/oauth2/authorization/*"
-                        )
-                );
-    }
+	@Test
+	void getJobsFiltersByStatus() throws Exception {
 
-    private DriveOperationJobResponse response(
-            Long jobId,
-            DriveOperationJobStatus status
-    ) {
+		when(driveOperationJobService.getJobs(GOOGLE_SUBJECT_ID, DriveOperationJobStatus.CANCELLED, null, null))
+			.thenReturn(new DriveOperationJobsPageResponse(List.of(), 0, 20, 0, 0, true, true));
 
-        LocalDateTime now =
-                LocalDateTime.of(
-                        2026,
-                        8,
-                        16,
-                        12,
-                        0
-                );
+		mockMvc
+			.perform(get("/api/drive/operation-jobs").param("status", "CANCELLED")
+				.with(oidcLogin().idToken(token -> token.subject(GOOGLE_SUBJECT_ID))))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.items").isArray());
 
-        return new DriveOperationJobResponse(
-                jobId,
-                DriveOperationType.COPY,
-                DriveOperationStrategyType.NATIVE_COPY,
-                status,
-                DriveConflictStrategy.KEEP_BOTH,
-                123L,
-                "Quarterly Report",
-                "application/pdf",
-                1L,
-                2L,
-                789L,
-                "destination-google-folder",
-                "Quarterly Report Copy",
-                null,
-                null,
-                1L,
-                0L,
-                0L,
-                2048L,
-                0L,
-                0,
-                3,
-                status == DriveOperationJobStatus.CANCELLED,
-                null,
-                null,
-                null,
-                null,
-                status == DriveOperationJobStatus.CANCELLED
-                        ? now
-                        : null,
-                now,
-                now
-        );
-    }
+		verify(driveOperationJobService).getJobs(GOOGLE_SUBJECT_ID, DriveOperationJobStatus.CANCELLED, null, null);
+	}
+
+	@Test
+	void getJobsRejectsInvalidSizeBeforeService() throws Exception {
+
+		mockMvc.perform(get("/api/drive/operation-jobs").param("size", "101").with(oidcLogin()))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.title").value("Validation failed"));
+
+		verifyNoInteractions(driveOperationJobService, driveOperationJobControlService);
+	}
+
+	@Test
+	void serviceValidationFailureReturnsProblemDetail() throws Exception {
+
+		when(driveOperationJobService.getJob(GOOGLE_SUBJECT_ID, 10L))
+			.thenThrow(new IllegalArgumentException("jobId is required"));
+
+		mockMvc.perform(get("/api/drive/operation-jobs/{jobId}", 10L).with(oidcLogin()))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.title").value("Invalid request"))
+			.andExpect(jsonPath("$.detail").value("jobId is required"));
+	}
+
+	@Test
+	void cancelRequestsCancellation() throws Exception {
+
+		when(driveOperationJobControlService.requestCancellation(GOOGLE_SUBJECT_ID, 10L))
+			.thenReturn(response(10L, DriveOperationJobStatus.CANCELLED));
+
+		mockMvc
+			.perform(post("/api/drive/operation-jobs/{jobId}/cancel", 10L)
+				.with(oidcLogin().idToken(token -> token.subject(GOOGLE_SUBJECT_ID)))
+				.with(csrf()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("CANCELLED"));
+
+		verify(driveOperationJobControlService).requestCancellation(GOOGLE_SUBJECT_ID, 10L);
+	}
+
+	@Test
+	void endpointRequiresAuthentication() throws Exception {
+
+		mockMvc.perform(get("/api/drive/operation-jobs"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrlPattern("/oauth2/authorization/*"));
+	}
+
+	private DriveOperationJobResponse response(Long jobId, DriveOperationJobStatus status) {
+
+		LocalDateTime now = LocalDateTime.of(2026, 8, 16, 12, 0);
+
+		return new DriveOperationJobResponse(jobId, DriveOperationType.COPY, DriveOperationStrategyType.NATIVE_COPY,
+				status, DriveConflictStrategy.KEEP_BOTH, 123L, "Quarterly Report", "application/pdf", 1L, 2L, 789L,
+				"destination-google-folder", "Quarterly Report Copy", null, null, 1L, 0L, 0L, 2048L, 0L, 0, 3,
+				status == DriveOperationJobStatus.CANCELLED, null, null, null, null,
+				status == DriveOperationJobStatus.CANCELLED ? now : null, now, now);
+	}
+
 }

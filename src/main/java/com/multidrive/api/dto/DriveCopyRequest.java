@@ -1,11 +1,13 @@
 package com.multidrive.api.dto;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 public record DriveCopyRequest(
 
-        Long destinationSourceId,
+		@NotNull(message = "destinationSourceId is required") Long destinationSourceId,
 
-        Long destinationParentItemId,
+		Long destinationParentItemId,
 
-        String name
-) {
+		@Size(max = 255, message = "name must not exceed 255 characters") String name) {
 }

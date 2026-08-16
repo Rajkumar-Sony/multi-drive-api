@@ -5,38 +5,37 @@ import com.multidrive.api.entity.DriveOperationType;
 
 public record DriveOperationJobExecutionSnapshot(
 
-        Long jobId,
+		Long jobId,
 
-        Long userId,
+		Long userId,
 
-        String googleSubjectId,
+		String googleSubjectId,
 
-        DriveOperationType operationType,
+		DriveOperationType operationType,
 
-        DriveOperationStrategyType strategyType,
+		DriveOperationStrategyType strategyType,
 
-        DriveOperationJobStatus status,
+		DriveOperationJobStatus status,
 
-        Long sourceItemId,
+		Long sourceItemId,
 
-        Long sourceConnectionId,
+		Long sourceConnectionId,
 
-        Long sourceSourceId,
+		Long sourceSourceId,
 
-        String sourceGoogleFileId,
+		String sourceGoogleFileId,
 
-        Long destinationSourceId,
+		Long destinationSourceId,
 
-        Long destinationConnectionId,
+		Long destinationConnectionId,
 
-        Long destinationParentItemId,
+		Long destinationParentItemId,
 
-        String destinationParentGoogleFileId,
+		String destinationParentGoogleFileId,
 
-        Integer attemptCount,
+		Integer attemptCount,
 
-        Integer maxAttempts,
+		Integer maxAttempts,
 
-        Boolean cancelRequested
-) {
+		Boolean cancelRequested) {
 }

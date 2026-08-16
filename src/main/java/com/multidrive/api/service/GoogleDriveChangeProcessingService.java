@@ -6,7 +6,6 @@ import java.util.List;
 
 public interface GoogleDriveChangeProcessingService {
 
-    List<GoogleDriveChangeResponse> processChanges(
-            Long trackerId
-    );
+	List<GoogleDriveChangeResponse> processChanges(Long trackerId);
+
 }

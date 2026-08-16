@@ -4,12 +4,20 @@ import com.multidrive.api.dto.DriveOperationJobResponse;
 import com.multidrive.api.dto.DriveOperationJobSubmitRequest;
 import com.multidrive.api.dto.DriveOperationJobsPageResponse;
 import com.multidrive.api.entity.DriveOperationJobStatus;
+import com.multidrive.api.security.AuthenticatedUserResolver;
 import com.multidrive.api.service.DriveOperationJobControlService;
 import com.multidrive.api.service.DriveOperationJobService;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,146 +29,78 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(
-        "/api/drive/operation-jobs"
-)
+@Validated
+@RequestMapping("/api/drive/operation-jobs")
 public class DriveOperationJobController {
 
-    private final DriveOperationJobService
-            driveOperationJobService;
+	private final DriveOperationJobService driveOperationJobService;
 
-    private final DriveOperationJobControlService
-            driveOperationJobControlService;
+	private final DriveOperationJobControlService driveOperationJobControlService;
 
-    public DriveOperationJobController(
-            DriveOperationJobService driveOperationJobService,
-            DriveOperationJobControlService driveOperationJobControlService
-    ) {
+	private final AuthenticatedUserResolver authenticatedUserResolver;
 
-        this.driveOperationJobService =
-                driveOperationJobService;
+	public DriveOperationJobController(DriveOperationJobService driveOperationJobService,
+			DriveOperationJobControlService driveOperationJobControlService,
+			AuthenticatedUserResolver authenticatedUserResolver) {
 
-        this.driveOperationJobControlService =
-                driveOperationJobControlService;
-    }
+		this.driveOperationJobService = driveOperationJobService;
 
-    @PostMapping
-    @ResponseStatus(
-            HttpStatus.ACCEPTED
-    )
-    public DriveOperationJobResponse submit(
+		this.driveOperationJobControlService = driveOperationJobControlService;
 
-            @RequestHeader(
-                    value = "Idempotency-Key",
-                    required = false
-            )
-            String idempotencyKey,
+		this.authenticatedUserResolver = authenticatedUserResolver;
+	}
 
-            @RequestBody
-            DriveOperationJobSubmitRequest request,
+	@PostMapping
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public DriveOperationJobResponse submit(
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@RequestHeader(value = "Idempotency-Key", required = false) @Size(max = 128,
+					message = "Idempotency-Key must not exceed 128 characters") String idempotencyKey,
 
-        return driveOperationJobService
-                .submit(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        idempotencyKey,
-                        request
-                );
-    }
+			@RequestBody @Valid @NotNull(message = "request is required") DriveOperationJobSubmitRequest request,
 
-    @GetMapping(
-            "/{jobId}"
-    )
-    public DriveOperationJobResponse getJob(
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-            @PathVariable
-            Long jobId,
+		return driveOperationJobService.submit(authenticatedUserResolver.requireGoogleSubjectId(oidcUser),
+				idempotencyKey, request);
+	}
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+	@GetMapping("/{jobId}")
+	public DriveOperationJobResponse getJob(
 
-        return driveOperationJobService
-                .getJob(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        jobId
-                );
-    }
+			@PathVariable Long jobId,
 
-    @GetMapping
-    public DriveOperationJobsPageResponse getJobs(
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-            @RequestParam(
-                    required = false
-            )
-            DriveOperationJobStatus status,
+		return driveOperationJobService.getJob(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), jobId);
+	}
 
-            @RequestParam(
-                    required = false
-            )
-            Integer page,
+	@GetMapping
+	public DriveOperationJobsPageResponse getJobs(
 
-            @RequestParam(
-                    required = false
-            )
-            Integer size,
+			@RequestParam(required = false) DriveOperationJobStatus status,
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@RequestParam(required = false) @Min(value = 0,
+					message = "page must be greater than or equal to 0") Integer page,
 
-        return driveOperationJobService
-                .getJobs(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        status,
-                        page,
-                        size
-                );
-    }
+			@RequestParam(required = false) @Min(value = 1, message = "size must be between 1 and 100") @Max(
+					value = 100, message = "size must be between 1 and 100") Integer size,
 
-    @PostMapping(
-            "/{jobId}/cancel"
-    )
-    public DriveOperationJobResponse cancel(
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-            @PathVariable
-            Long jobId,
+		return driveOperationJobService.getJobs(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), status,
+				page, size);
+	}
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+	@PostMapping("/{jobId}/cancel")
+	public DriveOperationJobResponse cancel(
 
-        return driveOperationJobControlService
-                .requestCancellation(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        jobId
-                );
-    }
+			@PathVariable Long jobId,
 
-    private String requireGoogleSubjectId(
-            OidcUser oidcUser
-    ) {
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-        if (oidcUser == null
-                || oidcUser.getSubject() == null
-                || oidcUser.getSubject().isBlank()) {
+		return driveOperationJobControlService
+			.requestCancellation(authenticatedUserResolver.requireGoogleSubjectId(oidcUser), jobId);
+	}
 
-            throw new IllegalStateException(
-                    "Authenticated application user not found"
-            );
-        }
-
-        return oidcUser.getSubject();
-    }
 }

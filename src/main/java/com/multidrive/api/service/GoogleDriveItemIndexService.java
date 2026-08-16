@@ -10,23 +10,12 @@ import java.util.List;
 
 public interface GoogleDriveItemIndexService {
 
-    int upsertItems(
-            GoogleDriveConnection connection,
-            List<GoogleDriveFileResponse> files,
-            GoogleDriveItemSourceType sourceType,
-            String driveId,
-            String syncRunId
-    );
+	int upsertItems(GoogleDriveConnection connection, List<GoogleDriveFileResponse> files,
+			GoogleDriveItemSourceType sourceType, String driveId, String syncRunId);
 
-    int applyChanges(
-            GoogleDriveConnection connection,
-            GoogleDriveTrackerType trackerType,
-            String trackerDriveId,
-            List<GoogleDriveChangeResponse> changes
-    );
+	int applyChanges(GoogleDriveConnection connection, GoogleDriveTrackerType trackerType, String trackerDriveId,
+			List<GoogleDriveChangeResponse> changes);
 
-    int deleteStaleItems(
-            Long connectionId,
-            String syncRunId
-    );
+	int deleteStaleItems(Long connectionId, String syncRunId);
+
 }

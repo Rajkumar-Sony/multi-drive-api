@@ -6,7 +6,6 @@ import java.io.OutputStream;
 @FunctionalInterface
 public interface DriveContentWriter {
 
-    void writeTo(
-            OutputStream outputStream
-    ) throws IOException;
+	void writeTo(OutputStream outputStream) throws IOException;
+
 }

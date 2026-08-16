@@ -2,8 +2,7 @@ package com.multidrive.api.model;
 
 public record DriveOperationPlan(
 
-        DriveOperationStrategyType strategyType,
+		DriveOperationStrategyType strategyType,
 
-        String reason
-) {
+		String reason) {
 }

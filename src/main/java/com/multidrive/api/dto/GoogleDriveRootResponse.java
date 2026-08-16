@@ -5,12 +5,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleDriveRootResponse(
 
-        String id,
+		String id,
 
-        String name,
+		String name,
 
-        String createdTime,
+		String createdTime,
 
-        GoogleDriveFileCapabilitiesResponse capabilities
-) {
+		GoogleDriveFileCapabilitiesResponse capabilities) {
 }

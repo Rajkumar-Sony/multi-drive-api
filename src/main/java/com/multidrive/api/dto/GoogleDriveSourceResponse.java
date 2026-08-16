@@ -7,22 +7,21 @@ import java.time.LocalDateTime;
 
 public record GoogleDriveSourceResponse(
 
-        Long id,
+		Long id,
 
-        Long connectionId,
+		Long connectionId,
 
-        String accountEmail,
+		String accountEmail,
 
-        GoogleDriveSourceType sourceType,
+		GoogleDriveSourceType sourceType,
 
-        String googleDriveId,
+		String googleDriveId,
 
-        String rootFolderId,
+		String rootFolderId,
 
-        String name,
+		String name,
 
-        GoogleDriveSourceStatus status,
+		GoogleDriveSourceStatus status,
 
-        LocalDateTime lastDiscoveredAt
-) {
+		LocalDateTime lastDiscoveredAt) {
 }

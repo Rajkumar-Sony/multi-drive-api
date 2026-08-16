@@ -2,13 +2,14 @@ package com.multidrive.api.entity;
 
 public enum DriveConflictStrategy {
 
-    KEEP_BOTH,
+	KEEP_BOTH,
 
-    RENAME,
+	RENAME,
 
-    SKIP,
+	SKIP,
 
-    REPLACE,
+	REPLACE,
 
-    FAIL
+	FAIL
+
 }

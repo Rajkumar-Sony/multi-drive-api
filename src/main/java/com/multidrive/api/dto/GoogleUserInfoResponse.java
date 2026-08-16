@@ -3,10 +3,5 @@ package com.multidrive.api.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record GoogleUserInfoResponse(
-        String sub,
-        String email,
-        String name,
-        String picture
-) {
+public record GoogleUserInfoResponse(String sub, String email, String name, String picture) {
 }

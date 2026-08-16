@@ -9,64 +9,63 @@ import java.time.LocalDateTime;
 
 public record DriveOperationJobResponse(
 
-        Long id,
+		Long id,
 
-        DriveOperationType operationType,
+		DriveOperationType operationType,
 
-        DriveOperationStrategyType strategyType,
+		DriveOperationStrategyType strategyType,
 
-        DriveOperationJobStatus status,
+		DriveOperationJobStatus status,
 
-        DriveConflictStrategy conflictStrategy,
+		DriveConflictStrategy conflictStrategy,
 
-        Long sourceItemId,
+		Long sourceItemId,
 
-        String sourceName,
+		String sourceName,
 
-        String sourceMimeType,
+		String sourceMimeType,
 
-        Long sourceSourceId,
+		Long sourceSourceId,
 
-        Long destinationSourceId,
+		Long destinationSourceId,
 
-        Long destinationParentItemId,
+		Long destinationParentItemId,
 
-        String destinationParentGoogleFileId,
+		String destinationParentGoogleFileId,
 
-        String requestedName,
+		String requestedName,
 
-        Long resultItemId,
+		Long resultItemId,
 
-        String resultGoogleFileId,
+		String resultGoogleFileId,
 
-        Long totalItems,
+		Long totalItems,
 
-        Long completedItems,
+		Long completedItems,
 
-        Long failedItems,
+		Long failedItems,
 
-        Long totalBytes,
+		Long totalBytes,
 
-        Long transferredBytes,
+		Long transferredBytes,
 
-        Integer attemptCount,
+		Integer attemptCount,
 
-        Integer maxAttempts,
+		Integer maxAttempts,
 
-        Boolean cancelRequested,
+		Boolean cancelRequested,
 
-        String errorCode,
+		String errorCode,
 
-        String errorMessage,
+		String errorMessage,
 
-        LocalDateTime nextAttemptAt,
+		LocalDateTime nextAttemptAt,
 
-        LocalDateTime startedAt,
+		LocalDateTime startedAt,
 
-        LocalDateTime completedAt,
+		LocalDateTime completedAt,
 
-        LocalDateTime createdAt,
+		LocalDateTime createdAt,
 
-        LocalDateTime updatedAt
-) {
+		LocalDateTime updatedAt) {
 }

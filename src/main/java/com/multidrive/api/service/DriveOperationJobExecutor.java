@@ -5,10 +5,8 @@ import com.multidrive.api.model.DriveOperationStrategyType;
 
 public interface DriveOperationJobExecutor {
 
-    DriveOperationStrategyType strategyType();
+	DriveOperationStrategyType strategyType();
 
-    void execute(
-            DriveOperationJobExecutionSnapshot job,
-            String workerId
-    );
+	void execute(DriveOperationJobExecutionSnapshot job, String workerId);
+
 }

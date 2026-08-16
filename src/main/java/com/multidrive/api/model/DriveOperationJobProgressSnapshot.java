@@ -6,32 +6,31 @@ import java.time.LocalDateTime;
 
 public record DriveOperationJobProgressSnapshot(
 
-        Long jobId,
+		Long jobId,
 
-        String googleSubjectId,
+		String googleSubjectId,
 
-        DriveOperationJobStatus status,
+		DriveOperationJobStatus status,
 
-        Long totalItems,
+		Long totalItems,
 
-        Long completedItems,
+		Long completedItems,
 
-        Long failedItems,
+		Long failedItems,
 
-        Long totalBytes,
+		Long totalBytes,
 
-        Long transferredBytes,
+		Long transferredBytes,
 
-        Integer attemptCount,
+		Integer attemptCount,
 
-        Integer maxAttempts,
+		Integer maxAttempts,
 
-        Boolean cancelRequested,
+		Boolean cancelRequested,
 
-        String errorCode,
+		String errorCode,
 
-        String errorMessage,
+		String errorMessage,
 
-        LocalDateTime updatedAt
-) {
+		LocalDateTime updatedAt) {
 }

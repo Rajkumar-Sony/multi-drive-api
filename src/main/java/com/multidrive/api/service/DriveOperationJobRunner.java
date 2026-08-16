@@ -20,309 +20,160 @@ import java.util.Map;
 @Service
 public class DriveOperationJobRunner {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(
-                    DriveOperationJobRunner.class
-            );
+	private static final Logger LOGGER = LoggerFactory.getLogger(DriveOperationJobRunner.class);
 
-    private final DriveOperationJobExecutionStore
-            driveOperationJobExecutionStore;
+	private final DriveOperationJobExecutionStore driveOperationJobExecutionStore;
 
-    private final DriveOperationJobStateService
-            driveOperationJobStateService;
+	private final DriveOperationJobStateService driveOperationJobStateService;
 
-    private final DriveOperationRetryPolicy
-            driveOperationRetryPolicy;
+	private final DriveOperationRetryPolicy driveOperationRetryPolicy;
 
-    private final DriveOperationLeaseHeartbeatService
-            driveOperationLeaseHeartbeatService;
+	private final DriveOperationLeaseHeartbeatService driveOperationLeaseHeartbeatService;
 
-    private final Map<
-            DriveOperationStrategyType,
-            DriveOperationJobExecutor
-            > executors;
+	private final Map<DriveOperationStrategyType, DriveOperationJobExecutor> executors;
 
-    public DriveOperationJobRunner(
-            DriveOperationJobExecutionStore
-                    driveOperationJobExecutionStore,
-            DriveOperationJobStateService
-                    driveOperationJobStateService,
-            DriveOperationRetryPolicy
-                    driveOperationRetryPolicy,
-            DriveOperationLeaseHeartbeatService
-                    driveOperationLeaseHeartbeatService,
-            List<DriveOperationJobExecutor>
-                    executors
-    ) {
+	public DriveOperationJobRunner(DriveOperationJobExecutionStore driveOperationJobExecutionStore,
+			DriveOperationJobStateService driveOperationJobStateService,
+			DriveOperationRetryPolicy driveOperationRetryPolicy,
+			DriveOperationLeaseHeartbeatService driveOperationLeaseHeartbeatService,
+			List<DriveOperationJobExecutor> executors) {
 
-        this.driveOperationJobExecutionStore =
-                driveOperationJobExecutionStore;
+		this.driveOperationJobExecutionStore = driveOperationJobExecutionStore;
 
-        this.driveOperationJobStateService =
-                driveOperationJobStateService;
+		this.driveOperationJobStateService = driveOperationJobStateService;
 
-        this.driveOperationRetryPolicy =
-                driveOperationRetryPolicy;
+		this.driveOperationRetryPolicy = driveOperationRetryPolicy;
 
-        this.driveOperationLeaseHeartbeatService =
-                driveOperationLeaseHeartbeatService;
+		this.driveOperationLeaseHeartbeatService = driveOperationLeaseHeartbeatService;
 
-        this.executors =
-                buildExecutorMap(
-                        executors
-                );
-    }
+		this.executors = buildExecutorMap(executors);
+	}
 
-    public void run(
-            Long jobId,
-            String workerId
-    ) {
+	public void run(Long jobId, String workerId) {
 
-        driveOperationLeaseHeartbeatService
-                .register(
-                        jobId,
-                        workerId
-                );
+		driveOperationLeaseHeartbeatService.register(jobId, workerId);
 
-        try {
+		try {
 
-            DriveOperationJobExecutionSnapshot job =
-                    driveOperationJobExecutionStore
-                            .findExecutionSnapshot(
-                                    jobId
-                            )
-                            .orElseThrow(
-                                    () ->
-                                            new IllegalStateException(
-                                                    "Claimed Drive operation job no longer exists"
-                                            )
-                            );
+			DriveOperationJobExecutionSnapshot job = driveOperationJobExecutionStore.findExecutionSnapshot(jobId)
+				.orElseThrow(() -> new IllegalStateException("Claimed Drive operation job no longer exists"));
 
-            driveOperationJobStateService
-                    .publishClaimed(
-                            jobId
-                    );
+			driveOperationJobStateService.publishClaimed(jobId);
 
-            DriveOperationJobExecutor executor =
-                    executors.get(
-                            job.strategyType()
-                    );
+			DriveOperationJobExecutor executor = executors.get(job.strategyType());
 
-            if (executor == null) {
+			if (executor == null) {
 
-                throw new IllegalStateException(
-                        "No Drive operation executor registered for strategy "
-                                + job.strategyType()
-                );
-            }
+				throw new IllegalStateException(
+						"No Drive operation executor registered for strategy " + job.strategyType());
+			}
 
-            executor.execute(
-                    job,
-                    workerId
-            );
+			executor.execute(job, workerId);
 
-        } catch (DriveOperationLeaseLostException exception) {
+		}
+		catch (DriveOperationLeaseLostException exception) {
 
-            LOGGER.warn(
-                    "Stopped Drive operation because worker lease was lost. jobId={}",
-                    jobId
-            );
+			LOGGER.warn("Stopped Drive operation because worker lease was lost. jobId={}", jobId);
 
-        } catch (Exception exception) {
+		}
+		catch (Exception exception) {
 
-            handleFailure(
-                    jobId,
-                    workerId,
-                    exception
-            );
+			handleFailure(jobId, workerId, exception);
 
-        } finally {
+		}
+		finally {
 
-            driveOperationLeaseHeartbeatService
-                    .unregister(
-                            jobId,
-                            workerId
-                    );
-        }
-    }
+			driveOperationLeaseHeartbeatService.unregister(jobId, workerId);
+		}
+	}
 
-    private void handleFailure(
-            Long jobId,
-            String workerId,
-            Exception exception
-    ) {
+	private void handleFailure(Long jobId, String workerId, Exception exception) {
 
-        DriveOperationJobExecutionSnapshot current =
-                driveOperationJobExecutionStore
-                        .findExecutionSnapshot(
-                                jobId
-                        )
-                        .orElse(
-                                null
-                        );
+		DriveOperationJobExecutionSnapshot current = driveOperationJobExecutionStore.findExecutionSnapshot(jobId)
+			.orElse(null);
 
-        if (current == null
-                || isTerminal(
-                        current.status()
-                )) {
+		if (current == null || isTerminal(current.status())) {
 
-            return;
-        }
+			return;
+		}
 
-        boolean retryable =
-                driveOperationRetryPolicy
-                        .shouldRetry(
-                                exception
-                        );
+		boolean retryable = driveOperationRetryPolicy.shouldRetry(exception);
 
-        String errorCode =
-                driveOperationRetryPolicy
-                        .errorCode(
-                                exception
-                        );
+		String errorCode = driveOperationRetryPolicy.errorCode(exception);
 
-        String errorMessage =
-                driveOperationRetryPolicy
-                        .errorMessage(
-                                exception
-                        );
+		String errorMessage = driveOperationRetryPolicy.errorMessage(exception);
 
-        if (retryable
-                && current.attemptCount()
-                < current.maxAttempts()) {
+		if (retryable && current.attemptCount() < current.maxAttempts()) {
 
-            LocalDateTime nextAttemptAt =
-                    LocalDateTime
-                            .now(
-                                    ZoneOffset.UTC
-                            )
-                            .plus(
-                                    driveOperationRetryPolicy
-                                            .retryDelay(
-                                                    current.attemptCount()
-                                            )
-                            );
+			LocalDateTime nextAttemptAt = LocalDateTime.now(ZoneOffset.UTC)
+				.plus(driveOperationRetryPolicy.retryDelay(current.attemptCount()));
 
-            try {
+			try {
 
-                driveOperationJobStateService
-                        .scheduleRetry(
-                                jobId,
-                                workerId,
-                                nextAttemptAt,
-                                errorCode,
-                                errorMessage
-                        );
+				driveOperationJobStateService.scheduleRetry(jobId, workerId, nextAttemptAt, errorCode, errorMessage);
 
-            } catch (DriveOperationLeaseLostException ignored) {
+			}
+			catch (DriveOperationLeaseLostException ignored) {
 
-                LOGGER.warn(
-                        "Could not schedule retry because worker lease was lost. jobId={}",
-                        jobId
-                );
-            }
+				LOGGER.warn("Could not schedule retry because worker lease was lost. jobId={}", jobId);
+			}
 
-            return;
-        }
+			return;
+		}
 
-        DriveOperationJobStatus terminalStatus =
-                determineTerminalStatus(
-                        current.status(),
-                        retryable
-                );
+		DriveOperationJobStatus terminalStatus = determineTerminalStatus(current.status(), retryable);
 
-        try {
+		try {
 
-            driveOperationJobStateService
-                    .fail(
-                            jobId,
-                            workerId,
-                            terminalStatus,
-                            errorCode,
-                            errorMessage
-                    );
+			driveOperationJobStateService.fail(jobId, workerId, terminalStatus, errorCode, errorMessage);
 
-        } catch (DriveOperationLeaseLostException ignored) {
+		}
+		catch (DriveOperationLeaseLostException ignored) {
 
-            LOGGER.warn(
-                    "Could not mark job failed because worker lease was lost. jobId={}",
-                    jobId
-            );
-        }
+			LOGGER.warn("Could not mark job failed because worker lease was lost. jobId={}", jobId);
+		}
 
-        LOGGER.error(
-                "Drive operation failed. jobId={}, status={}, errorCode={}",
-                jobId,
-                terminalStatus,
-                errorCode,
-                exception
-        );
-    }
+		LOGGER.error("Drive operation failed. jobId={}, status={}, errorCode={}", jobId, terminalStatus, errorCode,
+				exception);
+	}
 
-    private DriveOperationJobStatus determineTerminalStatus(
-            DriveOperationJobStatus currentStatus,
-            boolean retryable
-    ) {
+	private DriveOperationJobStatus determineTerminalStatus(DriveOperationJobStatus currentStatus, boolean retryable) {
 
-        if (retryable
-                && (
-                        currentStatus == DriveOperationJobStatus.RUNNING
-                        || currentStatus == DriveOperationJobStatus.VERIFYING
-                        || currentStatus == DriveOperationJobStatus.COMMITTING
-                )) {
+		if (retryable && (currentStatus == DriveOperationJobStatus.RUNNING
+				|| currentStatus == DriveOperationJobStatus.VERIFYING
+				|| currentStatus == DriveOperationJobStatus.COMMITTING)) {
 
-            return DriveOperationJobStatus.CLEANUP_REQUIRED;
-        }
+			return DriveOperationJobStatus.CLEANUP_REQUIRED;
+		}
 
-        return DriveOperationJobStatus.FAILED;
-    }
+		return DriveOperationJobStatus.FAILED;
+	}
 
-    private Map<
-            DriveOperationStrategyType,
-            DriveOperationJobExecutor
-            > buildExecutorMap(
-            List<DriveOperationJobExecutor> executorList
-    ) {
+	private Map<DriveOperationStrategyType, DriveOperationJobExecutor> buildExecutorMap(
+			List<DriveOperationJobExecutor> executorList) {
 
-        Map<
-                DriveOperationStrategyType,
-                DriveOperationJobExecutor
-                > result =
-                new EnumMap<>(
-                        DriveOperationStrategyType.class
-                );
+		Map<DriveOperationStrategyType, DriveOperationJobExecutor> result = new EnumMap<>(
+				DriveOperationStrategyType.class);
 
-        for (DriveOperationJobExecutor executor
-                : executorList) {
+		for (DriveOperationJobExecutor executor : executorList) {
 
-            DriveOperationJobExecutor previous =
-                    result.put(
-                            executor.strategyType(),
-                            executor
-                    );
+			DriveOperationJobExecutor previous = result.put(executor.strategyType(), executor);
 
-            if (previous != null) {
+			if (previous != null) {
 
-                throw new IllegalStateException(
-                        "Multiple Drive operation executors registered for "
-                                + executor.strategyType()
-                );
-            }
-        }
+				throw new IllegalStateException(
+						"Multiple Drive operation executors registered for " + executor.strategyType());
+			}
+		}
 
-        return Map.copyOf(
-                result
-        );
-    }
+		return Map.copyOf(result);
+	}
 
-    private boolean isTerminal(
-            DriveOperationJobStatus status
-    ) {
+	private boolean isTerminal(DriveOperationJobStatus status) {
 
-        return status == DriveOperationJobStatus.COMPLETED
-                || status == DriveOperationJobStatus.PARTIAL
-                || status == DriveOperationJobStatus.FAILED
-                || status == DriveOperationJobStatus.CANCELLED
-                || status == DriveOperationJobStatus.CLEANUP_REQUIRED;
-    }
+		return status == DriveOperationJobStatus.COMPLETED || status == DriveOperationJobStatus.PARTIAL
+				|| status == DriveOperationJobStatus.FAILED || status == DriveOperationJobStatus.CANCELLED
+				|| status == DriveOperationJobStatus.CLEANUP_REQUIRED;
+	}
+
 }

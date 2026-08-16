@@ -17,186 +17,115 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
-public class GoogleDriveConnectionServiceImpl
-        implements GoogleDriveConnectionService {
+public class GoogleDriveConnectionServiceImpl implements GoogleDriveConnectionService {
 
-    private final GoogleDriveConnectionRepository googleDriveConnectionRepository;
-    private final TokenEncryptionService tokenEncryptionService;
+	private final GoogleDriveConnectionRepository googleDriveConnectionRepository;
 
-    public GoogleDriveConnectionServiceImpl(
-            GoogleDriveConnectionRepository googleDriveConnectionRepository,
-            TokenEncryptionService tokenEncryptionService
-    ) {
-        this.googleDriveConnectionRepository =
-                googleDriveConnectionRepository;
+	private final TokenEncryptionService tokenEncryptionService;
 
-        this.tokenEncryptionService =
-                tokenEncryptionService;
-    }
+	public GoogleDriveConnectionServiceImpl(GoogleDriveConnectionRepository googleDriveConnectionRepository,
+			TokenEncryptionService tokenEncryptionService) {
+		this.googleDriveConnectionRepository = googleDriveConnectionRepository;
 
-    @Override
-    @Transactional
-    public GoogleDriveConnection saveOrUpdateConnection(
-            User user,
-            GoogleUserInfoResponse googleUserInfo,
-            GoogleTokenResponse tokenResponse
-    ) {
+		this.tokenEncryptionService = tokenEncryptionService;
+	}
 
-        validateInput(
-                user,
-                googleUserInfo,
-                tokenResponse
-        );
+	@Override
+	@Transactional
+	public GoogleDriveConnection saveOrUpdateConnection(User user, GoogleUserInfoResponse googleUserInfo,
+			GoogleTokenResponse tokenResponse) {
 
-        GoogleDriveConnection connection =
-                googleDriveConnectionRepository
-                        .findByUserIdAndGoogleSubjectId(
-                                user.getId(),
-                                googleUserInfo.sub()
-                        )
-                        .orElseGet(GoogleDriveConnection::new);
+		validateInput(user, googleUserInfo, tokenResponse);
 
-        boolean newConnection =
-                connection.getId() == null;
+		GoogleDriveConnection connection = googleDriveConnectionRepository
+			.findByUserIdAndGoogleSubjectId(user.getId(), googleUserInfo.sub())
+			.orElseGet(GoogleDriveConnection::new);
 
-        connection.setUser(user);
+		boolean newConnection = connection.getId() == null;
 
-        connection.setGoogleSubjectId(
-                googleUserInfo.sub()
-        );
+		connection.setUser(user);
 
-        connection.setGoogleEmail(
-                googleUserInfo.email()
-        );
+		connection.setGoogleSubjectId(googleUserInfo.sub());
 
-        connection.setEncryptedAccessToken(
-                tokenEncryptionService.encrypt(
-                        tokenResponse.accessToken()
-                )
-        );
+		connection.setGoogleEmail(googleUserInfo.email());
 
-        // Google can omit refresh_token for existing grants; keep the stored
-        // token unless a replacement arrives.
-        if (tokenResponse.refreshToken() != null
-                && !tokenResponse.refreshToken().isBlank()) {
+		connection.setEncryptedAccessToken(tokenEncryptionService.encrypt(tokenResponse.accessToken()));
 
-            connection.setEncryptedRefreshToken(
-                    tokenEncryptionService.encrypt(
-                            tokenResponse.refreshToken()
-                    )
-            );
+		// Google can omit refresh_token for existing grants; keep the stored
+		// token unless a replacement arrives.
+		if (tokenResponse.refreshToken() != null && !tokenResponse.refreshToken().isBlank()) {
 
-        } else if (newConnection) {
+			connection.setEncryptedRefreshToken(tokenEncryptionService.encrypt(tokenResponse.refreshToken()));
 
-            throw new IllegalStateException(
-                    "Google did not return a refresh token for the new Drive connection"
-            );
-        }
+		}
+		else if (newConnection) {
 
-        if (tokenResponse.expiresIn() != null) {
+			throw new IllegalStateException("Google did not return a refresh token for the new Drive connection");
+		}
 
-            LocalDateTime expiryTime =
-                    LocalDateTime.now(ZoneOffset.UTC)
-                            .plusSeconds(
-                                    tokenResponse.expiresIn()
-                            );
+		if (tokenResponse.expiresIn() != null) {
 
-            connection.setAccessTokenExpiry(
-                    expiryTime
-            );
-        }
+			LocalDateTime expiryTime = LocalDateTime.now(ZoneOffset.UTC).plusSeconds(tokenResponse.expiresIn());
 
-        connection.setScopes(
-                tokenResponse.scope()
-        );
+			connection.setAccessTokenExpiry(expiryTime);
+		}
 
-        connection.setStatus(
-                "CONNECTED"
-        );
+		connection.setScopes(tokenResponse.scope());
 
-        return googleDriveConnectionRepository.save(
-                connection
-        );
-    }
+		connection.setStatus("CONNECTED");
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<GoogleDriveAccountResponse> getConnectedAccounts(
-            Long userId
-    ) {
+		return googleDriveConnectionRepository.save(connection);
+	}
 
-        if (userId == null) {
-            throw new IllegalArgumentException(
-                    "User ID is required"
-            );
-        }
+	@Override
+	@Transactional(readOnly = true)
+	public List<GoogleDriveAccountResponse> getConnectedAccounts(Long userId) {
 
-        return googleDriveConnectionRepository
-                .findAllByUserId(userId)
-                .stream()
-                .map(this::mapToAccountResponse)
-                .toList();
-    }
+		if (userId == null) {
+			throw new IllegalArgumentException("User ID is required");
+		}
 
-    private GoogleDriveAccountResponse mapToAccountResponse(
-            GoogleDriveConnection connection
-    ) {
+		return googleDriveConnectionRepository.findAllByUserId(userId)
+			.stream()
+			.map(this::mapToAccountResponse)
+			.toList();
+	}
 
-        // Access and refresh tokens are intentionally excluded from API responses.
-        return new GoogleDriveAccountResponse(
-                connection.getId(),
-                connection.getGoogleEmail(),
-                connection.getStatus(),
-                connection.getAccessTokenExpiry()
-        );
-    }
+	private GoogleDriveAccountResponse mapToAccountResponse(GoogleDriveConnection connection) {
 
-    private void validateInput(
-            User user,
-            GoogleUserInfoResponse googleUserInfo,
-            GoogleTokenResponse tokenResponse
-    ) {
+		// Access and refresh tokens are intentionally excluded from API responses.
+		return new GoogleDriveAccountResponse(connection.getId(), connection.getGoogleEmail(), connection.getStatus(),
+				connection.getAccessTokenExpiry());
+	}
 
-        if (user == null || user.getId() == null) {
-            throw new IllegalArgumentException(
-                    "Application user is required"
-            );
-        }
+	private void validateInput(User user, GoogleUserInfoResponse googleUserInfo, GoogleTokenResponse tokenResponse) {
 
-        if (googleUserInfo == null) {
-            throw new IllegalArgumentException(
-                    "Google user information is required"
-            );
-        }
+		if (user == null || user.getId() == null) {
+			throw new IllegalArgumentException("Application user is required");
+		}
 
-        if (googleUserInfo.sub() == null
-                || googleUserInfo.sub().isBlank()) {
+		if (googleUserInfo == null) {
+			throw new IllegalArgumentException("Google user information is required");
+		}
 
-            throw new IllegalArgumentException(
-                    "Google subject ID is required"
-            );
-        }
+		if (googleUserInfo.sub() == null || googleUserInfo.sub().isBlank()) {
 
-        if (googleUserInfo.email() == null
-                || googleUserInfo.email().isBlank()) {
+			throw new IllegalArgumentException("Google subject ID is required");
+		}
 
-            throw new IllegalArgumentException(
-                    "Google email is required"
-            );
-        }
+		if (googleUserInfo.email() == null || googleUserInfo.email().isBlank()) {
 
-        if (tokenResponse == null) {
-            throw new IllegalArgumentException(
-                    "Google token response is required"
-            );
-        }
+			throw new IllegalArgumentException("Google email is required");
+		}
 
-        if (tokenResponse.accessToken() == null
-                || tokenResponse.accessToken().isBlank()) {
+		if (tokenResponse == null) {
+			throw new IllegalArgumentException("Google token response is required");
+		}
 
-            throw new IllegalArgumentException(
-                    "Google access token is required"
-            );
-        }
-    }
+		if (tokenResponse.accessToken() == null || tokenResponse.accessToken().isBlank()) {
+
+			throw new IllegalArgumentException("Google access token is required");
+		}
+	}
+
 }

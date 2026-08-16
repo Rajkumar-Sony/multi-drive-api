@@ -11,92 +11,74 @@ import org.springframework.stereotype.Component;
 @Component
 public class DriveItemDetailsMapper {
 
-    private final DriveItemCapabilityResponseMapper
-            driveItemCapabilityResponseMapper;
+	private final DriveItemCapabilityResponseMapper driveItemCapabilityResponseMapper;
 
-    public DriveItemDetailsMapper(
-            DriveItemCapabilityResponseMapper
-                    driveItemCapabilityResponseMapper
-    ) {
+	public DriveItemDetailsMapper(DriveItemCapabilityResponseMapper driveItemCapabilityResponseMapper) {
 
-        this.driveItemCapabilityResponseMapper =
-                driveItemCapabilityResponseMapper;
-    }
+		this.driveItemCapabilityResponseMapper = driveItemCapabilityResponseMapper;
+	}
 
-    public DriveItemDetailsResponse toResponse(
-            GoogleDriveItem item
-    ) {
+	public DriveItemDetailsResponse toResponse(GoogleDriveItem item) {
 
-        if (item == null) {
+		if (item == null) {
 
-            throw new IllegalArgumentException(
-                    "Drive item is required"
-            );
-        }
+			throw new IllegalArgumentException("Drive item is required");
+		}
 
-        GoogleDriveConnection connection =
-                item.getConnection();
+		GoogleDriveConnection connection = item.getConnection();
 
-        GoogleDriveSource source =
-                item.getSource();
+		GoogleDriveSource source = item.getSource();
 
-        if (connection == null
-                || source == null) {
+		if (connection == null || source == null) {
 
-            throw new IllegalStateException(
-                    "Drive item source information is incomplete"
-            );
-        }
+			throw new IllegalStateException("Drive item source information is incomplete");
+		}
 
-        return new DriveItemDetailsResponse(
+		return new DriveItemDetailsResponse(
 
-                item.getId(),
+				item.getId(),
 
-                connection.getId(),
+				connection.getId(),
 
-                connection.getGoogleEmail(),
+				connection.getGoogleEmail(),
 
-                source.getId(),
+				source.getId(),
 
-                source.getName(),
+				source.getName(),
 
-                item.getSourceType(),
+				item.getSourceType(),
 
-                source.getGoogleDriveId(),
+				source.getGoogleDriveId(),
 
-                source.getRootFolderId(),
+				source.getRootFolderId(),
 
-                item.getGoogleFileId(),
+				item.getGoogleFileId(),
 
-                item.getParentId(),
+				item.getParentId(),
 
-                item.getName(),
+				item.getName(),
 
-                item.getMimeType(),
+				item.getMimeType(),
 
-                item.getCategory(),
+				item.getCategory(),
 
-                item.getCategory()
-                        == GoogleDriveItemCategory.FOLDER,
+				item.getCategory() == GoogleDriveItemCategory.FOLDER,
 
-                item.isTrashed(),
+				item.isTrashed(),
 
-                item.getWebViewLink(),
+				item.getWebViewLink(),
 
-                item.getThumbnailLink(),
+				item.getThumbnailLink(),
 
-                item.getIconLink(),
+				item.getIconLink(),
 
-                item.getSizeBytes(),
+				item.getSizeBytes(),
 
-                item.getGoogleCreatedTime(),
+				item.getGoogleCreatedTime(),
 
-                item.getGoogleModifiedTime(),
+				item.getGoogleModifiedTime(),
 
-                driveItemCapabilityResponseMapper
-                        .toResponse(
-                                item.getCapabilities()
-                        )
-        );
-    }
+				driveItemCapabilityResponseMapper.toResponse(item.getCapabilities()));
+	}
+
 }

@@ -11,44 +11,27 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
-@RequestMapping(
-        "/api/events"
-)
+@RequestMapping("/api/events")
 public class DriveOperationEventController {
 
-    private final DriveOperationSseService
-            driveOperationSseService;
+	private final DriveOperationSseService driveOperationSseService;
 
-    public DriveOperationEventController(
-            DriveOperationSseService driveOperationSseService
-    ) {
+	public DriveOperationEventController(DriveOperationSseService driveOperationSseService) {
 
-        this.driveOperationSseService =
-                driveOperationSseService;
-    }
+		this.driveOperationSseService = driveOperationSseService;
+	}
 
-    @GetMapping(
-            value = "/operations",
-            produces = MediaType.TEXT_EVENT_STREAM_VALUE
-    )
-    public SseEmitter subscribe(
+	@GetMapping(value = "/operations", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public SseEmitter subscribe(
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-        if (oidcUser == null
-                || oidcUser.getSubject() == null
-                || oidcUser.getSubject().isBlank()) {
+		if (oidcUser == null || oidcUser.getSubject() == null || oidcUser.getSubject().isBlank()) {
 
-            throw new IllegalStateException(
-                    "Authenticated application user not found"
-            );
-        }
+			throw new IllegalStateException("Authenticated application user not found");
+		}
 
-        return driveOperationSseService
-                .subscribe(
-                        oidcUser.getSubject()
-                );
-    }
+		return driveOperationSseService.subscribe(oidcUser.getSubject());
+	}
+
 }

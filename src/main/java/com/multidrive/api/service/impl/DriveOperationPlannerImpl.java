@@ -10,104 +10,63 @@ import com.multidrive.api.service.DriveOperationPlanner;
 import org.springframework.stereotype.Service;
 
 @Service
-public class DriveOperationPlannerImpl
-        implements DriveOperationPlanner {
+public class DriveOperationPlannerImpl implements DriveOperationPlanner {
 
-    @Override
-    public DriveOperationPlan planMove(
-            GoogleDriveItem sourceItem,
-            GoogleDriveSource destinationSource
-    ) {
+	@Override
+	public DriveOperationPlan planMove(GoogleDriveItem sourceItem, GoogleDriveSource destinationSource) {
 
-        validate(
-                sourceItem,
-                destinationSource
-        );
+		validate(sourceItem, destinationSource);
 
-        GoogleDriveSource source =
-                sourceItem.getSource();
+		GoogleDriveSource source = sourceItem.getSource();
 
-        if (source.getId().equals(
-                destinationSource.getId()
-        )) {
+		if (source.getId().equals(destinationSource.getId())) {
 
-            return new DriveOperationPlan(
-                    DriveOperationStrategyType.NATIVE_MOVE,
-                    "Source and destination belong to the same Drive source"
-            );
-        }
+			return new DriveOperationPlan(DriveOperationStrategyType.NATIVE_MOVE,
+					"Source and destination belong to the same Drive source");
+		}
 
-        return new DriveOperationPlan(
-                DriveOperationStrategyType.CROSS_SOURCE_TRANSFER,
-                "Moving between different Drive sources requires the cross-source transfer engine"
-        );
-    }
+		return new DriveOperationPlan(DriveOperationStrategyType.CROSS_SOURCE_TRANSFER,
+				"Moving between different Drive sources requires the cross-source transfer engine");
+	}
 
-    @Override
-    public DriveOperationPlan planCopy(
-            GoogleDriveItem sourceItem,
-            GoogleDriveSource destinationSource
-    ) {
+	@Override
+	public DriveOperationPlan planCopy(GoogleDriveItem sourceItem, GoogleDriveSource destinationSource) {
 
-        validate(
-                sourceItem,
-                destinationSource
-        );
+		validate(sourceItem, destinationSource);
 
-        GoogleDriveSource source =
-                sourceItem.getSource();
+		GoogleDriveSource source = sourceItem.getSource();
 
-        if (!source.getId().equals(
-                destinationSource.getId()
-        )) {
+		if (!source.getId().equals(destinationSource.getId())) {
 
-            return new DriveOperationPlan(
-                    DriveOperationStrategyType.CROSS_SOURCE_TRANSFER,
-                    "Copying between different Drive sources requires the cross-source transfer engine"
-            );
-        }
+			return new DriveOperationPlan(DriveOperationStrategyType.CROSS_SOURCE_TRANSFER,
+					"Copying between different Drive sources requires the cross-source transfer engine");
+		}
 
-        if (sourceItem.getCategory()
-                == GoogleDriveItemCategory.FOLDER) {
+		if (sourceItem.getCategory() == GoogleDriveItemCategory.FOLDER) {
 
-            return new DriveOperationPlan(
-                    DriveOperationStrategyType.RECURSIVE_FOLDER_COPY,
-                    "Folder copy requires recursive folder-tree processing"
-            );
-        }
+			return new DriveOperationPlan(DriveOperationStrategyType.RECURSIVE_FOLDER_COPY,
+					"Folder copy requires recursive folder-tree processing");
+		}
 
-        return new DriveOperationPlan(
-                DriveOperationStrategyType.NATIVE_COPY,
-                "File can use Google Drive native copy"
-        );
-    }
+		return new DriveOperationPlan(DriveOperationStrategyType.NATIVE_COPY, "File can use Google Drive native copy");
+	}
 
-    private void validate(
-            GoogleDriveItem sourceItem,
-            GoogleDriveSource destinationSource
-    ) {
+	private void validate(GoogleDriveItem sourceItem, GoogleDriveSource destinationSource) {
 
-        if (sourceItem == null) {
+		if (sourceItem == null) {
 
-            throw new IllegalArgumentException(
-                    "sourceItem is required"
-            );
-        }
+			throw new IllegalArgumentException("sourceItem is required");
+		}
 
-        if (sourceItem.getSource() == null
-                || sourceItem.getSource().getId() == null) {
+		if (sourceItem.getSource() == null || sourceItem.getSource().getId() == null) {
 
-            throw new IllegalStateException(
-                    "Source Drive information is missing"
-            );
-        }
+			throw new IllegalStateException("Source Drive information is missing");
+		}
 
-        if (destinationSource == null
-                || destinationSource.getId() == null) {
+		if (destinationSource == null || destinationSource.getId() == null) {
 
-            throw new IllegalArgumentException(
-                    "destinationSource is required"
-            );
-        }
-    }
+			throw new IllegalArgumentException("destinationSource is required");
+		}
+	}
+
 }

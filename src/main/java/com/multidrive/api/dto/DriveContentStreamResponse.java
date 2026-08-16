@@ -4,12 +4,11 @@ import com.multidrive.api.service.DriveContentWriter;
 
 public record DriveContentStreamResponse(
 
-        String fileName,
+		String fileName,
 
-        String contentType,
+		String contentType,
 
-        Long contentLength,
+		Long contentLength,
 
-        DriveContentWriter writer
-) {
+		DriveContentWriter writer) {
 }

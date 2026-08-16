@@ -12,367 +12,204 @@ import org.springframework.stereotype.Component;
 @Component
 public class GoogleDriveCapabilityMapper {
 
-    public GoogleDriveItemCapabilities toItemCapabilities(
-            GoogleDriveFileCapabilitiesResponse source
-    ) {
+	public GoogleDriveItemCapabilities toItemCapabilities(GoogleDriveFileCapabilitiesResponse source) {
 
-        GoogleDriveItemCapabilities target =
-                new GoogleDriveItemCapabilities();
-
-        if (source == null) {
-            return target;
-        }
-
-        target.setCanMoveChildrenOutOfDrive(
-                source.canMoveChildrenOutOfDrive()
-        );
-
-        target.setCanReadDrive(
-                source.canReadDrive()
-        );
-
-        target.setCanEdit(
-                source.canEdit()
-        );
-
-        target.setCanCopy(
-                source.canCopy()
-        );
-
-        target.setCanComment(
-                source.canComment()
-        );
-
-        target.setCanAddChildren(
-                source.canAddChildren()
-        );
-
-        target.setCanDelete(
-                source.canDelete()
-        );
-
-        target.setCanDownload(
-                source.canDownload()
-        );
-
-        target.setCanListChildren(
-                source.canListChildren()
-        );
-
-        target.setCanRemoveChildren(
-                source.canRemoveChildren()
-        );
-
-        target.setCanRename(
-                source.canRename()
-        );
-
-        target.setCanTrash(
-                source.canTrash()
-        );
+		GoogleDriveItemCapabilities target = new GoogleDriveItemCapabilities();
 
-        target.setCanReadRevisions(
-                source.canReadRevisions()
-        );
-
-        target.setCanChangeCopyRequiresWriterPermission(
-                source.canChangeCopyRequiresWriterPermission()
-        );
+		if (source == null) {
+			return target;
+		}
 
-        target.setCanUntrash(
-                source.canUntrash()
-        );
+		target.setCanMoveChildrenOutOfDrive(source.canMoveChildrenOutOfDrive());
 
-        target.setCanModifyContent(
-                source.canModifyContent()
-        );
+		target.setCanReadDrive(source.canReadDrive());
 
-        target.setCanDeleteChildren(
-                source.canDeleteChildren()
-        );
+		target.setCanEdit(source.canEdit());
 
-        target.setCanTrashChildren(
-                source.canTrashChildren()
-        );
+		target.setCanCopy(source.canCopy());
 
-        target.setCanMoveItemOutOfDrive(
-                source.canMoveItemOutOfDrive()
-        );
+		target.setCanComment(source.canComment());
 
-        target.setCanAddMyDriveParent(
-                source.canAddMyDriveParent()
-        );
+		target.setCanAddChildren(source.canAddChildren());
 
-        target.setCanRemoveMyDriveParent(
-                source.canRemoveMyDriveParent()
-        );
+		target.setCanDelete(source.canDelete());
 
-        target.setCanMoveItemWithinDrive(
-                source.canMoveItemWithinDrive()
-        );
+		target.setCanDownload(source.canDownload());
 
-        target.setCanShare(
-                source.canShare()
-        );
+		target.setCanListChildren(source.canListChildren());
 
-        target.setCanMoveChildrenWithinDrive(
-                source.canMoveChildrenWithinDrive()
-        );
+		target.setCanRemoveChildren(source.canRemoveChildren());
 
-        target.setCanAddFolderFromAnotherDrive(
-                source.canAddFolderFromAnotherDrive()
-        );
+		target.setCanRename(source.canRename());
 
-        target.setCanChangeSecurityUpdateEnabled(
-                source.canChangeSecurityUpdateEnabled()
-        );
+		target.setCanTrash(source.canTrash());
 
-        target.setCanAcceptOwnership(
-                source.canAcceptOwnership()
-        );
+		target.setCanReadRevisions(source.canReadRevisions());
 
-        target.setCanReadLabels(
-                source.canReadLabels()
-        );
+		target.setCanChangeCopyRequiresWriterPermission(source.canChangeCopyRequiresWriterPermission());
 
-        target.setCanModifyLabels(
-                source.canModifyLabels()
-        );
+		target.setCanUntrash(source.canUntrash());
 
-        target.setCanModifyEditorContentRestriction(
-                source.canModifyEditorContentRestriction()
-        );
+		target.setCanModifyContent(source.canModifyContent());
 
-        target.setCanModifyOwnerContentRestriction(
-                source.canModifyOwnerContentRestriction()
-        );
+		target.setCanDeleteChildren(source.canDeleteChildren());
 
-        target.setCanRemoveContentRestriction(
-                source.canRemoveContentRestriction()
-        );
+		target.setCanTrashChildren(source.canTrashChildren());
 
-        target.setCanDisableInheritedPermissions(
-                source.canDisableInheritedPermissions()
-        );
+		target.setCanMoveItemOutOfDrive(source.canMoveItemOutOfDrive());
 
-        target.setCanEnableInheritedPermissions(
-                source.canEnableInheritedPermissions()
-        );
+		target.setCanAddMyDriveParent(source.canAddMyDriveParent());
 
-        target.setCanChangeItemDownloadRestriction(
-                source.canChangeItemDownloadRestriction()
-        );
+		target.setCanRemoveMyDriveParent(source.canRemoveMyDriveParent());
 
-        target.setCanStartApproval(
-                source.canStartApproval()
-        );
+		target.setCanMoveItemWithinDrive(source.canMoveItemWithinDrive());
 
-        return target;
-    }
+		target.setCanShare(source.canShare());
 
-    public GoogleDriveSourceCapabilities
-    toMyDriveSourceCapabilities(
-            GoogleDriveFileCapabilitiesResponse source
-    ) {
+		target.setCanMoveChildrenWithinDrive(source.canMoveChildrenWithinDrive());
 
-        GoogleDriveSourceCapabilities target =
-                new GoogleDriveSourceCapabilities();
+		target.setCanAddFolderFromAnotherDrive(source.canAddFolderFromAnotherDrive());
 
-        if (source == null) {
-            return target;
-        }
+		target.setCanChangeSecurityUpdateEnabled(source.canChangeSecurityUpdateEnabled());
 
-        target.setCanAddChildren(
-                source.canAddChildren()
-        );
+		target.setCanAcceptOwnership(source.canAcceptOwnership());
 
-        target.setCanComment(
-                source.canComment()
-        );
+		target.setCanReadLabels(source.canReadLabels());
 
-        target.setCanCopy(
-                source.canCopy()
-        );
+		target.setCanModifyLabels(source.canModifyLabels());
 
-        target.setCanDownload(
-                source.canDownload()
-        );
+		target.setCanModifyEditorContentRestriction(source.canModifyEditorContentRestriction());
 
-        target.setCanEdit(
-                source.canEdit()
-        );
+		target.setCanModifyOwnerContentRestriction(source.canModifyOwnerContentRestriction());
 
-        target.setCanListChildren(
-                source.canListChildren()
-        );
+		target.setCanRemoveContentRestriction(source.canRemoveContentRestriction());
 
-        target.setCanReadRevisions(
-                source.canReadRevisions()
-        );
+		target.setCanDisableInheritedPermissions(source.canDisableInheritedPermissions());
 
-        target.setCanRename(
-                source.canRename()
-        );
+		target.setCanEnableInheritedPermissions(source.canEnableInheritedPermissions());
 
-        target.setCanShare(
-                source.canShare()
-        );
+		target.setCanChangeItemDownloadRestriction(source.canChangeItemDownloadRestriction());
 
-        target.setCanDeleteChildren(
-                source.canDeleteChildren()
-        );
+		target.setCanStartApproval(source.canStartApproval());
 
-        target.setCanTrashChildren(
-                source.canTrashChildren()
-        );
+		return target;
+	}
 
-        return target;
-    }
+	public GoogleDriveSourceCapabilities toMyDriveSourceCapabilities(GoogleDriveFileCapabilitiesResponse source) {
 
-    public GoogleDriveSourceCapabilities
-    toSharedDriveSourceCapabilities(
-            GoogleDriveSharedDriveCapabilitiesResponse source
-    ) {
+		GoogleDriveSourceCapabilities target = new GoogleDriveSourceCapabilities();
 
-        GoogleDriveSourceCapabilities target =
-                new GoogleDriveSourceCapabilities();
+		if (source == null) {
+			return target;
+		}
 
-        if (source == null) {
-            return target;
-        }
+		target.setCanAddChildren(source.canAddChildren());
 
-        target.setCanAddChildren(
-                source.canAddChildren()
-        );
+		target.setCanComment(source.canComment());
 
-        target.setCanComment(
-                source.canComment()
-        );
+		target.setCanCopy(source.canCopy());
 
-        target.setCanCopy(
-                source.canCopy()
-        );
+		target.setCanDownload(source.canDownload());
 
-        target.setCanDeleteDrive(
-                source.canDeleteDrive()
-        );
+		target.setCanEdit(source.canEdit());
 
-        target.setCanDownload(
-                source.canDownload()
-        );
+		target.setCanListChildren(source.canListChildren());
 
-        target.setCanEdit(
-                source.canEdit()
-        );
+		target.setCanReadRevisions(source.canReadRevisions());
 
-        target.setCanListChildren(
-                source.canListChildren()
-        );
+		target.setCanRename(source.canRename());
 
-        target.setCanManageMembers(
-                source.canManageMembers()
-        );
+		target.setCanShare(source.canShare());
 
-        target.setCanReadRevisions(
-                source.canReadRevisions()
-        );
+		target.setCanDeleteChildren(source.canDeleteChildren());
 
-        target.setCanRename(
-                source.canRename()
-        );
+		target.setCanTrashChildren(source.canTrashChildren());
 
-        target.setCanRenameDrive(
-                source.canRenameDrive()
-        );
+		return target;
+	}
 
-        target.setCanChangeDriveBackground(
-                source.canChangeDriveBackground()
-        );
+	public GoogleDriveSourceCapabilities toSharedDriveSourceCapabilities(
+			GoogleDriveSharedDriveCapabilitiesResponse source) {
 
-        target.setCanShare(
-                source.canShare()
-        );
+		GoogleDriveSourceCapabilities target = new GoogleDriveSourceCapabilities();
 
-        target.setCanChangeCopyRequiresWriterPermissionRestriction(
-                source.canChangeCopyRequiresWriterPermissionRestriction()
-        );
+		if (source == null) {
+			return target;
+		}
 
-        target.setCanChangeDomainUsersOnlyRestriction(
-                source.canChangeDomainUsersOnlyRestriction()
-        );
+		target.setCanAddChildren(source.canAddChildren());
 
-        target.setCanChangeDriveMembersOnlyRestriction(
-                source.canChangeDriveMembersOnlyRestriction()
-        );
+		target.setCanComment(source.canComment());
 
-        target.setCanChangeSharingFoldersRequiresOrganizerPermissionRestriction(
-                source.canChangeSharingFoldersRequiresOrganizerPermissionRestriction()
-        );
+		target.setCanCopy(source.canCopy());
 
-        target.setCanResetDriveRestrictions(
-                source.canResetDriveRestrictions()
-        );
+		target.setCanDeleteDrive(source.canDeleteDrive());
 
-        target.setCanDeleteChildren(
-                source.canDeleteChildren()
-        );
+		target.setCanDownload(source.canDownload());
 
-        target.setCanTrashChildren(
-                source.canTrashChildren()
-        );
+		target.setCanEdit(source.canEdit());
 
-        target.setCanChangeDownloadRestriction(
-                source.canChangeDownloadRestriction()
-        );
+		target.setCanListChildren(source.canListChildren());
 
-        return target;
-    }
+		target.setCanManageMembers(source.canManageMembers());
 
-    public GoogleDriveSourceRestrictions
-    toSharedDriveRestrictions(
-            GoogleDriveSharedDriveRestrictionsResponse source
-    ) {
+		target.setCanReadRevisions(source.canReadRevisions());
 
-        GoogleDriveSourceRestrictions target =
-                new GoogleDriveSourceRestrictions();
+		target.setCanRename(source.canRename());
 
-        if (source == null) {
-            return target;
-        }
+		target.setCanRenameDrive(source.canRenameDrive());
 
-        target.setCopyRequiresWriterPermission(
-                source.copyRequiresWriterPermission()
-        );
+		target.setCanChangeDriveBackground(source.canChangeDriveBackground());
 
-        target.setDomainUsersOnly(
-                source.domainUsersOnly()
-        );
+		target.setCanShare(source.canShare());
 
-        target.setDriveMembersOnly(
-                source.driveMembersOnly()
-        );
+		target.setCanChangeCopyRequiresWriterPermissionRestriction(
+				source.canChangeCopyRequiresWriterPermissionRestriction());
 
-        target.setAdminManagedRestrictions(
-                source.adminManagedRestrictions()
-        );
+		target.setCanChangeDomainUsersOnlyRestriction(source.canChangeDomainUsersOnlyRestriction());
 
-        target.setSharingFoldersRequiresOrganizerPermission(
-                source.sharingFoldersRequiresOrganizerPermission()
-        );
+		target.setCanChangeDriveMembersOnlyRestriction(source.canChangeDriveMembersOnlyRestriction());
 
-        if (source.downloadRestriction() != null) {
+		target.setCanChangeSharingFoldersRequiresOrganizerPermissionRestriction(
+				source.canChangeSharingFoldersRequiresOrganizerPermissionRestriction());
 
-            target.setDownloadRestrictedForReaders(
-                    source.downloadRestriction()
-                            .restrictedForReaders()
-            );
+		target.setCanResetDriveRestrictions(source.canResetDriveRestrictions());
 
-            target.setDownloadRestrictedForWriters(
-                    source.downloadRestriction()
-                            .restrictedForWriters()
-            );
-        }
+		target.setCanDeleteChildren(source.canDeleteChildren());
 
-        return target;
-    }
+		target.setCanTrashChildren(source.canTrashChildren());
+
+		target.setCanChangeDownloadRestriction(source.canChangeDownloadRestriction());
+
+		return target;
+	}
+
+	public GoogleDriveSourceRestrictions toSharedDriveRestrictions(GoogleDriveSharedDriveRestrictionsResponse source) {
+
+		GoogleDriveSourceRestrictions target = new GoogleDriveSourceRestrictions();
+
+		if (source == null) {
+			return target;
+		}
+
+		target.setCopyRequiresWriterPermission(source.copyRequiresWriterPermission());
+
+		target.setDomainUsersOnly(source.domainUsersOnly());
+
+		target.setDriveMembersOnly(source.driveMembersOnly());
+
+		target.setAdminManagedRestrictions(source.adminManagedRestrictions());
+
+		target.setSharingFoldersRequiresOrganizerPermission(source.sharingFoldersRequiresOrganizerPermission());
+
+		if (source.downloadRestriction() != null) {
+
+			target.setDownloadRestrictedForReaders(source.downloadRestriction().restrictedForReaders());
+
+			target.setDownloadRestrictedForWriters(source.downloadRestriction().restrictedForWriters());
+		}
+
+		return target;
+	}
+
 }

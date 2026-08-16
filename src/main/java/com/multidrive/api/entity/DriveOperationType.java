@@ -2,7 +2,8 @@ package com.multidrive.api.entity;
 
 public enum DriveOperationType {
 
-    COPY,
+	COPY,
 
-    MOVE
+	MOVE
+
 }

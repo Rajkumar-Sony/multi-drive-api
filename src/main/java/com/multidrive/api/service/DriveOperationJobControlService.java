@@ -4,8 +4,6 @@ import com.multidrive.api.dto.DriveOperationJobResponse;
 
 public interface DriveOperationJobControlService {
 
-    DriveOperationJobResponse requestCancellation(
-            String googleSubjectId,
-            Long jobId
-    );
+	DriveOperationJobResponse requestCancellation(String googleSubjectId, Long jobId);
+
 }

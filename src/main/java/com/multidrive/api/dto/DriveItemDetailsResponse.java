@@ -7,48 +7,47 @@ import java.time.Instant;
 
 public record DriveItemDetailsResponse(
 
-        Long id,
+		Long id,
 
-        Long connectionId,
+		Long connectionId,
 
-        String accountEmail,
+		String accountEmail,
 
-        Long sourceId,
+		Long sourceId,
 
-        String sourceName,
+		String sourceName,
 
-        GoogleDriveItemSourceType sourceType,
+		GoogleDriveItemSourceType sourceType,
 
-        String googleDriveId,
+		String googleDriveId,
 
-        String rootFolderId,
+		String rootFolderId,
 
-        String googleFileId,
+		String googleFileId,
 
-        String parentId,
+		String parentId,
 
-        String name,
+		String name,
 
-        String mimeType,
+		String mimeType,
 
-        GoogleDriveItemCategory category,
+		GoogleDriveItemCategory category,
 
-        boolean folder,
+		boolean folder,
 
-        boolean trashed,
+		boolean trashed,
 
-        String webViewLink,
+		String webViewLink,
 
-        String thumbnailLink,
+		String thumbnailLink,
 
-        String iconLink,
+		String iconLink,
 
-        Long sizeBytes,
+		Long sizeBytes,
 
-        Instant createdTime,
+		Instant createdTime,
 
-        Instant modifiedTime,
+		Instant modifiedTime,
 
-        DriveItemCapabilitiesResponse capabilities
-) {
+		DriveItemCapabilitiesResponse capabilities) {
 }

@@ -4,12 +4,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 public record DriveUploadRequest(
 
-        Long sourceId,
+		Long sourceId,
 
-        Long parentItemId,
+		Long parentItemId,
 
-        String name,
+		String name,
 
-        MultipartFile file
-) {
+		MultipartFile file) {
 }

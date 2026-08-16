@@ -6,37 +6,15 @@ import com.multidrive.api.dto.GoogleSharedDrivesResponse;
 
 public interface GoogleDriveService {
 
-    GoogleDriveFilesResponse getFiles(
-            Long connectionId,
-            Long userId,
-            Integer pageSize,
-            String pageToken
-    );
+	GoogleDriveFilesResponse getFiles(Long connectionId, Long userId, Integer pageSize, String pageToken);
 
-    GoogleDriveFilesResponse getMyDriveFiles(
-            Long connectionId,
-            Long userId,
-            Integer pageSize,
-            String pageToken
-    );
+	GoogleDriveFilesResponse getMyDriveFiles(Long connectionId, Long userId, Integer pageSize, String pageToken);
 
-    GoogleDriveFilesResponse getSharedDriveFiles(
-            Long connectionId,
-            Long userId,
-            String driveId,
-            Integer pageSize,
-            String pageToken
-    );
+	GoogleDriveFilesResponse getSharedDriveFiles(Long connectionId, Long userId, String driveId, Integer pageSize,
+			String pageToken);
 
-    GoogleSharedDrivesResponse getSharedDrives(
-            Long connectionId,
-            Long userId,
-            Integer pageSize,
-            String pageToken
-    );
+	GoogleSharedDrivesResponse getSharedDrives(Long connectionId, Long userId, Integer pageSize, String pageToken);
 
-    GoogleDriveRootResponse getMyDriveRoot(
-            Long connectionId,
-            Long userId
-    );
+	GoogleDriveRootResponse getMyDriveRoot(Long connectionId, Long userId);
+
 }

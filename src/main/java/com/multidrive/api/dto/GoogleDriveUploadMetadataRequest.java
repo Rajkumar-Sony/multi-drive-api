@@ -4,10 +4,9 @@ import java.util.List;
 
 public record GoogleDriveUploadMetadataRequest(
 
-        String name,
+		String name,
 
-        String mimeType,
+		String mimeType,
 
-        List<String> parents
-) {
+		List<String> parents) {
 }

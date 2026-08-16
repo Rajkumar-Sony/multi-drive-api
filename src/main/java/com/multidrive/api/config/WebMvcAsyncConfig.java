@@ -11,76 +11,45 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.time.Duration;
 
 @Configuration
-public class WebMvcAsyncConfig
-        implements WebMvcConfigurer {
+public class WebMvcAsyncConfig implements WebMvcConfigurer {
 
-    private final AsyncTaskExecutor
-            mvcStreamingTaskExecutor;
+	private final AsyncTaskExecutor mvcStreamingTaskExecutor;
 
-    public WebMvcAsyncConfig(
+	public WebMvcAsyncConfig(
 
-            @Qualifier(
-                    "mvcStreamingTaskExecutor"
-            )
-            AsyncTaskExecutor mvcStreamingTaskExecutor
-    ) {
+			@Qualifier("mvcStreamingTaskExecutor") AsyncTaskExecutor mvcStreamingTaskExecutor) {
 
-        this.mvcStreamingTaskExecutor =
-                mvcStreamingTaskExecutor;
-    }
+		this.mvcStreamingTaskExecutor = mvcStreamingTaskExecutor;
+	}
 
-    @Bean(
-            name = "mvcStreamingTaskExecutor"
-    )
-    public static AsyncTaskExecutor mvcStreamingTaskExecutor() {
+	@Bean(name = "mvcStreamingTaskExecutor")
+	public static AsyncTaskExecutor mvcStreamingTaskExecutor() {
 
-        ThreadPoolTaskExecutor executor =
-                new ThreadPoolTaskExecutor();
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
-        executor.setCorePoolSize(
-                4
-        );
+		executor.setCorePoolSize(4);
 
-        executor.setMaxPoolSize(
-                16
-        );
+		executor.setMaxPoolSize(16);
 
-        executor.setQueueCapacity(
-                100
-        );
+		executor.setQueueCapacity(100);
 
-        executor.setThreadNamePrefix(
-                "mvc-stream-"
-        );
+		executor.setThreadNamePrefix("mvc-stream-");
 
-        executor.setWaitForTasksToCompleteOnShutdown(
-                true
-        );
+		executor.setWaitForTasksToCompleteOnShutdown(true);
 
-        executor.setAwaitTerminationSeconds(
-                30
-        );
+		executor.setAwaitTerminationSeconds(30);
 
-        executor.initialize();
+		executor.initialize();
 
-        return executor;
-    }
+		return executor;
+	}
 
-    @Override
-    public void configureAsyncSupport(
-            AsyncSupportConfigurer configurer
-    ) {
+	@Override
+	public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
 
-        configurer.setTaskExecutor(
-                mvcStreamingTaskExecutor
-        );
+		configurer.setTaskExecutor(mvcStreamingTaskExecutor);
 
-        configurer.setDefaultTimeout(
-                Duration
-                        .ofHours(
-                                2
-                        )
-                        .toMillis()
-        );
-    }
+		configurer.setDefaultTimeout(Duration.ofHours(2).toMillis());
+	}
+
 }

@@ -6,22 +6,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleTokenResponse(
 
-        @JsonProperty("access_token")
-        String accessToken,
+		@JsonProperty("access_token") String accessToken,
 
-        @JsonProperty("refresh_token")
-        String refreshToken,
+		@JsonProperty("refresh_token") String refreshToken,
 
-        @JsonProperty("expires_in")
-        Long expiresIn,
+		@JsonProperty("expires_in") Long expiresIn,
 
-        @JsonProperty("scope")
-        String scope,
+		@JsonProperty("scope") String scope,
 
-        @JsonProperty("token_type")
-        String tokenType,
+		@JsonProperty("token_type") String tokenType,
 
-        @JsonProperty("id_token")
-        String idToken
-) {
+		@JsonProperty("id_token") String idToken) {
 }

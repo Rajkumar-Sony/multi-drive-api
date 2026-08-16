@@ -10,13 +10,9 @@ import java.util.List;
 
 public interface GoogleDriveConnectionService {
 
-    GoogleDriveConnection saveOrUpdateConnection(
-            User user,
-            GoogleUserInfoResponse googleUserInfo,
-            GoogleTokenResponse tokenResponse
-    );
+	GoogleDriveConnection saveOrUpdateConnection(User user, GoogleUserInfoResponse googleUserInfo,
+			GoogleTokenResponse tokenResponse);
 
-    List<GoogleDriveAccountResponse> getConnectedAccounts(
-            Long userId
-    );
+	List<GoogleDriveAccountResponse> getConnectedAccounts(Long userId);
+
 }

@@ -10,38 +10,32 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
+	private final UserRepository userRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+	public UserServiceImpl(UserRepository userRepository) {
+		this.userRepository = userRepository;
+	}
 
-    @Override
-    @Transactional
-    public User saveOrUpdateGoogleUser(
-            String googleSubjectId,
-            String email,
-            String name,
-            String pictureUrl
-    ) {
+	@Override
+	@Transactional
+	public User saveOrUpdateGoogleUser(String googleSubjectId, String email, String name, String pictureUrl) {
 
-        User user = userRepository
-                .findByGoogleSubjectId(googleSubjectId)
-                .orElseGet(User::new);
+		User user = userRepository.findByGoogleSubjectId(googleSubjectId).orElseGet(User::new);
 
-        user.setGoogleSubjectId(googleSubjectId);
-        user.setEmail(email);
-        user.setName(name);
-        user.setPictureUrl(pictureUrl);
+		user.setGoogleSubjectId(googleSubjectId);
+		user.setEmail(email);
+		user.setName(name);
+		user.setPictureUrl(pictureUrl);
 
-        return userRepository.save(user);
-    }
+		return userRepository.save(user);
+	}
 
-    @Override
-    @Transactional(readOnly = true)
-    public User findByGoogleSubjectId(String googleSubjectId) {
+	@Override
+	@Transactional(readOnly = true)
+	public User findByGoogleSubjectId(String googleSubjectId) {
 
-        return userRepository.findByGoogleSubjectId(googleSubjectId)
-                .orElseThrow(() -> new IllegalStateException("User not found"));
-    }
+		return userRepository.findByGoogleSubjectId(googleSubjectId)
+			.orElseThrow(() -> new IllegalStateException("User not found"));
+	}
+
 }

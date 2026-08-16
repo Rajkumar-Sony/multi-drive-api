@@ -4,8 +4,6 @@ import com.multidrive.api.dto.DriveItemDetailsResponse;
 
 public interface DriveItemLookupService {
 
-    DriveItemDetailsResponse getItem(
-            String googleSubjectId,
-            Long itemId
-    );
+	DriveItemDetailsResponse getItem(String googleSubjectId, Long itemId);
+
 }

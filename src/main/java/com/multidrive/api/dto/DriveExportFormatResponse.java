@@ -2,12 +2,11 @@ package com.multidrive.api.dto;
 
 public record DriveExportFormatResponse(
 
-        String label,
+		String label,
 
-        String mimeType,
+		String mimeType,
 
-        String extension,
+		String extension,
 
-        boolean defaultFormat
-) {
+		boolean defaultFormat) {
 }

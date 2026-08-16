@@ -15,153 +15,96 @@ import java.util.Base64;
 @Service
 public class TokenEncryptionServiceImpl implements TokenEncryptionService {
 
-    private static final String ALGORITHM = "AES/GCM/NoPadding";
+	private static final String ALGORITHM = "AES/GCM/NoPadding";
 
-    private static final int IV_LENGTH = 12;
-    private static final int TAG_LENGTH = 128;
+	private static final int IV_LENGTH = 12;
 
-    private final SecretKeySpec secretKey;
-    private final SecureRandom secureRandom;
+	private static final int TAG_LENGTH = 128;
 
-    public TokenEncryptionServiceImpl(
-            @Value("${app.security.token-encryption-key}")
-            String encryptionKey
-    ) {
+	private final SecretKeySpec secretKey;
 
-        byte[] decodedKey =
-                Base64.getDecoder().decode(encryptionKey);
+	private final SecureRandom secureRandom;
 
-        if (decodedKey.length != 32) {
-            throw new IllegalArgumentException(
-                    "TOKEN_ENCRYPTION_KEY must be a 256-bit Base64 encoded key"
-            );
-        }
+	public TokenEncryptionServiceImpl(@Value("${app.security.token-encryption-key}") String encryptionKey) {
 
-        this.secretKey =
-                new SecretKeySpec(decodedKey, "AES");
+		byte[] decodedKey = Base64.getDecoder().decode(encryptionKey);
 
-        this.secureRandom = new SecureRandom();
-    }
+		if (decodedKey.length != 32) {
+			throw new IllegalArgumentException("TOKEN_ENCRYPTION_KEY must be a 256-bit Base64 encoded key");
+		}
 
-    @Override
-    public String encrypt(String plainText) {
+		this.secretKey = new SecretKeySpec(decodedKey, "AES");
 
-        if (plainText == null || plainText.isBlank()) {
-            return null;
-        }
+		this.secureRandom = new SecureRandom();
+	}
 
-        try {
+	@Override
+	public String encrypt(String plainText) {
 
-            byte[] iv = new byte[IV_LENGTH];
-            secureRandom.nextBytes(iv);
+		if (plainText == null || plainText.isBlank()) {
+			return null;
+		}
 
-            Cipher cipher =
-                    Cipher.getInstance(ALGORITHM);
+		try {
 
-            GCMParameterSpec parameterSpec =
-                    new GCMParameterSpec(TAG_LENGTH, iv);
+			byte[] iv = new byte[IV_LENGTH];
+			secureRandom.nextBytes(iv);
 
-            cipher.init(
-                    Cipher.ENCRYPT_MODE,
-                    secretKey,
-                    parameterSpec
-            );
+			Cipher cipher = Cipher.getInstance(ALGORITHM);
 
-            byte[] encryptedBytes =
-                    cipher.doFinal(
-                            plainText.getBytes(StandardCharsets.UTF_8)
-                    );
+			GCMParameterSpec parameterSpec = new GCMParameterSpec(TAG_LENGTH, iv);
 
-            byte[] combined =
-                    new byte[iv.length + encryptedBytes.length];
+			cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
 
-            System.arraycopy(
-                    iv,
-                    0,
-                    combined,
-                    0,
-                    iv.length
-            );
+			byte[] encryptedBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
 
-            System.arraycopy(
-                    encryptedBytes,
-                    0,
-                    combined,
-                    iv.length,
-                    encryptedBytes.length
-            );
+			byte[] combined = new byte[iv.length + encryptedBytes.length];
 
-            return Base64.getEncoder()
-                    .encodeToString(combined);
+			System.arraycopy(iv, 0, combined, 0, iv.length);
 
-        } catch (Exception ex) {
-            throw new IllegalStateException(
-                    "Unable to encrypt token",
-                    ex
-            );
-        }
-    }
+			System.arraycopy(encryptedBytes, 0, combined, iv.length, encryptedBytes.length);
 
-    @Override
-    public String decrypt(String encryptedText) {
+			return Base64.getEncoder().encodeToString(combined);
 
-        if (encryptedText == null || encryptedText.isBlank()) {
-            return null;
-        }
+		}
+		catch (Exception ex) {
+			throw new IllegalStateException("Unable to encrypt token", ex);
+		}
+	}
 
-        try {
+	@Override
+	public String decrypt(String encryptedText) {
 
-            byte[] combined =
-                    Base64.getDecoder()
-                            .decode(encryptedText);
+		if (encryptedText == null || encryptedText.isBlank()) {
+			return null;
+		}
 
-            byte[] iv =
-                    new byte[IV_LENGTH];
+		try {
 
-            byte[] encryptedBytes =
-                    new byte[combined.length - IV_LENGTH];
+			byte[] combined = Base64.getDecoder().decode(encryptedText);
 
-            System.arraycopy(
-                    combined,
-                    0,
-                    iv,
-                    0,
-                    IV_LENGTH
-            );
+			byte[] iv = new byte[IV_LENGTH];
 
-            System.arraycopy(
-                    combined,
-                    IV_LENGTH,
-                    encryptedBytes,
-                    0,
-                    encryptedBytes.length
-            );
+			byte[] encryptedBytes = new byte[combined.length - IV_LENGTH];
 
-            Cipher cipher =
-                    Cipher.getInstance(ALGORITHM);
+			System.arraycopy(combined, 0, iv, 0, IV_LENGTH);
 
-            GCMParameterSpec parameterSpec =
-                    new GCMParameterSpec(TAG_LENGTH, iv);
+			System.arraycopy(combined, IV_LENGTH, encryptedBytes, 0, encryptedBytes.length);
 
-            cipher.init(
-                    Cipher.DECRYPT_MODE,
-                    secretKey,
-                    parameterSpec
-            );
+			Cipher cipher = Cipher.getInstance(ALGORITHM);
 
-            byte[] decryptedBytes =
-                    cipher.doFinal(encryptedBytes);
+			GCMParameterSpec parameterSpec = new GCMParameterSpec(TAG_LENGTH, iv);
 
-            return new String(
-                    decryptedBytes,
-                    StandardCharsets.UTF_8
-            );
+			cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
 
-        } catch (Exception ex) {
-            throw new IllegalStateException(
-                    "Unable to decrypt token",
-                    ex
-            );
-        }
-    }
+			byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+
+			return new String(decryptedBytes, StandardCharsets.UTF_8);
+
+		}
+		catch (Exception ex) {
+			throw new IllegalStateException("Unable to decrypt token", ex);
+		}
+	}
+
 }

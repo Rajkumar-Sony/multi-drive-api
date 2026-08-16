@@ -16,49 +16,28 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequestMapping("/api/events")
 public class GoogleDriveEventController {
 
-    private final GoogleDriveSseService
-            googleDriveSseService;
+	private final GoogleDriveSseService googleDriveSseService;
 
-    private final UserService
-            userService;
+	private final UserService userService;
 
-    public GoogleDriveEventController(
-            GoogleDriveSseService googleDriveSseService,
-            UserService userService
-    ) {
+	public GoogleDriveEventController(GoogleDriveSseService googleDriveSseService, UserService userService) {
 
-        this.googleDriveSseService =
-                googleDriveSseService;
+		this.googleDriveSseService = googleDriveSseService;
 
-        this.userService =
-                userService;
-    }
+		this.userService = userService;
+	}
 
-    @GetMapping(
-            value = "/drive",
-            produces = MediaType.TEXT_EVENT_STREAM_VALUE
-    )
-    public SseEmitter subscribeToDriveEvents(
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+	@GetMapping(value = "/drive", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public SseEmitter subscribeToDriveEvents(@AuthenticationPrincipal OidcUser oidcUser) {
 
-        if (oidcUser == null) {
+		if (oidcUser == null) {
 
-            throw new IllegalStateException(
-                    "Authenticated application user not found"
-            );
-        }
+			throw new IllegalStateException("Authenticated application user not found");
+		}
 
-        User user =
-                userService
-                        .findByGoogleSubjectId(
-                                oidcUser.getSubject()
-                        );
+		User user = userService.findByGoogleSubjectId(oidcUser.getSubject());
 
-        return googleDriveSseService
-                .subscribe(
-                        user.getId()
-                );
-    }
+		return googleDriveSseService.subscribe(user.getId());
+	}
+
 }

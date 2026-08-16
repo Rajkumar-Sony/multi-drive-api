@@ -3,18 +3,20 @@ package com.multidrive.api.dto;
 import com.multidrive.api.entity.DriveConflictStrategy;
 import com.multidrive.api.entity.DriveOperationType;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 public record DriveOperationJobSubmitRequest(
 
-        DriveOperationType operationType,
+		@NotNull(message = "operationType is required") DriveOperationType operationType,
 
-        Long sourceItemId,
+		@NotNull(message = "sourceItemId is required") Long sourceItemId,
 
-        Long destinationSourceId,
+		@NotNull(message = "destinationSourceId is required") Long destinationSourceId,
 
-        Long destinationParentItemId,
+		Long destinationParentItemId,
 
-        String name,
+		@Size(max = 255, message = "name must not exceed 255 characters") String name,
 
-        DriveConflictStrategy conflictStrategy
-) {
+		DriveConflictStrategy conflictStrategy) {
 }

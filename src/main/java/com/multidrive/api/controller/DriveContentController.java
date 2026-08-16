@@ -22,201 +22,104 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 @RestController
-@RequestMapping(
-        "/api/drive/items"
-)
+@RequestMapping("/api/drive/items")
 public class DriveContentController {
 
-    private final DriveDownloadService
-            driveDownloadService;
+	private final DriveDownloadService driveDownloadService;
 
-    public DriveContentController(
-            DriveDownloadService driveDownloadService
-    ) {
+	public DriveContentController(DriveDownloadService driveDownloadService) {
 
-        this.driveDownloadService =
-                driveDownloadService;
-    }
+		this.driveDownloadService = driveDownloadService;
+	}
 
-    @GetMapping(
-            "/{itemId}/download"
-    )
-    public ResponseEntity<StreamingResponseBody> download(
+	@GetMapping("/{itemId}/download")
+	public ResponseEntity<StreamingResponseBody> download(
 
-            @PathVariable
-            Long itemId,
+			@PathVariable Long itemId,
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-        DriveContentStreamResponse response =
-                driveDownloadService
-                        .prepareDownload(
-                                requireGoogleSubjectId(
-                                        oidcUser
-                                ),
-                                itemId
-                        );
+		DriveContentStreamResponse response = driveDownloadService.prepareDownload(requireGoogleSubjectId(oidcUser),
+				itemId);
 
-        return buildStreamingResponse(
-                response
-        );
-    }
+		return buildStreamingResponse(response);
+	}
 
-    @GetMapping(
-            "/{itemId}/export"
-    )
-    public ResponseEntity<StreamingResponseBody> export(
+	@GetMapping("/{itemId}/export")
+	public ResponseEntity<StreamingResponseBody> export(
 
-            @PathVariable
-            Long itemId,
+			@PathVariable Long itemId,
 
-            @RequestParam(
-                    required = false
-            )
-            String mimeType,
+			@RequestParam(required = false) String mimeType,
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-        DriveContentStreamResponse response =
-                driveDownloadService
-                        .prepareExport(
-                                requireGoogleSubjectId(
-                                        oidcUser
-                                ),
-                                itemId,
-                                mimeType
-                        );
+		DriveContentStreamResponse response = driveDownloadService.prepareExport(requireGoogleSubjectId(oidcUser),
+				itemId, mimeType);
 
-        return buildStreamingResponse(
-                response
-        );
-    }
+		return buildStreamingResponse(response);
+	}
 
-    @GetMapping(
-            "/{itemId}/export-formats"
-    )
-    public DriveExportOptionsResponse exportFormats(
+	@GetMapping("/{itemId}/export-formats")
+	public DriveExportOptionsResponse exportFormats(
 
-            @PathVariable
-            Long itemId,
+			@PathVariable Long itemId,
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-        return driveDownloadService
-                .getExportOptions(
-                        requireGoogleSubjectId(
-                                oidcUser
-                        ),
-                        itemId
-                );
-    }
+		return driveDownloadService.getExportOptions(requireGoogleSubjectId(oidcUser), itemId);
+	}
 
-    private ResponseEntity<StreamingResponseBody>
-    buildStreamingResponse(
-            DriveContentStreamResponse response
-    ) {
+	private ResponseEntity<StreamingResponseBody> buildStreamingResponse(DriveContentStreamResponse response) {
 
-        MediaType contentType =
-                parseMediaType(
-                        response.contentType()
-                );
+		MediaType contentType = parseMediaType(response.contentType());
 
-        ContentDisposition contentDisposition =
-                ContentDisposition
-                        .attachment()
-                        .filename(
-                                response.fileName(),
-                                StandardCharsets.UTF_8
-                        )
-                        .build();
+		ContentDisposition contentDisposition = ContentDisposition.attachment()
+			.filename(response.fileName(), StandardCharsets.UTF_8)
+			.build();
 
-        StreamingResponseBody streamingResponseBody =
-                outputStream ->
-                        response.writer()
-                                .writeTo(
-                                        outputStream
-                                );
+		StreamingResponseBody streamingResponseBody = outputStream -> response.writer().writeTo(outputStream);
 
-        ResponseEntity.BodyBuilder builder =
-                ResponseEntity
-                        .ok()
-                        .contentType(
-                                contentType
-                        )
-                        .cacheControl(
-                                CacheControl
-                                        .maxAge(
-                                                Duration.ZERO
-                                        )
-                                        .cachePrivate()
-                                        .mustRevalidate()
-                        )
-                        .header(
-                                HttpHeaders.CONTENT_DISPOSITION,
-                                contentDisposition.toString()
-                        )
-                        .header(
-                                "X-Content-Type-Options",
-                                "nosniff"
-                        );
+		ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
+			.contentType(contentType)
+			.cacheControl(CacheControl.maxAge(Duration.ZERO).cachePrivate().mustRevalidate())
+			.header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
+			.header("X-Content-Type-Options", "nosniff");
 
-        if (response.contentLength() != null
-                && response.contentLength() >= 0) {
+		if (response.contentLength() != null && response.contentLength() >= 0) {
 
-            builder.contentLength(
-                    response.contentLength()
-            );
-        }
+			builder.contentLength(response.contentLength());
+		}
 
-        return builder.body(
-                streamingResponseBody
-        );
-    }
+		return builder.body(streamingResponseBody);
+	}
 
-    private MediaType parseMediaType(
-            String mimeType
-    ) {
+	private MediaType parseMediaType(String mimeType) {
 
-        if (mimeType == null
-                || mimeType.isBlank()) {
+		if (mimeType == null || mimeType.isBlank()) {
 
-            return MediaType
-                    .APPLICATION_OCTET_STREAM;
-        }
+			return MediaType.APPLICATION_OCTET_STREAM;
+		}
 
-        try {
+		try {
 
-            return MediaType
-                    .parseMediaType(
-                            mimeType
-                    );
+			return MediaType.parseMediaType(mimeType);
 
-        } catch (Exception exception) {
+		}
+		catch (Exception exception) {
 
-            return MediaType
-                    .APPLICATION_OCTET_STREAM;
-        }
-    }
+			return MediaType.APPLICATION_OCTET_STREAM;
+		}
+	}
 
-    private String requireGoogleSubjectId(
-            OidcUser oidcUser
-    ) {
+	private String requireGoogleSubjectId(OidcUser oidcUser) {
 
-        if (oidcUser == null
-                || oidcUser.getSubject() == null
-                || oidcUser.getSubject().isBlank()) {
+		if (oidcUser == null || oidcUser.getSubject() == null || oidcUser.getSubject().isBlank()) {
 
-            throw new IllegalStateException(
-                    "Authenticated application user not found"
-            );
-        }
+			throw new IllegalStateException("Authenticated application user not found");
+		}
 
-        return oidcUser.getSubject();
-    }
+		return oidcUser.getSubject();
+	}
+
 }

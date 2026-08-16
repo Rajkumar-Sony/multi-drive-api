@@ -11,43 +11,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(
-        "/api/drive/items"
-)
+@RequestMapping("/api/drive/items")
 public class DriveItemController {
 
-    private final DriveItemLookupService
-            driveItemLookupService;
+	private final DriveItemLookupService driveItemLookupService;
 
-    public DriveItemController(
-            DriveItemLookupService driveItemLookupService
-    ) {
+	public DriveItemController(DriveItemLookupService driveItemLookupService) {
 
-        this.driveItemLookupService =
-                driveItemLookupService;
-    }
+		this.driveItemLookupService = driveItemLookupService;
+	}
 
-    @GetMapping("/{itemId}")
-    public DriveItemDetailsResponse getItem(
+	@GetMapping("/{itemId}")
+	public DriveItemDetailsResponse getItem(
 
-            @PathVariable
-            Long itemId,
+			@PathVariable Long itemId,
 
-            @AuthenticationPrincipal
-            OidcUser oidcUser
-    ) {
+			@AuthenticationPrincipal OidcUser oidcUser) {
 
-        if (oidcUser == null) {
+		if (oidcUser == null) {
 
-            throw new IllegalStateException(
-                    "Authenticated application user not found"
-            );
-        }
+			throw new IllegalStateException("Authenticated application user not found");
+		}
 
-        return driveItemLookupService
-                .getItem(
-                        oidcUser.getSubject(),
-                        itemId
-                );
-    }
+		return driveItemLookupService.getItem(oidcUser.getSubject(), itemId);
+	}
+
 }

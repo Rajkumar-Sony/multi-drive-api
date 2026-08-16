@@ -15,119 +15,42 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DriveOperationRetryPolicyTest {
 
-    private final DriveOperationRetryPolicy retryPolicy =
-            new DriveOperationRetryPolicy();
+	private final DriveOperationRetryPolicy retryPolicy = new DriveOperationRetryPolicy();
 
-    @Test
-    void shouldRetryTransientFailures() {
+	@Test
+	void shouldRetryTransientFailures() {
 
-        assertThat(
-                retryPolicy.shouldRetry(
-                        new ResourceAccessException(
-                                "timeout"
-                        )
-                )
-        )
-                .isTrue();
+		assertThat(retryPolicy.shouldRetry(new ResourceAccessException("timeout"))).isTrue();
 
-        assertThat(
-                retryPolicy.shouldRetry(
-                        httpException(
-                                HttpStatus.TOO_MANY_REQUESTS
-                        )
-                )
-        )
-                .isTrue();
+		assertThat(retryPolicy.shouldRetry(httpException(HttpStatus.TOO_MANY_REQUESTS))).isTrue();
 
-        assertThat(
-                retryPolicy.shouldRetry(
-                        httpException(
-                                HttpStatus.INTERNAL_SERVER_ERROR
-                        )
-                )
-        )
-                .isTrue();
-    }
+		assertThat(retryPolicy.shouldRetry(httpException(HttpStatus.INTERNAL_SERVER_ERROR))).isTrue();
+	}
 
-    @Test
-    void shouldNotRetryPermanentFailures() {
+	@Test
+	void shouldNotRetryPermanentFailures() {
 
-        assertThat(
-                retryPolicy.shouldRetry(
-                        new IllegalArgumentException(
-                                "bad job"
-                        )
-                )
-        )
-                .isFalse();
+		assertThat(retryPolicy.shouldRetry(new IllegalArgumentException("bad job"))).isFalse();
 
-        assertThat(
-                retryPolicy.shouldRetry(
-                        new DriveItemNotFoundException(
-                                10L
-                        )
-                )
-        )
-                .isFalse();
+		assertThat(retryPolicy.shouldRetry(new DriveItemNotFoundException(10L))).isFalse();
 
-        assertThat(
-                retryPolicy.shouldRetry(
-                        new DriveOperationNotAllowedException(
-                                "MOVE"
-                        )
-                )
-        )
-                .isFalse();
-    }
+		assertThat(retryPolicy.shouldRetry(new DriveOperationNotAllowedException("MOVE"))).isFalse();
+	}
 
-    @Test
-    void retryDelayUsesBoundedExponentialBackoff() {
+	@Test
+	void retryDelayUsesBoundedExponentialBackoff() {
 
-        assertThat(
-                retryPolicy.retryDelay(
-                        1
-                )
-        )
-                .isEqualTo(
-                        Duration.ofSeconds(
-                                5
-                        )
-                );
+		assertThat(retryPolicy.retryDelay(1)).isEqualTo(Duration.ofSeconds(5));
 
-        assertThat(
-                retryPolicy.retryDelay(
-                        4
-                )
-        )
-                .isEqualTo(
-                        Duration.ofSeconds(
-                                40
-                        )
-                );
+		assertThat(retryPolicy.retryDelay(4)).isEqualTo(Duration.ofSeconds(40));
 
-        assertThat(
-                retryPolicy.retryDelay(
-                        20
-                )
-        )
-                .isEqualTo(
-                        Duration.ofMinutes(
-                                5
-                        )
-                );
-    }
+		assertThat(retryPolicy.retryDelay(20)).isEqualTo(Duration.ofMinutes(5));
+	}
 
-    private RestClientResponseException httpException(
-            HttpStatus status
-    ) {
+	private RestClientResponseException httpException(HttpStatus status) {
 
-        return new RestClientResponseException(
-                status.getReasonPhrase(),
-                status.value(),
-                status.getReasonPhrase(),
-                null,
-                new byte[0],
-                StandardCharsets.UTF_8
-        );
-    }
+		return new RestClientResponseException(status.getReasonPhrase(), status.value(), status.getReasonPhrase(), null,
+				new byte[0], StandardCharsets.UTF_8);
+	}
+
 }

@@ -5,76 +5,75 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleDriveFileCapabilitiesResponse(
 
-        Boolean canMoveChildrenOutOfDrive,
+		Boolean canMoveChildrenOutOfDrive,
 
-        Boolean canReadDrive,
+		Boolean canReadDrive,
 
-        Boolean canEdit,
+		Boolean canEdit,
 
-        Boolean canCopy,
+		Boolean canCopy,
 
-        Boolean canComment,
+		Boolean canComment,
 
-        Boolean canAddChildren,
+		Boolean canAddChildren,
 
-        Boolean canDelete,
+		Boolean canDelete,
 
-        Boolean canDownload,
+		Boolean canDownload,
 
-        Boolean canListChildren,
+		Boolean canListChildren,
 
-        Boolean canRemoveChildren,
+		Boolean canRemoveChildren,
 
-        Boolean canRename,
+		Boolean canRename,
 
-        Boolean canTrash,
+		Boolean canTrash,
 
-        Boolean canReadRevisions,
+		Boolean canReadRevisions,
 
-        Boolean canChangeCopyRequiresWriterPermission,
+		Boolean canChangeCopyRequiresWriterPermission,
 
-        Boolean canUntrash,
+		Boolean canUntrash,
 
-        Boolean canModifyContent,
+		Boolean canModifyContent,
 
-        Boolean canDeleteChildren,
+		Boolean canDeleteChildren,
 
-        Boolean canTrashChildren,
+		Boolean canTrashChildren,
 
-        Boolean canMoveItemOutOfDrive,
+		Boolean canMoveItemOutOfDrive,
 
-        Boolean canAddMyDriveParent,
+		Boolean canAddMyDriveParent,
 
-        Boolean canRemoveMyDriveParent,
+		Boolean canRemoveMyDriveParent,
 
-        Boolean canMoveItemWithinDrive,
+		Boolean canMoveItemWithinDrive,
 
-        Boolean canShare,
+		Boolean canShare,
 
-        Boolean canMoveChildrenWithinDrive,
+		Boolean canMoveChildrenWithinDrive,
 
-        Boolean canAddFolderFromAnotherDrive,
+		Boolean canAddFolderFromAnotherDrive,
 
-        Boolean canChangeSecurityUpdateEnabled,
+		Boolean canChangeSecurityUpdateEnabled,
 
-        Boolean canAcceptOwnership,
+		Boolean canAcceptOwnership,
 
-        Boolean canReadLabels,
+		Boolean canReadLabels,
 
-        Boolean canModifyLabels,
+		Boolean canModifyLabels,
 
-        Boolean canModifyEditorContentRestriction,
+		Boolean canModifyEditorContentRestriction,
 
-        Boolean canModifyOwnerContentRestriction,
+		Boolean canModifyOwnerContentRestriction,
 
-        Boolean canRemoveContentRestriction,
+		Boolean canRemoveContentRestriction,
 
-        Boolean canDisableInheritedPermissions,
+		Boolean canDisableInheritedPermissions,
 
-        Boolean canEnableInheritedPermissions,
+		Boolean canEnableInheritedPermissions,
 
-        Boolean canChangeItemDownloadRestriction,
+		Boolean canChangeItemDownloadRestriction,
 
-        Boolean canStartApproval
-) {
+		Boolean canStartApproval) {
 }

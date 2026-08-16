@@ -6,6 +6,7 @@ import com.multidrive.api.entity.DriveConflictStrategy;
 import com.multidrive.api.entity.DriveOperationJobStatus;
 import com.multidrive.api.entity.DriveOperationType;
 import com.multidrive.api.model.DriveOperationStrategyType;
+import com.multidrive.api.service.DriveOperationJobControlService;
 import com.multidrive.api.service.DriveOperationJobService;
 
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ class DriveOperationJobControllerTest {
 
     @MockitoBean
     private DriveOperationJobService driveOperationJobService;
+
+    @MockitoBean
+    private DriveOperationJobControlService driveOperationJobControlService;
 
     @Test
     void submitCreatesQueuedJob() throws Exception {
@@ -390,8 +394,8 @@ class DriveOperationJobControllerTest {
     void cancelRequestsCancellation() throws Exception {
 
         when(
-                driveOperationJobService
-                        .cancel(
+                driveOperationJobControlService
+                        .requestCancellation(
                                 GOOGLE_SUBJECT_ID,
                                 10L
                         )
@@ -435,9 +439,9 @@ class DriveOperationJobControllerTest {
                 );
 
         verify(
-                driveOperationJobService
+                driveOperationJobControlService
         )
-                .cancel(
+                .requestCancellation(
                         GOOGLE_SUBJECT_ID,
                         10L
                 );

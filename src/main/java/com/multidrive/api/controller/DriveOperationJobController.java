@@ -4,6 +4,7 @@ import com.multidrive.api.dto.DriveOperationJobResponse;
 import com.multidrive.api.dto.DriveOperationJobSubmitRequest;
 import com.multidrive.api.dto.DriveOperationJobsPageResponse;
 import com.multidrive.api.entity.DriveOperationJobStatus;
+import com.multidrive.api.service.DriveOperationJobControlService;
 import com.multidrive.api.service.DriveOperationJobService;
 
 import org.springframework.http.HttpStatus;
@@ -28,12 +29,19 @@ public class DriveOperationJobController {
     private final DriveOperationJobService
             driveOperationJobService;
 
+    private final DriveOperationJobControlService
+            driveOperationJobControlService;
+
     public DriveOperationJobController(
-            DriveOperationJobService driveOperationJobService
+            DriveOperationJobService driveOperationJobService,
+            DriveOperationJobControlService driveOperationJobControlService
     ) {
 
         this.driveOperationJobService =
                 driveOperationJobService;
+
+        this.driveOperationJobControlService =
+                driveOperationJobControlService;
     }
 
     @PostMapping
@@ -131,8 +139,8 @@ public class DriveOperationJobController {
             OidcUser oidcUser
     ) {
 
-        return driveOperationJobService
-                .cancel(
+        return driveOperationJobControlService
+                .requestCancellation(
                         requireGoogleSubjectId(
                                 oidcUser
                         ),

@@ -604,6 +604,10 @@ public class GoogleDriveItemIndexServiceImpl
                 )
         );
 
+        item.setExplicitlyTrashed(
+                file.explicitlyTrashed()
+        );
+
         item.setCapabilities(
                 googleDriveCapabilityMapper
                         .toItemCapabilities(

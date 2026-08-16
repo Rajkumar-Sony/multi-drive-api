@@ -12,27 +12,19 @@ import com.multidrive.api.entity.GoogleDriveSource;
 import com.multidrive.api.entity.GoogleDriveSourceStatus;
 import com.multidrive.api.entity.GoogleDriveSourceType;
 import com.multidrive.api.exception.DriveItemNotFoundException;
-import com.multidrive.api.mapper.DriveItemDetailsMapper;
-import com.multidrive.api.mapper.GoogleDriveCapabilityMapper;
 import com.multidrive.api.repository.GoogleDriveItemRepository;
 import com.multidrive.api.repository.GoogleDriveSourceRepository;
+import com.multidrive.api.service.DriveItemLookupService;
 import com.multidrive.api.service.DriveOperationCapabilityGuard;
+import com.multidrive.api.service.DriveOperationLocalStateService;
 import com.multidrive.api.service.DriveOperationService;
 import com.multidrive.api.service.GoogleDriveFileMutationService;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.List;
 
 @Service
 public class DriveOperationServiceImpl
         implements DriveOperationService {
-
-    private static final String GOOGLE_FOLDER_MIME_TYPE =
-            "application/vnd.google-apps.folder";
 
     private final GoogleDriveItemRepository
             googleDriveItemRepository;
@@ -46,30 +38,19 @@ public class DriveOperationServiceImpl
     private final DriveOperationCapabilityGuard
             driveOperationCapabilityGuard;
 
-    private final GoogleDriveCapabilityMapper
-            googleDriveCapabilityMapper;
+    private final DriveOperationLocalStateService
+            driveOperationLocalStateService;
 
-    private final DriveItemDetailsMapper
-            driveItemDetailsMapper;
+    private final DriveItemLookupService
+            driveItemLookupService;
 
     public DriveOperationServiceImpl(
-            GoogleDriveItemRepository
-                    googleDriveItemRepository,
-
-            GoogleDriveSourceRepository
-                    googleDriveSourceRepository,
-
-            GoogleDriveFileMutationService
-                    googleDriveFileMutationService,
-
-            DriveOperationCapabilityGuard
-                    driveOperationCapabilityGuard,
-
-            GoogleDriveCapabilityMapper
-                    googleDriveCapabilityMapper,
-
-            DriveItemDetailsMapper
-                    driveItemDetailsMapper
+            GoogleDriveItemRepository googleDriveItemRepository,
+            GoogleDriveSourceRepository googleDriveSourceRepository,
+            GoogleDriveFileMutationService googleDriveFileMutationService,
+            DriveOperationCapabilityGuard driveOperationCapabilityGuard,
+            DriveOperationLocalStateService driveOperationLocalStateService,
+            DriveItemLookupService driveItemLookupService
     ) {
 
         this.googleDriveItemRepository =
@@ -84,15 +65,14 @@ public class DriveOperationServiceImpl
         this.driveOperationCapabilityGuard =
                 driveOperationCapabilityGuard;
 
-        this.googleDriveCapabilityMapper =
-                googleDriveCapabilityMapper;
+        this.driveOperationLocalStateService =
+                driveOperationLocalStateService;
 
-        this.driveItemDetailsMapper =
-                driveItemDetailsMapper;
+        this.driveItemLookupService =
+                driveItemLookupService;
     }
 
     @Override
-    @Transactional
     public DriveItemDetailsResponse createFolder(
             String googleSubjectId,
             DriveCreateFolderRequest request
@@ -121,15 +101,6 @@ public class DriveOperationServiceImpl
                         request.name()
                 );
 
-        /*
-         * Two paths:
-         *
-         * 1. parentItemId == null
-         *      create directly in source root
-         *
-         * 2. parentItemId != null
-         *      create inside an indexed folder
-         */
         if (request.parentItemId() == null) {
 
             return createFolderInSourceRoot(
@@ -148,7 +119,6 @@ public class DriveOperationServiceImpl
     }
 
     @Override
-    @Transactional
     public DriveItemDetailsResponse rename(
             String googleSubjectId,
             Long itemId,
@@ -158,13 +128,6 @@ public class DriveOperationServiceImpl
         validateGoogleSubjectId(
                 googleSubjectId
         );
-
-        if (itemId == null) {
-
-            throw new IllegalArgumentException(
-                    "itemId is required"
-            );
-        }
 
         if (request == null) {
 
@@ -179,17 +142,10 @@ public class DriveOperationServiceImpl
                 );
 
         GoogleDriveItem item =
-                googleDriveItemRepository
-                        .findOwnedItemForDetails(
-                                itemId,
-                                googleSubjectId
-                        )
-                        .orElseThrow(
-                                () ->
-                                        new DriveItemNotFoundException(
-                                                itemId
-                                        )
-                        );
+                requireOwnedItem(
+                        googleSubjectId,
+                        itemId
+                );
 
         GoogleDriveConnection connection =
                 requireConnection(
@@ -201,13 +157,6 @@ public class DriveOperationServiceImpl
                         connection
                 );
 
-        /*
-         * Re-read Google before mutation.
-         *
-         * The capability stored in PostgreSQL is useful
-         * for fast UI decisions, but permissions may have
-         * changed since the last sync.
-         */
         GoogleDriveFileResponse currentRemoteFile =
                 googleDriveFileMutationService
                         .getFile(
@@ -218,8 +167,7 @@ public class DriveOperationServiceImpl
 
         driveOperationCapabilityGuard
                 .requireAllowed(
-                        currentRemoteFile.capabilities()
-                                != null
+                        currentRemoteFile.capabilities() != null
                                 ? currentRemoteFile
                                         .capabilities()
                                         .canRename()
@@ -236,15 +184,237 @@ public class DriveOperationServiceImpl
                                 normalizedName
                         );
 
-        GoogleDriveItem updatedItem =
-                updateExistingLocalItem(
-                        item,
+        driveOperationLocalStateService
+                .updateItem(
+                        item.getId(),
                         updatedRemoteFile
                 );
 
-        return driveItemDetailsMapper
-                .toResponse(
-                        updatedItem
+        return driveItemLookupService
+                .getItem(
+                        googleSubjectId,
+                        item.getId()
+                );
+    }
+
+    @Override
+    public DriveItemDetailsResponse trash(
+            String googleSubjectId,
+            Long itemId
+    ) {
+
+        validateGoogleSubjectId(
+                googleSubjectId
+        );
+
+        GoogleDriveItem item =
+                requireOwnedItem(
+                        googleSubjectId,
+                        itemId
+                );
+
+        GoogleDriveConnection connection =
+                requireConnection(
+                        item
+                );
+
+        Long userId =
+                requireUserId(
+                        connection
+                );
+
+        GoogleDriveFileResponse currentRemoteFile =
+                googleDriveFileMutationService
+                        .getFile(
+                                connection.getId(),
+                                userId,
+                                item.getGoogleFileId()
+                        );
+
+        if (Boolean.TRUE.equals(
+                currentRemoteFile.trashed()
+        )) {
+
+            driveOperationLocalStateService
+                    .markTrashed(
+                            item.getId(),
+                            currentRemoteFile
+                    );
+
+            return driveItemLookupService
+                    .getItem(
+                            googleSubjectId,
+                            item.getId()
+                    );
+        }
+
+        driveOperationCapabilityGuard
+                .requireAllowed(
+                        currentRemoteFile.capabilities() != null
+                                ? currentRemoteFile
+                                        .capabilities()
+                                        .canTrash()
+                                : null,
+                        "TRASH"
+                );
+
+        GoogleDriveFileResponse trashedRemoteFile =
+                googleDriveFileMutationService
+                        .trash(
+                                connection.getId(),
+                                userId,
+                                item.getGoogleFileId()
+                        );
+
+        driveOperationLocalStateService
+                .markTrashed(
+                        item.getId(),
+                        trashedRemoteFile
+                );
+
+        return driveItemLookupService
+                .getItem(
+                        googleSubjectId,
+                        item.getId()
+                );
+    }
+
+    @Override
+    public DriveItemDetailsResponse restore(
+            String googleSubjectId,
+            Long itemId
+    ) {
+
+        validateGoogleSubjectId(
+                googleSubjectId
+        );
+
+        GoogleDriveItem item =
+                requireOwnedItem(
+                        googleSubjectId,
+                        itemId
+                );
+
+        GoogleDriveConnection connection =
+                requireConnection(
+                        item
+                );
+
+        Long userId =
+                requireUserId(
+                        connection
+                );
+
+        GoogleDriveFileResponse currentRemoteFile =
+                googleDriveFileMutationService
+                        .getFile(
+                                connection.getId(),
+                                userId,
+                                item.getGoogleFileId()
+                        );
+
+        if (!Boolean.TRUE.equals(
+                currentRemoteFile.trashed()
+        )) {
+
+            driveOperationLocalStateService
+                    .markRestored(
+                            item.getId(),
+                            currentRemoteFile
+                    );
+
+            return driveItemLookupService
+                    .getItem(
+                            googleSubjectId,
+                            item.getId()
+                    );
+        }
+
+        driveOperationCapabilityGuard
+                .requireAllowed(
+                        currentRemoteFile.capabilities() != null
+                                ? currentRemoteFile
+                                        .capabilities()
+                                        .canUntrash()
+                                : null,
+                        "RESTORE"
+                );
+
+        GoogleDriveFileResponse restoredRemoteFile =
+                googleDriveFileMutationService
+                        .restore(
+                                connection.getId(),
+                                userId,
+                                item.getGoogleFileId()
+                        );
+
+        driveOperationLocalStateService
+                .markRestored(
+                        item.getId(),
+                        restoredRemoteFile
+                );
+
+        return driveItemLookupService
+                .getItem(
+                        googleSubjectId,
+                        item.getId()
+                );
+    }
+
+    @Override
+    public void permanentlyDelete(
+            String googleSubjectId,
+            Long itemId
+    ) {
+
+        validateGoogleSubjectId(
+                googleSubjectId
+        );
+
+        GoogleDriveItem item =
+                requireOwnedItem(
+                        googleSubjectId,
+                        itemId
+                );
+
+        GoogleDriveConnection connection =
+                requireConnection(
+                        item
+                );
+
+        Long userId =
+                requireUserId(
+                        connection
+                );
+
+        GoogleDriveFileResponse currentRemoteFile =
+                googleDriveFileMutationService
+                        .getFile(
+                                connection.getId(),
+                                userId,
+                                item.getGoogleFileId()
+                        );
+
+        driveOperationCapabilityGuard
+                .requireAllowed(
+                        currentRemoteFile.capabilities() != null
+                                ? currentRemoteFile
+                                        .capabilities()
+                                        .canDelete()
+                                : null,
+                        "PERMANENT_DELETE"
+                );
+
+        googleDriveFileMutationService
+                .permanentlyDelete(
+                        connection.getId(),
+                        userId,
+                        item.getGoogleFileId()
+                );
+
+        driveOperationLocalStateService
+                .deleteSubtree(
+                        item.getId()
                 );
     }
 
@@ -276,17 +446,6 @@ public class DriveOperationServiceImpl
             );
         }
 
-        driveOperationCapabilityGuard
-                .requireAllowed(
-                        source.getCapabilities()
-                                != null
-                                ? source.getCapabilities()
-                                        .getCanAddChildren()
-                                : null,
-                        "CREATE_FOLDER",
-                        "Cannot create a folder in this Drive root"
-                );
-
         GoogleDriveConnection connection =
                 requireConnection(
                         source
@@ -295,6 +454,24 @@ public class DriveOperationServiceImpl
         Long userId =
                 requireUserId(
                         connection
+                );
+
+        GoogleDriveFileResponse currentRemoteParent =
+                googleDriveFileMutationService
+                        .getFile(
+                                connection.getId(),
+                                userId,
+                                source.getRootFolderId()
+                        );
+
+        driveOperationCapabilityGuard
+                .requireAllowed(
+                        currentRemoteParent.capabilities() != null
+                                ? currentRemoteParent
+                                        .capabilities()
+                                        .canAddChildren()
+                                : null,
+                        "CREATE_FOLDER"
                 );
 
         GoogleDriveFileResponse createdRemoteFile =
@@ -306,16 +483,27 @@ public class DriveOperationServiceImpl
                                 name
                         );
 
-        GoogleDriveItem createdItem =
-                createLocalFolderItem(
-                        connection,
-                        source,
-                        createdRemoteFile
+        GoogleDriveItemSourceType sourceType =
+                resolveItemSourceType(
+                        source
                 );
 
-        return driveItemDetailsMapper
-                .toResponse(
-                        createdItem
+        Long createdItemId =
+                driveOperationLocalStateService
+                        .createFolder(
+                                connection.getId(),
+                                source.getId(),
+                                sourceType,
+                                sourceType == GoogleDriveItemSourceType.SHARED_DRIVE
+                                        ? source.getGoogleDriveId()
+                                        : null,
+                                createdRemoteFile
+                        );
+
+        return driveItemLookupService
+                .getItem(
+                        googleSubjectId,
+                        createdItemId
                 );
     }
 
@@ -328,17 +516,10 @@ public class DriveOperationServiceImpl
     ) {
 
         GoogleDriveItem parentItem =
-                googleDriveItemRepository
-                        .findOwnedItemForDetails(
-                                parentItemId,
-                                googleSubjectId
-                        )
-                        .orElseThrow(
-                                () ->
-                                        new DriveItemNotFoundException(
-                                                parentItemId
-                                        )
-                        );
+                requireOwnedItem(
+                        googleSubjectId,
+                        parentItemId
+                );
 
         if (parentItem.getCategory()
                 != GoogleDriveItemCategory.FOLDER) {
@@ -379,10 +560,6 @@ public class DriveOperationServiceImpl
                         connection
                 );
 
-        /*
-         * Get the current Google capability instead of
-         * relying only on the local snapshot.
-         */
         GoogleDriveFileResponse currentRemoteParent =
                 googleDriveFileMutationService
                         .getFile(
@@ -393,14 +570,12 @@ public class DriveOperationServiceImpl
 
         driveOperationCapabilityGuard
                 .requireAllowed(
-                        currentRemoteParent.capabilities()
-                                != null
+                        currentRemoteParent.capabilities() != null
                                 ? currentRemoteParent
                                         .capabilities()
                                         .canAddChildren()
                                 : null,
-                        "CREATE_FOLDER",
-                        "Cannot add children to the selected folder"
+                        "CREATE_FOLDER"
                 );
 
         GoogleDriveFileResponse createdRemoteFile =
@@ -412,201 +587,51 @@ public class DriveOperationServiceImpl
                                 name
                         );
 
-        GoogleDriveItem createdItem =
-                createLocalFolderItem(
-                        connection,
-                        source,
-                        createdRemoteFile
-                );
-
-        return driveItemDetailsMapper
-                .toResponse(
-                        createdItem
-                );
-    }
-
-    private GoogleDriveItem createLocalFolderItem(
-            GoogleDriveConnection connection,
-            GoogleDriveSource source,
-            GoogleDriveFileResponse remoteFile
-    ) {
-
-        GoogleDriveItem item =
-                new GoogleDriveItem();
-
-        item.setConnection(
-                connection
-        );
-
-        item.setSource(
-                source
-        );
-
-        item.setGoogleFileId(
-                remoteFile.id()
-        );
-
-        item.setName(
-                normalizeRemoteName(
-                        remoteFile.name()
-                )
-        );
-
-        item.setMimeType(
-                remoteFile.mimeType() != null
-                        ? remoteFile.mimeType()
-                        : GOOGLE_FOLDER_MIME_TYPE
-        );
-
-        item.setCategory(
-                GoogleDriveItemCategory.FOLDER
-        );
-
         GoogleDriveItemSourceType sourceType =
                 resolveItemSourceType(
                         source
                 );
 
-        item.setSourceType(
-                sourceType
-        );
+        Long createdItemId =
+                driveOperationLocalStateService
+                        .createFolder(
+                                connection.getId(),
+                                source.getId(),
+                                sourceType,
+                                sourceType == GoogleDriveItemSourceType.SHARED_DRIVE
+                                        ? source.getGoogleDriveId()
+                                        : null,
+                                createdRemoteFile
+                        );
 
-        item.setDriveId(
-                sourceType
-                        == GoogleDriveItemSourceType.SHARED_DRIVE
-                        ? resolveDriveId(
-                                source,
-                                remoteFile
-                        )
-                        : null
-        );
-
-        item.setParentId(
-                extractParentId(
-                        remoteFile.parents()
-                )
-        );
-
-        item.setWebViewLink(
-                remoteFile.webViewLink()
-        );
-
-        item.setThumbnailLink(
-                remoteFile.thumbnailLink()
-        );
-
-        item.setIconLink(
-                remoteFile.iconLink()
-        );
-
-        item.setSizeBytes(
-                parseSize(
-                        remoteFile.size()
-                )
-        );
-
-        item.setGoogleCreatedTime(
-                parseInstant(
-                        remoteFile.createdTime()
-                )
-        );
-
-        item.setGoogleModifiedTime(
-                parseInstant(
-                        remoteFile.modifiedTime()
-                )
-        );
-
-        item.setTrashed(
-                Boolean.TRUE.equals(
-                        remoteFile.trashed()
-                )
-        );
-
-        item.setCapabilities(
-                googleDriveCapabilityMapper
-                        .toItemCapabilities(
-                                remoteFile.capabilities()
-                        )
-        );
-
-        return googleDriveItemRepository
-                .saveAndFlush(
-                        item
+        return driveItemLookupService
+                .getItem(
+                        googleSubjectId,
+                        createdItemId
                 );
     }
 
-    private GoogleDriveItem updateExistingLocalItem(
-            GoogleDriveItem item,
-            GoogleDriveFileResponse remoteFile
+    private GoogleDriveItem requireOwnedItem(
+            String googleSubjectId,
+            Long itemId
     ) {
 
-        item.setName(
-                normalizeRemoteName(
-                        remoteFile.name()
-                )
-        );
+        if (itemId == null) {
 
-        if (remoteFile.mimeType() != null
-                && !remoteFile.mimeType().isBlank()) {
-
-            item.setMimeType(
-                    remoteFile.mimeType()
+            throw new IllegalArgumentException(
+                    "itemId is required"
             );
         }
 
-        item.setParentId(
-                extractParentId(
-                        remoteFile.parents()
-                )
-        );
-
-        item.setWebViewLink(
-                remoteFile.webViewLink()
-        );
-
-        item.setThumbnailLink(
-                remoteFile.thumbnailLink()
-        );
-
-        item.setIconLink(
-                remoteFile.iconLink()
-        );
-
-        item.setSizeBytes(
-                parseSize(
-                        remoteFile.size()
-                )
-        );
-
-        item.setGoogleCreatedTime(
-                parseInstant(
-                        remoteFile.createdTime()
-                )
-        );
-
-        item.setGoogleModifiedTime(
-                parseInstant(
-                        remoteFile.modifiedTime()
-                )
-        );
-
-        item.setTrashed(
-                Boolean.TRUE.equals(
-                        remoteFile.trashed()
-                )
-        );
-
-        item.setCapabilities(
-                googleDriveCapabilityMapper
-                        .toItemCapabilities(
-                                remoteFile.capabilities()
-                        )
-        );
-
         return googleDriveItemRepository
-                .saveAndFlush(
-                        item
+                .findOwnedItemForDetails(
+                        itemId,
+                        googleSubjectId
+                )
+                .orElseThrow(
+                        () -> new DriveItemNotFoundException(
+                                itemId
+                        )
                 );
     }
 
@@ -621,77 +646,6 @@ public class DriveOperationServiceImpl
         }
 
         return GoogleDriveItemSourceType.MY_DRIVE;
-    }
-
-    private String resolveDriveId(
-            GoogleDriveSource source,
-            GoogleDriveFileResponse remoteFile
-    ) {
-
-        if (remoteFile.driveId() != null
-                && !remoteFile.driveId().isBlank()) {
-
-            return remoteFile.driveId();
-        }
-
-        return source.getGoogleDriveId();
-    }
-
-    private String extractParentId(
-            List<String> parents
-    ) {
-
-        if (parents == null
-                || parents.isEmpty()) {
-
-            return null;
-        }
-
-        return parents.getFirst();
-    }
-
-    private Long parseSize(
-            String value
-    ) {
-
-        if (value == null
-                || value.isBlank()) {
-
-            return null;
-        }
-
-        try {
-
-            return Long.parseLong(
-                    value
-            );
-
-        } catch (NumberFormatException exception) {
-
-            return null;
-        }
-    }
-
-    private Instant parseInstant(
-            String value
-    ) {
-
-        if (value == null
-                || value.isBlank()) {
-
-            return null;
-        }
-
-        try {
-
-            return Instant.parse(
-                    value
-            );
-
-        } catch (DateTimeParseException exception) {
-
-            return null;
-        }
     }
 
     private GoogleDriveConnection requireConnection(
@@ -785,19 +739,6 @@ public class DriveOperationServiceImpl
         }
 
         return normalized;
-    }
-
-    private String normalizeRemoteName(
-            String name
-    ) {
-
-        if (name == null
-                || name.isBlank()) {
-
-            return "Untitled";
-        }
-
-        return name;
     }
 
     private void validateGoogleSubjectId(

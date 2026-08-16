@@ -16,4 +16,19 @@ public interface DriveOperationService {
             Long itemId,
             DriveRenameRequest request
     );
+
+    DriveItemDetailsResponse trash(
+            String googleSubjectId,
+            Long itemId
+    );
+
+    DriveItemDetailsResponse restore(
+            String googleSubjectId,
+            Long itemId
+    );
+
+    void permanentlyDelete(
+            String googleSubjectId,
+            Long itemId
+    );
 }

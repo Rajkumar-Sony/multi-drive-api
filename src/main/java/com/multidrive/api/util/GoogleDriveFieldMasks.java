@@ -56,6 +56,7 @@ public final class GoogleDriveFieldMasks {
                     + "size,"
                     + "driveId,"
                     + "trashed,"
+                    + "explicitlyTrashed,"
                     + "capabilities("
                     + FILE_CAPABILITIES
                     + ")";

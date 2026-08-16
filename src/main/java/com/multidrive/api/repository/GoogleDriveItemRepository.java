@@ -92,6 +92,178 @@ public interface GoogleDriveItemRepository
             String googleSubjectId
     );
 
+    /*
+     * Folder trash:
+     *
+     * Mark the complete local descendant tree as trashed
+     * without changing explicitly_trashed.
+     */
+    @Modifying(
+            flushAutomatically = true,
+            clearAutomatically = true
+    )
+    @Query(
+            value = """
+                    WITH RECURSIVE descendants AS (
+
+                        SELECT
+                            child.id,
+                            child.google_file_id
+                        FROM google_drive_items child
+                        WHERE child.connection_id = :connectionId
+                          AND child.source_id = :sourceId
+                          AND child.parent_id = :rootGoogleFileId
+
+                        UNION ALL
+
+                        SELECT
+                            child.id,
+                            child.google_file_id
+                        FROM google_drive_items child
+                        JOIN descendants parent
+                          ON child.parent_id = parent.google_file_id
+                        WHERE child.connection_id = :connectionId
+                          AND child.source_id = :sourceId
+                    )
+
+                    UPDATE google_drive_items item
+                    SET
+                        trashed = TRUE,
+                        updated_at = CURRENT_TIMESTAMP
+                    FROM descendants
+                    WHERE item.id = descendants.id
+                    """,
+            nativeQuery = true
+    )
+    int markDescendantsTrashed(
+            @Param("connectionId")
+            Long connectionId,
+
+            @Param("sourceId")
+            Long sourceId,
+
+            @Param("rootGoogleFileId")
+            String rootGoogleFileId
+    );
+
+    /*
+     * Folder restore:
+     *
+     * Restore descendants that were trashed only because
+     * of the restored parent. Explicitly trashed nested
+     * folders keep their subtree trashed.
+     */
+    @Modifying(
+            flushAutomatically = true,
+            clearAutomatically = true
+    )
+    @Query(
+            value = """
+                    WITH RECURSIVE subtree AS (
+
+                        SELECT
+                            child.id,
+                            child.google_file_id,
+                            COALESCE(
+                                child.explicitly_trashed,
+                                child.trashed,
+                                FALSE
+                            ) AS keep_trashed
+                        FROM google_drive_items child
+                        WHERE child.connection_id = :connectionId
+                          AND child.source_id = :sourceId
+                          AND child.parent_id = :rootGoogleFileId
+
+                        UNION ALL
+
+                        SELECT
+                            child.id,
+                            child.google_file_id,
+                            (
+                                parent.keep_trashed
+                                OR
+                                COALESCE(
+                                    child.explicitly_trashed,
+                                    child.trashed,
+                                    FALSE
+                                )
+                            ) AS keep_trashed
+                        FROM google_drive_items child
+                        JOIN subtree parent
+                          ON child.parent_id = parent.google_file_id
+                        WHERE child.connection_id = :connectionId
+                          AND child.source_id = :sourceId
+                    )
+
+                    UPDATE google_drive_items item
+                    SET
+                        trashed = subtree.keep_trashed,
+                        updated_at = CURRENT_TIMESTAMP
+                    FROM subtree
+                    WHERE item.id = subtree.id
+                    """,
+            nativeQuery = true
+    )
+    int restoreDescendantsAfterParentRestore(
+            @Param("connectionId")
+            Long connectionId,
+
+            @Param("sourceId")
+            Long sourceId,
+
+            @Param("rootGoogleFileId")
+            String rootGoogleFileId
+    );
+
+    /*
+     * Delete the complete local subtree using one
+     * PostgreSQL recursive statement.
+     */
+    @Modifying(
+            flushAutomatically = true,
+            clearAutomatically = true
+    )
+    @Query(
+            value = """
+                    WITH RECURSIVE subtree AS (
+
+                        SELECT
+                            item.id,
+                            item.google_file_id
+                        FROM google_drive_items item
+                        WHERE item.id = :rootItemId
+                          AND item.connection_id = :connectionId
+                          AND item.source_id = :sourceId
+
+                        UNION ALL
+
+                        SELECT
+                            child.id,
+                            child.google_file_id
+                        FROM google_drive_items child
+                        JOIN subtree parent
+                          ON child.parent_id = parent.google_file_id
+                        WHERE child.connection_id = :connectionId
+                          AND child.source_id = :sourceId
+                    )
+
+                    DELETE FROM google_drive_items item
+                    USING subtree
+                    WHERE item.id = subtree.id
+                    """,
+            nativeQuery = true
+    )
+    int deleteLocalSubtree(
+            @Param("rootItemId")
+            Long rootItemId,
+
+            @Param("connectionId")
+            Long connectionId,
+
+            @Param("sourceId")
+            Long sourceId
+    );
+
     @Modifying
     @Query("""
             DELETE FROM GoogleDriveItem item

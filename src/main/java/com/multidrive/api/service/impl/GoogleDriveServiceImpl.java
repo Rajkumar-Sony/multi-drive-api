@@ -68,7 +68,8 @@ public class GoogleDriveServiceImpl
                 pageToken,
                 null,
                 null,
-                true
+                true,
+                "trashed=false"
         );
     }
 
@@ -87,7 +88,8 @@ public class GoogleDriveServiceImpl
                 pageToken,
                 "user",
                 null,
-                false
+                false,
+                null
         );
     }
 
@@ -115,7 +117,8 @@ public class GoogleDriveServiceImpl
                 pageToken,
                 "drive",
                 driveId,
-                true
+                true,
+                null
         );
     }
 
@@ -250,7 +253,8 @@ public class GoogleDriveServiceImpl
             String pageToken,
             String corpora,
             String driveId,
-            boolean includeItemsFromAllDrives
+            boolean includeItemsFromAllDrives,
+            String query
     ) {
 
         String accessToken =
@@ -275,10 +279,6 @@ public class GoogleDriveServiceImpl
                                 requestedPageSize
                         )
                         .queryParam(
-                                "q",
-                                "trashed=false"
-                        )
-                        .queryParam(
                                 "spaces",
                                 "drive"
                         )
@@ -294,6 +294,15 @@ public class GoogleDriveServiceImpl
                                 "fields",
                                 GoogleDriveFieldMasks.FILE_LIST
                         );
+
+        if (query != null
+                && !query.isBlank()) {
+
+            uriBuilder.queryParam(
+                    "q",
+                    query
+            );
+        }
 
         if (corpora != null
                 && !corpora.isBlank()) {

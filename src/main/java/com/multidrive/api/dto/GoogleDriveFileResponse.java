@@ -31,6 +31,8 @@ public record GoogleDriveFileResponse(
 
         Boolean trashed,
 
+        Boolean explicitlyTrashed,
+
         GoogleDriveFileCapabilitiesResponse capabilities
 ) {
 }

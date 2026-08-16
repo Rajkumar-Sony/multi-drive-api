@@ -61,29 +61,14 @@ public class GoogleDriveFileMutationServiceImpl
                                 userId
                         );
 
-        URI uri =
-                UriComponentsBuilder
-                        .fromUriString(
-                                GOOGLE_DRIVE_FILES_URL
-                                        + "/"
-                                        + googleFileId
-                        )
-                        .queryParam(
-                                "supportsAllDrives",
-                                true
-                        )
-                        .queryParam(
-                                "fields",
-                                GoogleDriveFieldMasks.FILE_RESOURCE
-                        )
-                        .build()
-                        .encode()
-                        .toUri();
-
         GoogleDriveFileResponse response =
                 restClient
                         .get()
-                        .uri(uri)
+                        .uri(
+                                buildFileUri(
+                                        googleFileId
+                                )
+                        )
                         .header(
                                 HttpHeaders.AUTHORIZATION,
                                 "Bearer " + accessToken
@@ -188,10 +173,97 @@ public class GoogleDriveFileMutationServiceImpl
                 googleFileId
         );
 
-        String normalizedName =
-                normalizeName(
-                        name
+        GoogleDriveFileMutationRequest request =
+                new GoogleDriveFileMutationRequest(
+                        normalizeName(
+                                name
+                        ),
+                        null,
+                        null,
+                        null
                 );
+
+        return patchFile(
+                connectionId,
+                userId,
+                googleFileId,
+                request,
+                "Google Drive returned an empty rename response"
+        );
+    }
+
+    @Override
+    public GoogleDriveFileResponse trash(
+            Long connectionId,
+            Long userId,
+            String googleFileId
+    ) {
+
+        validateIdentifiers(
+                connectionId,
+                userId,
+                googleFileId
+        );
+
+        GoogleDriveFileMutationRequest request =
+                new GoogleDriveFileMutationRequest(
+                        null,
+                        null,
+                        null,
+                        true
+                );
+
+        return patchFile(
+                connectionId,
+                userId,
+                googleFileId,
+                request,
+                "Google Drive returned an empty trash response"
+        );
+    }
+
+    @Override
+    public GoogleDriveFileResponse restore(
+            Long connectionId,
+            Long userId,
+            String googleFileId
+    ) {
+
+        validateIdentifiers(
+                connectionId,
+                userId,
+                googleFileId
+        );
+
+        GoogleDriveFileMutationRequest request =
+                new GoogleDriveFileMutationRequest(
+                        null,
+                        null,
+                        null,
+                        false
+                );
+
+        return patchFile(
+                connectionId,
+                userId,
+                googleFileId,
+                request,
+                "Google Drive returned an empty restore response"
+        );
+    }
+
+    @Override
+    public void permanentlyDelete(
+            Long connectionId,
+            Long userId,
+            String googleFileId
+    ) {
+
+        validateIdentifiers(
+                connectionId,
+                userId,
+                googleFileId
+        );
 
         String accessToken =
                 googleTokenService
@@ -199,14 +271,6 @@ public class GoogleDriveFileMutationServiceImpl
                                 connectionId,
                                 userId
                         );
-
-        GoogleDriveFileMutationRequest request =
-                new GoogleDriveFileMutationRequest(
-                        normalizedName,
-                        null,
-                        null,
-                        null
-                );
 
         URI uri =
                 UriComponentsBuilder
@@ -219,18 +283,44 @@ public class GoogleDriveFileMutationServiceImpl
                                 "supportsAllDrives",
                                 true
                         )
-                        .queryParam(
-                                "fields",
-                                GoogleDriveFieldMasks.FILE_RESOURCE
-                        )
                         .build()
                         .encode()
                         .toUri();
 
+        restClient
+                .delete()
+                .uri(uri)
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer " + accessToken
+                )
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    private GoogleDriveFileResponse patchFile(
+            Long connectionId,
+            Long userId,
+            String googleFileId,
+            GoogleDriveFileMutationRequest request,
+            String emptyResponseMessage
+    ) {
+
+        String accessToken =
+                googleTokenService
+                        .getValidAccessToken(
+                                connectionId,
+                                userId
+                        );
+
         GoogleDriveFileResponse response =
                 restClient
                         .patch()
-                        .uri(uri)
+                        .uri(
+                                buildFileUri(
+                                        googleFileId
+                                )
+                        )
                         .header(
                                 HttpHeaders.AUTHORIZATION,
                                 "Bearer " + accessToken
@@ -245,8 +335,31 @@ public class GoogleDriveFileMutationServiceImpl
 
         return requireFileResponse(
                 response,
-                "Google Drive returned an empty rename response"
+                emptyResponseMessage
         );
+    }
+
+    private URI buildFileUri(
+            String googleFileId
+    ) {
+
+        return UriComponentsBuilder
+                .fromUriString(
+                        GOOGLE_DRIVE_FILES_URL
+                                + "/"
+                                + googleFileId
+                )
+                .queryParam(
+                        "supportsAllDrives",
+                        true
+                )
+                .queryParam(
+                        "fields",
+                        GoogleDriveFieldMasks.FILE_RESOURCE
+                )
+                .build()
+                .encode()
+                .toUri();
     }
 
     private GoogleDriveFileResponse requireFileResponse(

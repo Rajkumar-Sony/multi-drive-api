@@ -23,4 +23,22 @@ public interface GoogleDriveFileMutationService {
             String googleFileId,
             String name
     );
+
+    GoogleDriveFileResponse trash(
+            Long connectionId,
+            Long userId,
+            String googleFileId
+    );
+
+    GoogleDriveFileResponse restore(
+            Long connectionId,
+            Long userId,
+            String googleFileId
+    );
+
+    void permanentlyDelete(
+            Long connectionId,
+            Long userId,
+            String googleFileId
+    );
 }

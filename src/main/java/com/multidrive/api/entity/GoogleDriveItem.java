@@ -150,6 +150,11 @@ public class GoogleDriveItem {
     private boolean trashed;
 
     @Column(
+            name = "explicitly_trashed"
+    )
+    private Boolean explicitlyTrashed;
+
+    @Column(
             name = "sync_run_id",
             length = 36
     )
@@ -372,6 +377,16 @@ public class GoogleDriveItem {
             boolean trashed
     ) {
         this.trashed = trashed;
+    }
+
+    public Boolean getExplicitlyTrashed() {
+        return explicitlyTrashed;
+    }
+
+    public void setExplicitlyTrashed(
+            Boolean explicitlyTrashed
+    ) {
+        this.explicitlyTrashed = explicitlyTrashed;
     }
 
     public String getSyncRunId() {

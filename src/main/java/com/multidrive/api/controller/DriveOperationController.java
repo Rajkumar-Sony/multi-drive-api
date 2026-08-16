@@ -5,8 +5,10 @@ import com.multidrive.api.dto.DriveItemDetailsResponse;
 import com.multidrive.api.dto.DriveRenameRequest;
 import com.multidrive.api.service.DriveOperationService;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -73,6 +75,73 @@ public class DriveOperationController {
                         itemId,
                         request
                 );
+    }
+
+    @PostMapping(
+            "/items/{itemId}/trash"
+    )
+    public DriveItemDetailsResponse trash(
+
+            @PathVariable
+            Long itemId,
+
+            @AuthenticationPrincipal
+            OidcUser oidcUser
+    ) {
+
+        return driveOperationService
+                .trash(
+                        requireGoogleSubjectId(
+                                oidcUser
+                        ),
+                        itemId
+                );
+    }
+
+    @PostMapping(
+            "/items/{itemId}/restore"
+    )
+    public DriveItemDetailsResponse restore(
+
+            @PathVariable
+            Long itemId,
+
+            @AuthenticationPrincipal
+            OidcUser oidcUser
+    ) {
+
+        return driveOperationService
+                .restore(
+                        requireGoogleSubjectId(
+                                oidcUser
+                        ),
+                        itemId
+                );
+    }
+
+    @DeleteMapping(
+            "/items/{itemId}/permanent"
+    )
+    public ResponseEntity<Void> permanentlyDelete(
+
+            @PathVariable
+            Long itemId,
+
+            @AuthenticationPrincipal
+            OidcUser oidcUser
+    ) {
+
+        driveOperationService
+                .permanentlyDelete(
+                        requireGoogleSubjectId(
+                                oidcUser
+                        ),
+                        itemId
+                );
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 
     private String requireGoogleSubjectId(

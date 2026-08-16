@@ -21,11 +21,8 @@ public class UnifiedDriveViewController {
             userService;
 
     public UnifiedDriveViewController(
-            UnifiedDriveViewService
-                    unifiedDriveViewService,
-
-            UserService
-                    userService
+            UnifiedDriveViewService unifiedDriveViewService,
+            UserService userService
     ) {
 
         this.unifiedDriveViewService =
@@ -36,22 +33,36 @@ public class UnifiedDriveViewController {
     }
 
     /**
-     * All folders and files from all connected
-     * Google Drive accounts.
+     * Unified Dashboard.
      *
-     * GET /api/dashboard
+     * All non-trashed folders and files from all
+     * connected Google Drive accounts.
+     *
+     * Optional filters:
+     *
+     * connectionId = one connected Google account
+     * parentId     = children of one folder
+     * q            = search file/folder name
      */
     @GetMapping("/api/dashboard")
     public UnifiedDriveItemsPageResponse getDashboard(
 
-            @RequestParam(
-                    defaultValue = "0"
-            )
-            Integer page,
+            @RequestParam(required = false)
+            Long connectionId,
+
+            @RequestParam(required = false)
+            String parentId,
 
             @RequestParam(
-                    defaultValue = "50"
+                    name = "q",
+                    required = false
             )
+            String searchQuery,
+
+            @RequestParam(defaultValue = "0")
+            Integer page,
+
+            @RequestParam(defaultValue = "50")
             Integer size,
 
             @AuthenticationPrincipal
@@ -66,28 +77,36 @@ public class UnifiedDriveViewController {
         return unifiedDriveViewService
                 .getDashboard(
                         user.getId(),
+                        connectionId,
+                        parentId,
+                        searchQuery,
                         page,
                         size
                 );
     }
 
     /**
-     * All document files from every connected
-     * Google Drive account.
-     *
-     * GET /api/docs
+     * Unified Docs.
      */
     @GetMapping("/api/docs")
     public UnifiedDriveItemsPageResponse getDocs(
 
-            @RequestParam(
-                    defaultValue = "0"
-            )
-            Integer page,
+            @RequestParam(required = false)
+            Long connectionId,
+
+            @RequestParam(required = false)
+            String parentId,
 
             @RequestParam(
-                    defaultValue = "50"
+                    name = "q",
+                    required = false
             )
+            String searchQuery,
+
+            @RequestParam(defaultValue = "0")
+            Integer page,
+
+            @RequestParam(defaultValue = "50")
             Integer size,
 
             @AuthenticationPrincipal
@@ -102,28 +121,36 @@ public class UnifiedDriveViewController {
         return unifiedDriveViewService
                 .getDocs(
                         user.getId(),
+                        connectionId,
+                        parentId,
+                        searchQuery,
                         page,
                         size
                 );
     }
 
     /**
-     * All image files from every connected
-     * Google Drive account.
-     *
-     * GET /api/gallery
+     * Unified Gallery.
      */
     @GetMapping("/api/gallery")
     public UnifiedDriveItemsPageResponse getGallery(
 
-            @RequestParam(
-                    defaultValue = "0"
-            )
-            Integer page,
+            @RequestParam(required = false)
+            Long connectionId,
+
+            @RequestParam(required = false)
+            String parentId,
 
             @RequestParam(
-                    defaultValue = "50"
+                    name = "q",
+                    required = false
             )
+            String searchQuery,
+
+            @RequestParam(defaultValue = "0")
+            Integer page,
+
+            @RequestParam(defaultValue = "50")
             Integer size,
 
             @AuthenticationPrincipal
@@ -138,28 +165,36 @@ public class UnifiedDriveViewController {
         return unifiedDriveViewService
                 .getGallery(
                         user.getId(),
+                        connectionId,
+                        parentId,
+                        searchQuery,
                         page,
                         size
                 );
     }
 
     /**
-     * All video files from every connected
-     * Google Drive account.
-     *
-     * GET /api/videos
+     * Unified Videos.
      */
     @GetMapping("/api/videos")
     public UnifiedDriveItemsPageResponse getVideos(
 
-            @RequestParam(
-                    defaultValue = "0"
-            )
-            Integer page,
+            @RequestParam(required = false)
+            Long connectionId,
+
+            @RequestParam(required = false)
+            String parentId,
 
             @RequestParam(
-                    defaultValue = "50"
+                    name = "q",
+                    required = false
             )
+            String searchQuery,
+
+            @RequestParam(defaultValue = "0")
+            Integer page,
+
+            @RequestParam(defaultValue = "50")
             Integer size,
 
             @AuthenticationPrincipal
@@ -174,6 +209,9 @@ public class UnifiedDriveViewController {
         return unifiedDriveViewService
                 .getVideos(
                         user.getId(),
+                        connectionId,
+                        parentId,
+                        searchQuery,
                         page,
                         size
                 );

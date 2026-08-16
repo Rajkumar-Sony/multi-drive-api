@@ -20,8 +20,11 @@ import jakarta.persistence.Version;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import lombok.Getter;
+
 @Entity
 @Table(name = "drive_operation_jobs")
+@Getter
 public class DriveOperationJob {
 
 	@Id
@@ -202,300 +205,144 @@ public class DriveOperationJob {
 		updatedAt = LocalDateTime.now(ZoneOffset.UTC);
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
 	public void setUser(User user) {
 		this.user = user;
-	}
-
-	public DriveOperationType getOperationType() {
-		return operationType;
 	}
 
 	public void setOperationType(DriveOperationType operationType) {
 		this.operationType = operationType;
 	}
 
-	public DriveOperationStrategyType getStrategyType() {
-		return strategyType;
-	}
-
 	public void setStrategyType(DriveOperationStrategyType strategyType) {
 		this.strategyType = strategyType;
-	}
-
-	public DriveOperationJobStatus getStatus() {
-		return status;
 	}
 
 	public void setStatus(DriveOperationJobStatus status) {
 		this.status = status;
 	}
 
-	public DriveConflictStrategy getConflictStrategy() {
-		return conflictStrategy;
-	}
-
 	public void setConflictStrategy(DriveConflictStrategy conflictStrategy) {
 		this.conflictStrategy = conflictStrategy;
-	}
-
-	public Long getSourceItemId() {
-		return sourceItemId;
 	}
 
 	public void setSourceItemId(Long sourceItemId) {
 		this.sourceItemId = sourceItemId;
 	}
 
-	public Long getSourceConnectionId() {
-		return sourceConnectionId;
-	}
-
 	public void setSourceConnectionId(Long sourceConnectionId) {
 		this.sourceConnectionId = sourceConnectionId;
-	}
-
-	public Long getSourceSourceId() {
-		return sourceSourceId;
 	}
 
 	public void setSourceSourceId(Long sourceSourceId) {
 		this.sourceSourceId = sourceSourceId;
 	}
 
-	public String getSourceGoogleFileId() {
-		return sourceGoogleFileId;
-	}
-
 	public void setSourceGoogleFileId(String sourceGoogleFileId) {
 		this.sourceGoogleFileId = sourceGoogleFileId;
-	}
-
-	public String getSourceName() {
-		return sourceName;
 	}
 
 	public void setSourceName(String sourceName) {
 		this.sourceName = sourceName;
 	}
 
-	public String getSourceMimeType() {
-		return sourceMimeType;
-	}
-
 	public void setSourceMimeType(String sourceMimeType) {
 		this.sourceMimeType = sourceMimeType;
-	}
-
-	public Long getDestinationSourceId() {
-		return destinationSourceId;
 	}
 
 	public void setDestinationSourceId(Long destinationSourceId) {
 		this.destinationSourceId = destinationSourceId;
 	}
 
-	public Long getDestinationConnectionId() {
-		return destinationConnectionId;
-	}
-
 	public void setDestinationConnectionId(Long destinationConnectionId) {
 		this.destinationConnectionId = destinationConnectionId;
-	}
-
-	public Long getDestinationParentItemId() {
-		return destinationParentItemId;
 	}
 
 	public void setDestinationParentItemId(Long destinationParentItemId) {
 		this.destinationParentItemId = destinationParentItemId;
 	}
 
-	public String getDestinationParentGoogleFileId() {
-		return destinationParentGoogleFileId;
-	}
-
 	public void setDestinationParentGoogleFileId(String destinationParentGoogleFileId) {
 		this.destinationParentGoogleFileId = destinationParentGoogleFileId;
-	}
-
-	public String getRequestedName() {
-		return requestedName;
 	}
 
 	public void setRequestedName(String requestedName) {
 		this.requestedName = requestedName;
 	}
 
-	public Long getResultItemId() {
-		return resultItemId;
-	}
-
 	public void setResultItemId(Long resultItemId) {
 		this.resultItemId = resultItemId;
-	}
-
-	public String getResultGoogleFileId() {
-		return resultGoogleFileId;
 	}
 
 	public void setResultGoogleFileId(String resultGoogleFileId) {
 		this.resultGoogleFileId = resultGoogleFileId;
 	}
 
-	public Long getTotalItems() {
-		return totalItems;
-	}
-
 	public void setTotalItems(Long totalItems) {
 		this.totalItems = totalItems;
-	}
-
-	public Long getCompletedItems() {
-		return completedItems;
 	}
 
 	public void setCompletedItems(Long completedItems) {
 		this.completedItems = completedItems;
 	}
 
-	public Long getFailedItems() {
-		return failedItems;
-	}
-
 	public void setFailedItems(Long failedItems) {
 		this.failedItems = failedItems;
-	}
-
-	public Long getTotalBytes() {
-		return totalBytes;
 	}
 
 	public void setTotalBytes(Long totalBytes) {
 		this.totalBytes = totalBytes;
 	}
 
-	public Long getTransferredBytes() {
-		return transferredBytes;
-	}
-
 	public void setTransferredBytes(Long transferredBytes) {
 		this.transferredBytes = transferredBytes;
-	}
-
-	public Integer getAttemptCount() {
-		return attemptCount;
 	}
 
 	public void setAttemptCount(Integer attemptCount) {
 		this.attemptCount = attemptCount;
 	}
 
-	public Integer getMaxAttempts() {
-		return maxAttempts;
-	}
-
 	public void setMaxAttempts(Integer maxAttempts) {
 		this.maxAttempts = maxAttempts;
-	}
-
-	public LocalDateTime getNextAttemptAt() {
-		return nextAttemptAt;
 	}
 
 	public void setNextAttemptAt(LocalDateTime nextAttemptAt) {
 		this.nextAttemptAt = nextAttemptAt;
 	}
 
-	public Boolean getCancelRequested() {
-		return cancelRequested;
-	}
-
 	public void setCancelRequested(Boolean cancelRequested) {
 		this.cancelRequested = cancelRequested;
-	}
-
-	public String getIdempotencyKey() {
-		return idempotencyKey;
 	}
 
 	public void setIdempotencyKey(String idempotencyKey) {
 		this.idempotencyKey = idempotencyKey;
 	}
 
-	public String getWorkerId() {
-		return workerId;
-	}
-
 	public void setWorkerId(String workerId) {
 		this.workerId = workerId;
-	}
-
-	public LocalDateTime getLeaseExpiresAt() {
-		return leaseExpiresAt;
 	}
 
 	public void setLeaseExpiresAt(LocalDateTime leaseExpiresAt) {
 		this.leaseExpiresAt = leaseExpiresAt;
 	}
 
-	public LocalDateTime getLastHeartbeatAt() {
-		return lastHeartbeatAt;
-	}
-
 	public void setLastHeartbeatAt(LocalDateTime lastHeartbeatAt) {
 		this.lastHeartbeatAt = lastHeartbeatAt;
-	}
-
-	public String getErrorCode() {
-		return errorCode;
 	}
 
 	public void setErrorCode(String errorCode) {
 		this.errorCode = errorCode;
 	}
 
-	public String getErrorMessage() {
-		return errorMessage;
-	}
-
 	public void setErrorMessage(String errorMessage) {
 		this.errorMessage = errorMessage;
-	}
-
-	public LocalDateTime getStartedAt() {
-		return startedAt;
 	}
 
 	public void setStartedAt(LocalDateTime startedAt) {
 		this.startedAt = startedAt;
 	}
 
-	public LocalDateTime getCompletedAt() {
-		return completedAt;
-	}
-
 	public void setCompletedAt(LocalDateTime completedAt) {
 		this.completedAt = completedAt;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
-	}
-
-	public Long getVersion() {
-		return version;
 	}
 
 }

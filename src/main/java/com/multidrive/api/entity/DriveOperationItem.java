@@ -17,8 +17,11 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import lombok.Getter;
+
 @Entity
 @Table(name = "drive_operation_items")
+@Getter
 public class DriveOperationItem {
 
 	@Id
@@ -117,160 +120,76 @@ public class DriveOperationItem {
 		updatedAt = LocalDateTime.now(ZoneOffset.UTC);
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public DriveOperationJob getJob() {
-		return job;
-	}
-
 	public void setJob(DriveOperationJob job) {
 		this.job = job;
-	}
-
-	public Integer getSequenceNo() {
-		return sequenceNo;
 	}
 
 	public void setSequenceNo(Integer sequenceNo) {
 		this.sequenceNo = sequenceNo;
 	}
 
-	public Long getSourceLocalItemId() {
-		return sourceLocalItemId;
-	}
-
 	public void setSourceLocalItemId(Long sourceLocalItemId) {
 		this.sourceLocalItemId = sourceLocalItemId;
-	}
-
-	public String getSourceGoogleFileId() {
-		return sourceGoogleFileId;
 	}
 
 	public void setSourceGoogleFileId(String sourceGoogleFileId) {
 		this.sourceGoogleFileId = sourceGoogleFileId;
 	}
 
-	public String getSourceName() {
-		return sourceName;
-	}
-
 	public void setSourceName(String sourceName) {
 		this.sourceName = sourceName;
-	}
-
-	public String getSourceMimeType() {
-		return sourceMimeType;
 	}
 
 	public void setSourceMimeType(String sourceMimeType) {
 		this.sourceMimeType = sourceMimeType;
 	}
 
-	public String getSourceParentGoogleFileId() {
-		return sourceParentGoogleFileId;
-	}
-
 	public void setSourceParentGoogleFileId(String sourceParentGoogleFileId) {
 		this.sourceParentGoogleFileId = sourceParentGoogleFileId;
-	}
-
-	public String getSourcePath() {
-		return sourcePath;
 	}
 
 	public void setSourcePath(String sourcePath) {
 		this.sourcePath = sourcePath;
 	}
 
-	public Long getDestinationLocalItemId() {
-		return destinationLocalItemId;
-	}
-
 	public void setDestinationLocalItemId(Long destinationLocalItemId) {
 		this.destinationLocalItemId = destinationLocalItemId;
-	}
-
-	public String getDestinationGoogleFileId() {
-		return destinationGoogleFileId;
 	}
 
 	public void setDestinationGoogleFileId(String destinationGoogleFileId) {
 		this.destinationGoogleFileId = destinationGoogleFileId;
 	}
 
-	public String getDestinationParentGoogleFileId() {
-		return destinationParentGoogleFileId;
-	}
-
 	public void setDestinationParentGoogleFileId(String destinationParentGoogleFileId) {
 		this.destinationParentGoogleFileId = destinationParentGoogleFileId;
-	}
-
-	public String getDestinationPath() {
-		return destinationPath;
 	}
 
 	public void setDestinationPath(String destinationPath) {
 		this.destinationPath = destinationPath;
 	}
 
-	public DriveOperationItemStatus getStatus() {
-		return status;
-	}
-
 	public void setStatus(DriveOperationItemStatus status) {
 		this.status = status;
-	}
-
-	public Long getSizeBytes() {
-		return sizeBytes;
 	}
 
 	public void setSizeBytes(Long sizeBytes) {
 		this.sizeBytes = sizeBytes;
 	}
 
-	public Long getTransferredBytes() {
-		return transferredBytes;
-	}
-
 	public void setTransferredBytes(Long transferredBytes) {
 		this.transferredBytes = transferredBytes;
-	}
-
-	public Integer getAttemptCount() {
-		return attemptCount;
 	}
 
 	public void setAttemptCount(Integer attemptCount) {
 		this.attemptCount = attemptCount;
 	}
 
-	public String getErrorCode() {
-		return errorCode;
-	}
-
 	public void setErrorCode(String errorCode) {
 		this.errorCode = errorCode;
 	}
 
-	public String getErrorMessage() {
-		return errorMessage;
-	}
-
 	public void setErrorMessage(String errorMessage) {
 		this.errorMessage = errorMessage;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
 	}
 
 }

@@ -19,8 +19,13 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
 @Table(name = "google_drive_sources")
+@Getter
+@Setter
 public class GoogleDriveSource {
 
 	@Id
@@ -100,126 +105,6 @@ public class GoogleDriveSource {
 	public void preUpdate() {
 
 		updatedAt = LocalDateTime.now(ZoneOffset.UTC);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public GoogleDriveConnection getConnection() {
-		return connection;
-	}
-
-	public void setConnection(GoogleDriveConnection connection) {
-		this.connection = connection;
-	}
-
-	public GoogleDriveSourceType getSourceType() {
-		return sourceType;
-	}
-
-	public void setSourceType(GoogleDriveSourceType sourceType) {
-		this.sourceType = sourceType;
-	}
-
-	public String getGoogleDriveId() {
-		return googleDriveId;
-	}
-
-	public void setGoogleDriveId(String googleDriveId) {
-		this.googleDriveId = googleDriveId;
-	}
-
-	public String getRootFolderId() {
-		return rootFolderId;
-	}
-
-	public void setRootFolderId(String rootFolderId) {
-		this.rootFolderId = rootFolderId;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public GoogleDriveSourceStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(GoogleDriveSourceStatus status) {
-		this.status = status;
-	}
-
-	public Boolean getHidden() {
-		return hidden;
-	}
-
-	public void setHidden(Boolean hidden) {
-		this.hidden = hidden;
-	}
-
-	public Instant getGoogleCreatedTime() {
-		return googleCreatedTime;
-	}
-
-	public void setGoogleCreatedTime(Instant googleCreatedTime) {
-		this.googleCreatedTime = googleCreatedTime;
-	}
-
-	public GoogleDriveSourceCapabilities getCapabilities() {
-		return capabilities;
-	}
-
-	public void setCapabilities(GoogleDriveSourceCapabilities capabilities) {
-		this.capabilities = capabilities;
-	}
-
-	public GoogleDriveSourceRestrictions getRestrictions() {
-		return restrictions;
-	}
-
-	public void setRestrictions(GoogleDriveSourceRestrictions restrictions) {
-		this.restrictions = restrictions;
-	}
-
-	public String getDiscoveryRunId() {
-		return discoveryRunId;
-	}
-
-	public void setDiscoveryRunId(String discoveryRunId) {
-		this.discoveryRunId = discoveryRunId;
-	}
-
-	public LocalDateTime getLastDiscoveredAt() {
-		return lastDiscoveredAt;
-	}
-
-	public void setLastDiscoveredAt(LocalDateTime lastDiscoveredAt) {
-		this.lastDiscoveredAt = lastDiscoveredAt;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
-	}
-
-	public void setUpdatedAt(LocalDateTime updatedAt) {
-		this.updatedAt = updatedAt;
 	}
 
 }

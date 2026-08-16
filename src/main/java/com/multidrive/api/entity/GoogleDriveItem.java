@@ -20,9 +20,15 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
-@Table(name = "google_drive_items", uniqueConstraints = {
-		@UniqueConstraint(name = "uk_google_drive_item", columnNames = { "connection_id", "google_file_id" }) })
+@Table(name = "google_drive_items",
+		uniqueConstraints = {
+				@UniqueConstraint(name = "uk_google_drive_item", columnNames = { "connection_id", "google_file_id" }) })
+@Getter
+@Setter
 public class GoogleDriveItem {
 
 	@Id
@@ -121,182 +127,6 @@ public class GoogleDriveItem {
 	public void preUpdate() {
 
 		updatedAt = LocalDateTime.now(ZoneOffset.UTC);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public GoogleDriveConnection getConnection() {
-		return connection;
-	}
-
-	public void setConnection(GoogleDriveConnection connection) {
-		this.connection = connection;
-	}
-
-	public GoogleDriveSource getSource() {
-		return source;
-	}
-
-	public void setSource(GoogleDriveSource source) {
-		this.source = source;
-	}
-
-	public String getGoogleFileId() {
-		return googleFileId;
-	}
-
-	public void setGoogleFileId(String googleFileId) {
-		this.googleFileId = googleFileId;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getMimeType() {
-		return mimeType;
-	}
-
-	public void setMimeType(String mimeType) {
-		this.mimeType = mimeType;
-	}
-
-	public GoogleDriveItemCategory getCategory() {
-		return category;
-	}
-
-	public void setCategory(GoogleDriveItemCategory category) {
-		this.category = category;
-	}
-
-	public GoogleDriveItemSourceType getSourceType() {
-		return sourceType;
-	}
-
-	public void setSourceType(GoogleDriveItemSourceType sourceType) {
-		this.sourceType = sourceType;
-	}
-
-	public String getParentId() {
-		return parentId;
-	}
-
-	public void setParentId(String parentId) {
-		this.parentId = parentId;
-	}
-
-	public String getDriveId() {
-		return driveId;
-	}
-
-	public void setDriveId(String driveId) {
-		this.driveId = driveId;
-	}
-
-	public String getWebViewLink() {
-		return webViewLink;
-	}
-
-	public void setWebViewLink(String webViewLink) {
-		this.webViewLink = webViewLink;
-	}
-
-	public String getThumbnailLink() {
-		return thumbnailLink;
-	}
-
-	public void setThumbnailLink(String thumbnailLink) {
-		this.thumbnailLink = thumbnailLink;
-	}
-
-	public String getIconLink() {
-		return iconLink;
-	}
-
-	public void setIconLink(String iconLink) {
-		this.iconLink = iconLink;
-	}
-
-	public Long getSizeBytes() {
-		return sizeBytes;
-	}
-
-	public void setSizeBytes(Long sizeBytes) {
-		this.sizeBytes = sizeBytes;
-	}
-
-	public Instant getGoogleCreatedTime() {
-		return googleCreatedTime;
-	}
-
-	public void setGoogleCreatedTime(Instant googleCreatedTime) {
-		this.googleCreatedTime = googleCreatedTime;
-	}
-
-	public Instant getGoogleModifiedTime() {
-		return googleModifiedTime;
-	}
-
-	public void setGoogleModifiedTime(Instant googleModifiedTime) {
-		this.googleModifiedTime = googleModifiedTime;
-	}
-
-	public boolean isTrashed() {
-		return trashed;
-	}
-
-	public void setTrashed(boolean trashed) {
-		this.trashed = trashed;
-	}
-
-	public Boolean getExplicitlyTrashed() {
-		return explicitlyTrashed;
-	}
-
-	public void setExplicitlyTrashed(Boolean explicitlyTrashed) {
-		this.explicitlyTrashed = explicitlyTrashed;
-	}
-
-	public String getSyncRunId() {
-		return syncRunId;
-	}
-
-	public void setSyncRunId(String syncRunId) {
-		this.syncRunId = syncRunId;
-	}
-
-	public GoogleDriveItemCapabilities getCapabilities() {
-		return capabilities;
-	}
-
-	public void setCapabilities(GoogleDriveItemCapabilities capabilities) {
-		this.capabilities = capabilities;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
-	}
-
-	public void setUpdatedAt(LocalDateTime updatedAt) {
-		this.updatedAt = updatedAt;
 	}
 
 }

@@ -15,8 +15,13 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
 @Table(name = "google_drive_watch_channels")
+@Getter
+@Setter
 public class GoogleDriveWatchChannel {
 
 	@Id
@@ -71,94 +76,6 @@ public class GoogleDriveWatchChannel {
 	public void preUpdate() {
 
 		updatedAt = LocalDateTime.now(ZoneOffset.UTC);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public GoogleDriveChangeTracker getTracker() {
-		return tracker;
-	}
-
-	public void setTracker(GoogleDriveChangeTracker tracker) {
-		this.tracker = tracker;
-	}
-
-	public String getChannelId() {
-		return channelId;
-	}
-
-	public void setChannelId(String channelId) {
-		this.channelId = channelId;
-	}
-
-	public String getChannelToken() {
-		return channelToken;
-	}
-
-	public void setChannelToken(String channelToken) {
-		this.channelToken = channelToken;
-	}
-
-	public String getResourceId() {
-		return resourceId;
-	}
-
-	public void setResourceId(String resourceId) {
-		this.resourceId = resourceId;
-	}
-
-	public String getResourceUri() {
-		return resourceUri;
-	}
-
-	public void setResourceUri(String resourceUri) {
-		this.resourceUri = resourceUri;
-	}
-
-	public LocalDateTime getExpiration() {
-		return expiration;
-	}
-
-	public void setExpiration(LocalDateTime expiration) {
-		this.expiration = expiration;
-	}
-
-	public Long getLastMessageNumber() {
-		return lastMessageNumber;
-	}
-
-	public void setLastMessageNumber(Long lastMessageNumber) {
-		this.lastMessageNumber = lastMessageNumber;
-	}
-
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
-	}
-
-	public void setUpdatedAt(LocalDateTime updatedAt) {
-		this.updatedAt = updatedAt;
 	}
 
 }

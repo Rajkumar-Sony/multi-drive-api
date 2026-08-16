@@ -3,7 +3,12 @@ package com.multidrive.api.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Embeddable
+@Getter
+@Setter
 public class GoogleDriveSourceCapabilities {
 
 	@Column(name = "cap_can_add_children")
@@ -68,173 +73,5 @@ public class GoogleDriveSourceCapabilities {
 
 	@Column(name = "cap_can_change_download_restriction")
 	private Boolean canChangeDownloadRestriction;
-
-	public Boolean getCanAddChildren() {
-		return canAddChildren;
-	}
-
-	public void setCanAddChildren(Boolean value) {
-		this.canAddChildren = value;
-	}
-
-	public Boolean getCanComment() {
-		return canComment;
-	}
-
-	public void setCanComment(Boolean value) {
-		this.canComment = value;
-	}
-
-	public Boolean getCanCopy() {
-		return canCopy;
-	}
-
-	public void setCanCopy(Boolean value) {
-		this.canCopy = value;
-	}
-
-	public Boolean getCanDeleteDrive() {
-		return canDeleteDrive;
-	}
-
-	public void setCanDeleteDrive(Boolean value) {
-		this.canDeleteDrive = value;
-	}
-
-	public Boolean getCanDownload() {
-		return canDownload;
-	}
-
-	public void setCanDownload(Boolean value) {
-		this.canDownload = value;
-	}
-
-	public Boolean getCanEdit() {
-		return canEdit;
-	}
-
-	public void setCanEdit(Boolean value) {
-		this.canEdit = value;
-	}
-
-	public Boolean getCanListChildren() {
-		return canListChildren;
-	}
-
-	public void setCanListChildren(Boolean value) {
-		this.canListChildren = value;
-	}
-
-	public Boolean getCanManageMembers() {
-		return canManageMembers;
-	}
-
-	public void setCanManageMembers(Boolean value) {
-		this.canManageMembers = value;
-	}
-
-	public Boolean getCanReadRevisions() {
-		return canReadRevisions;
-	}
-
-	public void setCanReadRevisions(Boolean value) {
-		this.canReadRevisions = value;
-	}
-
-	public Boolean getCanRename() {
-		return canRename;
-	}
-
-	public void setCanRename(Boolean value) {
-		this.canRename = value;
-	}
-
-	public Boolean getCanRenameDrive() {
-		return canRenameDrive;
-	}
-
-	public void setCanRenameDrive(Boolean value) {
-		this.canRenameDrive = value;
-	}
-
-	public Boolean getCanChangeDriveBackground() {
-		return canChangeDriveBackground;
-	}
-
-	public void setCanChangeDriveBackground(Boolean value) {
-		this.canChangeDriveBackground = value;
-	}
-
-	public Boolean getCanShare() {
-		return canShare;
-	}
-
-	public void setCanShare(Boolean value) {
-		this.canShare = value;
-	}
-
-	public Boolean getCanChangeCopyRequiresWriterPermissionRestriction() {
-		return canChangeCopyRequiresWriterPermissionRestriction;
-	}
-
-	public void setCanChangeCopyRequiresWriterPermissionRestriction(Boolean value) {
-		this.canChangeCopyRequiresWriterPermissionRestriction = value;
-	}
-
-	public Boolean getCanChangeDomainUsersOnlyRestriction() {
-		return canChangeDomainUsersOnlyRestriction;
-	}
-
-	public void setCanChangeDomainUsersOnlyRestriction(Boolean value) {
-		this.canChangeDomainUsersOnlyRestriction = value;
-	}
-
-	public Boolean getCanChangeDriveMembersOnlyRestriction() {
-		return canChangeDriveMembersOnlyRestriction;
-	}
-
-	public void setCanChangeDriveMembersOnlyRestriction(Boolean value) {
-		this.canChangeDriveMembersOnlyRestriction = value;
-	}
-
-	public Boolean getCanChangeSharingFoldersRequiresOrganizerPermissionRestriction() {
-		return canChangeSharingFoldersRequiresOrganizerPermissionRestriction;
-	}
-
-	public void setCanChangeSharingFoldersRequiresOrganizerPermissionRestriction(Boolean value) {
-		this.canChangeSharingFoldersRequiresOrganizerPermissionRestriction = value;
-	}
-
-	public Boolean getCanResetDriveRestrictions() {
-		return canResetDriveRestrictions;
-	}
-
-	public void setCanResetDriveRestrictions(Boolean value) {
-		this.canResetDriveRestrictions = value;
-	}
-
-	public Boolean getCanDeleteChildren() {
-		return canDeleteChildren;
-	}
-
-	public void setCanDeleteChildren(Boolean value) {
-		this.canDeleteChildren = value;
-	}
-
-	public Boolean getCanTrashChildren() {
-		return canTrashChildren;
-	}
-
-	public void setCanTrashChildren(Boolean value) {
-		this.canTrashChildren = value;
-	}
-
-	public Boolean getCanChangeDownloadRestriction() {
-		return canChangeDownloadRestriction;
-	}
-
-	public void setCanChangeDownloadRestriction(Boolean value) {
-		this.canChangeDownloadRestriction = value;
-	}
 
 }

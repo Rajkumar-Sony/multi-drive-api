@@ -4,9 +4,13 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+import lombok.Getter;
+
 @Entity
-@Table(name = "google_drive_connections", uniqueConstraints = {
-		@UniqueConstraint(name = "uk_user_google_account", columnNames = { "user_id", "google_subject_id" }) })
+@Table(name = "google_drive_connections",
+		uniqueConstraints = {
+				@UniqueConstraint(name = "uk_user_google_account", columnNames = { "user_id", "google_subject_id" }) })
+@Getter
 public class GoogleDriveConnection {
 
 	@Id
@@ -61,80 +65,36 @@ public class GoogleDriveConnection {
 		this.updatedAt = LocalDateTime.now();
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
 	public void setUser(User user) {
 		this.user = user;
-	}
-
-	public String getGoogleSubjectId() {
-		return googleSubjectId;
 	}
 
 	public void setGoogleSubjectId(String googleSubjectId) {
 		this.googleSubjectId = googleSubjectId;
 	}
 
-	public String getGoogleEmail() {
-		return googleEmail;
-	}
-
 	public void setGoogleEmail(String googleEmail) {
 		this.googleEmail = googleEmail;
-	}
-
-	public String getEncryptedAccessToken() {
-		return encryptedAccessToken;
 	}
 
 	public void setEncryptedAccessToken(String encryptedAccessToken) {
 		this.encryptedAccessToken = encryptedAccessToken;
 	}
 
-	public String getEncryptedRefreshToken() {
-		return encryptedRefreshToken;
-	}
-
 	public void setEncryptedRefreshToken(String encryptedRefreshToken) {
 		this.encryptedRefreshToken = encryptedRefreshToken;
-	}
-
-	public LocalDateTime getAccessTokenExpiry() {
-		return accessTokenExpiry;
 	}
 
 	public void setAccessTokenExpiry(LocalDateTime accessTokenExpiry) {
 		this.accessTokenExpiry = accessTokenExpiry;
 	}
 
-	public String getScopes() {
-		return scopes;
-	}
-
 	public void setScopes(String scopes) {
 		this.scopes = scopes;
 	}
 
-	public String getStatus() {
-		return status;
-	}
-
 	public void setStatus(String status) {
 		this.status = status;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
 	}
 
 }

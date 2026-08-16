@@ -17,8 +17,13 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
 @Table(name = "google_drive_change_trackers")
+@Getter
+@Setter
 public class GoogleDriveChangeTracker {
 
 	@Id
@@ -68,78 +73,6 @@ public class GoogleDriveChangeTracker {
 	public void preUpdate() {
 
 		updatedAt = LocalDateTime.now(ZoneOffset.UTC);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public GoogleDriveConnection getConnection() {
-		return connection;
-	}
-
-	public void setConnection(GoogleDriveConnection connection) {
-		this.connection = connection;
-	}
-
-	public GoogleDriveTrackerType getTrackerType() {
-		return trackerType;
-	}
-
-	public void setTrackerType(GoogleDriveTrackerType trackerType) {
-		this.trackerType = trackerType;
-	}
-
-	public String getDriveId() {
-		return driveId;
-	}
-
-	public void setDriveId(String driveId) {
-		this.driveId = driveId;
-	}
-
-	public String getPageToken() {
-		return pageToken;
-	}
-
-	public void setPageToken(String pageToken) {
-		this.pageToken = pageToken;
-	}
-
-	public LocalDateTime getLastSyncedAt() {
-		return lastSyncedAt;
-	}
-
-	public void setLastSyncedAt(LocalDateTime lastSyncedAt) {
-		this.lastSyncedAt = lastSyncedAt;
-	}
-
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
-	}
-
-	public void setUpdatedAt(LocalDateTime updatedAt) {
-		this.updatedAt = updatedAt;
 	}
 
 }

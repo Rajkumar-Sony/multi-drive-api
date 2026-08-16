@@ -31,6 +31,9 @@ google:
   oauth2:
     drive-redirect-uri: ${GOOGLE_DRIVE_REDIRECT_URI}
 
+  drive:
+    webhook-url: ${GOOGLE_DRIVE_WEBHOOK_URL:}
+
 app:
   security:
     token-encryption-key: ${TOKEN_ENCRYPTION_KEY}

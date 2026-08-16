@@ -9,6 +9,7 @@ public record GoogleDriveFileResponse(
         String modifiedTime,
         List<String> parents,
         String webViewLink,
-        String driveId
+        String driveId,
+        Boolean trashed
 ) {
 }

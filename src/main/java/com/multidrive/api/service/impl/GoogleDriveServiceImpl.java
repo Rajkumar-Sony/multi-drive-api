@@ -21,20 +21,33 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
     private static final String GOOGLE_SHARED_DRIVES_URL =
             "https://www.googleapis.com/drive/v3/drives";
 
-    private static final int DEFAULT_FILE_PAGE_SIZE = 50;
-    private static final int MAX_FILE_PAGE_SIZE = 1000;
+    private static final int DEFAULT_FILE_PAGE_SIZE =
+            50;
 
-    private static final int DEFAULT_SHARED_DRIVE_PAGE_SIZE = 50;
-    private static final int MAX_SHARED_DRIVE_PAGE_SIZE = 100;
+    private static final int MAX_FILE_PAGE_SIZE =
+            1000;
 
-    private final GoogleTokenService googleTokenService;
-    private final RestClient restClient;
+    private static final int DEFAULT_SHARED_DRIVE_PAGE_SIZE =
+            50;
+
+    private static final int MAX_SHARED_DRIVE_PAGE_SIZE =
+            100;
+
+    private final GoogleTokenService
+            googleTokenService;
+
+    private final RestClient
+            restClient;
 
     public GoogleDriveServiceImpl(
             GoogleTokenService googleTokenService
     ) {
-        this.googleTokenService = googleTokenService;
-        this.restClient = RestClient.create();
+
+        this.googleTokenService =
+                googleTokenService;
+
+        this.restClient =
+                RestClient.create();
     }
 
     @Override
@@ -46,17 +59,22 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
     ) {
 
         String accessToken =
-                googleTokenService.getValidAccessToken(
-                        connectionId,
-                        userId
-                );
+                googleTokenService
+                        .getValidAccessToken(
+                                connectionId,
+                                userId
+                        );
 
         int requestedPageSize =
-                normalizeFilePageSize(pageSize);
+                normalizeFilePageSize(
+                        pageSize
+                );
 
         UriComponentsBuilder uriBuilder =
                 UriComponentsBuilder
-                        .fromUriString(GOOGLE_DRIVE_FILES_URL)
+                        .fromUriString(
+                                GOOGLE_DRIVE_FILES_URL
+                        )
                         .queryParam(
                                 "pageSize",
                                 requestedPageSize
@@ -88,11 +106,14 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
                                         + "modifiedTime,"
                                         + "parents,"
                                         + "webViewLink,"
-                                        + "driveId"
+                                        + "driveId,"
+                                        + "trashed"
                                         + ")"
                         );
 
-        if (pageToken != null && !pageToken.isBlank()) {
+        if (pageToken != null
+                && !pageToken.isBlank()) {
+
             uriBuilder.queryParam(
                     "pageToken",
                     pageToken
@@ -119,6 +140,7 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
                         );
 
         if (response == null) {
+
             throw new IllegalStateException(
                     "Google Drive returned an empty file response"
             );
@@ -136,27 +158,38 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
     ) {
 
         String accessToken =
-                googleTokenService.getValidAccessToken(
-                        connectionId,
-                        userId
-                );
+                googleTokenService
+                        .getValidAccessToken(
+                                connectionId,
+                                userId
+                        );
 
         int requestedPageSize =
-                normalizeSharedDrivePageSize(pageSize);
+                normalizeSharedDrivePageSize(
+                        pageSize
+                );
 
         UriComponentsBuilder uriBuilder =
                 UriComponentsBuilder
-                        .fromUriString(GOOGLE_SHARED_DRIVES_URL)
+                        .fromUriString(
+                                GOOGLE_SHARED_DRIVES_URL
+                        )
                         .queryParam(
                                 "pageSize",
                                 requestedPageSize
                         )
                         .queryParam(
                                 "fields",
-                                "nextPageToken,drives(id,name)"
+                                "nextPageToken,"
+                                        + "drives("
+                                        + "id,"
+                                        + "name"
+                                        + ")"
                         );
 
-        if (pageToken != null && !pageToken.isBlank()) {
+        if (pageToken != null
+                && !pageToken.isBlank()) {
+
             uriBuilder.queryParam(
                     "pageToken",
                     pageToken
@@ -183,6 +216,7 @@ public class GoogleDriveServiceImpl implements GoogleDriveService {
                         );
 
         if (response == null) {
+
             throw new IllegalStateException(
                     "Google Drive returned an empty Shared Drives response"
             );

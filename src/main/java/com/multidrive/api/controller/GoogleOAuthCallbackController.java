@@ -4,10 +4,12 @@ import com.multidrive.api.dto.GoogleTokenResponse;
 import com.multidrive.api.dto.GoogleUserInfoResponse;
 import com.multidrive.api.entity.GoogleDriveChangeTracker;
 import com.multidrive.api.entity.GoogleDriveConnection;
+import com.multidrive.api.entity.GoogleDriveWatchChannel;
 import com.multidrive.api.entity.User;
 import com.multidrive.api.service.GoogleDriveChangeService;
 import com.multidrive.api.service.GoogleDriveConnectionService;
 import com.multidrive.api.service.GoogleDriveOAuthService;
+import com.multidrive.api.service.GoogleDriveWatchService;
 import com.multidrive.api.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
@@ -49,6 +51,9 @@ public class GoogleOAuthCallbackController {
     private final GoogleDriveChangeService
             googleDriveChangeService;
 
+    private final GoogleDriveWatchService
+            googleDriveWatchService;
+
     private final UserService
             userService;
 
@@ -61,6 +66,9 @@ public class GoogleOAuthCallbackController {
 
             GoogleDriveChangeService
                     googleDriveChangeService,
+
+            GoogleDriveWatchService
+                    googleDriveWatchService,
 
             UserService
                     userService
@@ -75,12 +83,16 @@ public class GoogleOAuthCallbackController {
         this.googleDriveChangeService =
                 googleDriveChangeService;
 
+        this.googleDriveWatchService =
+                googleDriveWatchService;
+
         this.userService =
                 userService;
     }
 
     @GetMapping("/callback")
     public ResponseEntity<Map<String, Object>> callback(
+
             @RequestParam(required = false)
             String code,
 
@@ -118,9 +130,6 @@ public class GoogleOAuthCallbackController {
                         OAUTH_STATE_SESSION_KEY
                 );
 
-        /*
-         * OAuth state is single-use.
-         */
         session.removeAttribute(
                 OAUTH_STATE_SESSION_KEY
         );
@@ -192,9 +201,6 @@ public class GoogleOAuthCallbackController {
                                     tokenResponse
                             );
 
-            /*
-             * Initialize the user's main change tracker.
-             */
             GoogleDriveChangeTracker userTracker =
                     googleDriveChangeService
                             .initializeUserTracker(
@@ -202,10 +208,6 @@ public class GoogleOAuthCallbackController {
                                     applicationUser.getId()
                             );
 
-            /*
-             * Initialize one tracker for every
-             * Shared Drive available to this account.
-             */
             List<GoogleDriveChangeTracker>
                     sharedDriveTrackers =
                     googleDriveChangeService
@@ -213,6 +215,45 @@ public class GoogleOAuthCallbackController {
                                     connection.getId(),
                                     applicationUser.getId()
                             );
+
+            String realTimeSyncStatus =
+                    "ACTIVE";
+
+            int watchChannelCount =
+                    0;
+
+            /*
+             * Google Drive account connection should
+             * still succeed even if webhook registration
+             * temporarily fails.
+             *
+             * Example:
+             * public HTTPS tunnel is not running.
+             */
+            try {
+
+                List<GoogleDriveWatchChannel> watchChannels =
+                        googleDriveWatchService
+                                .registerWatchChannels(
+                                        connection.getId(),
+                                        applicationUser.getId()
+                                );
+
+                watchChannelCount =
+                        watchChannels.size();
+
+            } catch (Exception watchException) {
+
+                realTimeSyncStatus =
+                        "SETUP_FAILED";
+
+                LOGGER.error(
+                        "Google Drive connected, but real-time "
+                                + "watch registration failed. connectionId={}",
+                        connection.getId(),
+                        watchException
+                );
+            }
 
             Map<String, Object> response =
                     new LinkedHashMap<>();
@@ -255,6 +296,16 @@ public class GoogleOAuthCallbackController {
             response.put(
                     "sharedDriveTrackerCount",
                     sharedDriveTrackers.size()
+            );
+
+            response.put(
+                    "watchChannelCount",
+                    watchChannelCount
+            );
+
+            response.put(
+                    "realTimeSyncStatus",
+                    realTimeSyncStatus
             );
 
             return ResponseEntity.ok(

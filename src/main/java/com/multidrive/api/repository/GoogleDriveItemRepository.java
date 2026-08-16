@@ -93,6 +93,57 @@ public interface GoogleDriveItemRepository
     );
 
     /*
+     * Used before moving a folder.
+     *
+     * We must not move a folder into one of its own
+     * descendants. PostgreSQL resolves the hierarchy in
+     * one recursive query.
+     */
+    @Query(
+            value = """
+                    WITH RECURSIVE descendants AS (
+
+                        SELECT
+                            child.google_file_id
+                        FROM google_drive_items child
+                        WHERE child.connection_id = :connectionId
+                          AND child.source_id = :sourceId
+                          AND child.parent_id = :rootGoogleFileId
+
+                        UNION ALL
+
+                        SELECT
+                            child.google_file_id
+                        FROM google_drive_items child
+                        JOIN descendants parent
+                          ON child.parent_id = parent.google_file_id
+                        WHERE child.connection_id = :connectionId
+                          AND child.source_id = :sourceId
+                    )
+
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM descendants
+                        WHERE google_file_id = :candidateGoogleFileId
+                    )
+                    """,
+            nativeQuery = true
+    )
+    boolean isDescendant(
+            @Param("connectionId")
+            Long connectionId,
+
+            @Param("sourceId")
+            Long sourceId,
+
+            @Param("rootGoogleFileId")
+            String rootGoogleFileId,
+
+            @Param("candidateGoogleFileId")
+            String candidateGoogleFileId
+    );
+
+    /*
      * Folder trash:
      *
      * Mark the complete local descendant tree as trashed

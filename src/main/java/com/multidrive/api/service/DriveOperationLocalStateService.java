@@ -21,6 +21,14 @@ public interface DriveOperationLocalStateService {
             GoogleDriveFileResponse remoteFile
     );
 
+    Long createCopiedItem(
+            Long connectionId,
+            Long sourceId,
+            GoogleDriveItemSourceType sourceType,
+            String driveId,
+            GoogleDriveFileResponse remoteFile
+    );
+
     void updateItem(
             Long itemId,
             GoogleDriveFileResponse remoteFile

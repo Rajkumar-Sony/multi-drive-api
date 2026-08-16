@@ -1,7 +1,9 @@
 package com.multidrive.api.controller;
 
+import com.multidrive.api.dto.DriveCopyRequest;
 import com.multidrive.api.dto.DriveCreateFolderRequest;
 import com.multidrive.api.dto.DriveItemDetailsResponse;
+import com.multidrive.api.dto.DriveMoveRequest;
 import com.multidrive.api.dto.DriveRenameRequest;
 import com.multidrive.api.service.DriveOperationService;
 
@@ -69,6 +71,56 @@ public class DriveOperationController {
 
         return driveOperationService
                 .rename(
+                        requireGoogleSubjectId(
+                                oidcUser
+                        ),
+                        itemId,
+                        request
+                );
+    }
+
+    @PostMapping(
+            "/items/{itemId}/move"
+    )
+    public DriveItemDetailsResponse move(
+
+            @PathVariable
+            Long itemId,
+
+            @RequestBody
+            DriveMoveRequest request,
+
+            @AuthenticationPrincipal
+            OidcUser oidcUser
+    ) {
+
+        return driveOperationService
+                .move(
+                        requireGoogleSubjectId(
+                                oidcUser
+                        ),
+                        itemId,
+                        request
+                );
+    }
+
+    @PostMapping(
+            "/items/{itemId}/copy"
+    )
+    public DriveItemDetailsResponse copy(
+
+            @PathVariable
+            Long itemId,
+
+            @RequestBody
+            DriveCopyRequest request,
+
+            @AuthenticationPrincipal
+            OidcUser oidcUser
+    ) {
+
+        return driveOperationService
+                .copy(
                         requireGoogleSubjectId(
                                 oidcUser
                         ),

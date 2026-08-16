@@ -13,6 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class GoogleDriveFileMutationServiceImpl
@@ -193,6 +194,189 @@ public class GoogleDriveFileMutationServiceImpl
     }
 
     @Override
+    public GoogleDriveFileResponse move(
+            Long connectionId,
+            Long userId,
+            String googleFileId,
+            String destinationParentGoogleFileId,
+            List<String> currentParentGoogleFileIds
+    ) {
+
+        validateIdentifiers(
+                connectionId,
+                userId,
+                googleFileId
+        );
+
+        if (destinationParentGoogleFileId == null
+                || destinationParentGoogleFileId.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "destinationParentGoogleFileId is required"
+            );
+        }
+
+        String accessToken =
+                googleTokenService
+                        .getValidAccessToken(
+                                connectionId,
+                                userId
+                        );
+
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder
+                        .fromUriString(
+                                GOOGLE_DRIVE_FILES_URL
+                                        + "/"
+                                        + googleFileId
+                        )
+                        .queryParam(
+                                "addParents",
+                                destinationParentGoogleFileId
+                        )
+                        .queryParam(
+                                "supportsAllDrives",
+                                true
+                        )
+                        .queryParam(
+                                "fields",
+                                GoogleDriveFieldMasks.FILE_RESOURCE
+                        );
+
+        String removeParents =
+                buildRemoveParents(
+                        currentParentGoogleFileIds,
+                        destinationParentGoogleFileId
+                );
+
+        if (!removeParents.isBlank()) {
+
+            uriBuilder.queryParam(
+                    "removeParents",
+                    removeParents
+            );
+        }
+
+        GoogleDriveFileMutationRequest emptyRequest =
+                new GoogleDriveFileMutationRequest(
+                        null,
+                        null,
+                        null,
+                        null
+                );
+
+        GoogleDriveFileResponse response =
+                restClient
+                        .patch()
+                        .uri(
+                                uriBuilder
+                                        .build()
+                                        .encode()
+                                        .toUri()
+                        )
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + accessToken
+                        )
+                        .body(
+                                emptyRequest
+                        )
+                        .retrieve()
+                        .body(
+                                GoogleDriveFileResponse.class
+                        );
+
+        return requireFileResponse(
+                response,
+                "Google Drive returned an empty move response"
+        );
+    }
+
+    @Override
+    public GoogleDriveFileResponse copy(
+            Long connectionId,
+            Long userId,
+            String googleFileId,
+            String destinationParentGoogleFileId,
+            String name
+    ) {
+
+        validateIdentifiers(
+                connectionId,
+                userId,
+                googleFileId
+        );
+
+        if (destinationParentGoogleFileId == null
+                || destinationParentGoogleFileId.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "destinationParentGoogleFileId is required"
+            );
+        }
+
+        String accessToken =
+                googleTokenService
+                        .getValidAccessToken(
+                                connectionId,
+                                userId
+                        );
+
+        GoogleDriveFileMutationRequest request =
+                new GoogleDriveFileMutationRequest(
+                        normalizeOptionalName(
+                                name
+                        ),
+                        null,
+                        List.of(
+                                destinationParentGoogleFileId
+                        ),
+                        null
+                );
+
+        URI uri =
+                UriComponentsBuilder
+                        .fromUriString(
+                                GOOGLE_DRIVE_FILES_URL
+                                        + "/"
+                                        + googleFileId
+                                        + "/copy"
+                        )
+                        .queryParam(
+                                "supportsAllDrives",
+                                true
+                        )
+                        .queryParam(
+                                "fields",
+                                GoogleDriveFieldMasks.FILE_RESOURCE
+                        )
+                        .build()
+                        .encode()
+                        .toUri();
+
+        GoogleDriveFileResponse response =
+                restClient
+                        .post()
+                        .uri(uri)
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + accessToken
+                        )
+                        .body(
+                                request
+                        )
+                        .retrieve()
+                        .body(
+                                GoogleDriveFileResponse.class
+                        );
+
+        return requireFileResponse(
+                response,
+                "Google Drive returned an empty copy response"
+        );
+    }
+
+    @Override
     public GoogleDriveFileResponse trash(
             Long connectionId,
             Long userId,
@@ -336,7 +520,42 @@ public class GoogleDriveFileMutationServiceImpl
         return requireFileResponse(
                 response,
                 emptyResponseMessage
-        );
+                );
+    }
+
+    private String buildRemoveParents(
+            List<String> currentParents,
+            String destinationParent
+    ) {
+
+        if (currentParents == null
+                || currentParents.isEmpty()) {
+
+            return "";
+        }
+
+        return currentParents
+                .stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(
+                        parent ->
+                                !parent.isBlank()
+                )
+                .filter(
+                        parent ->
+                                !parent.equals(
+                                        destinationParent
+                                )
+                )
+                .distinct()
+                .reduce(
+                        "",
+                        (left, right) ->
+                                left.isBlank()
+                                        ? right
+                                        : left + "," + right
+                );
     }
 
     private URI buildFileUri(
@@ -398,6 +617,31 @@ public class GoogleDriveFileMutationServiceImpl
             throw new IllegalArgumentException(
                     "name must not be blank"
             );
+        }
+
+        if (normalized.length() > 255) {
+
+            throw new IllegalArgumentException(
+                    "name must not exceed 255 characters"
+            );
+        }
+
+        return normalized;
+    }
+
+    private String normalizeOptionalName(
+            String name
+    ) {
+
+        if (name == null) {
+            return null;
+        }
+
+        String normalized =
+                name.trim();
+
+        if (normalized.isEmpty()) {
+            return null;
         }
 
         if (normalized.length() > 255) {

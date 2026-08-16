@@ -2,6 +2,8 @@ package com.multidrive.api.service;
 
 import com.multidrive.api.dto.GoogleDriveFileResponse;
 
+import java.util.List;
+
 public interface GoogleDriveFileMutationService {
 
     GoogleDriveFileResponse getFile(
@@ -21,6 +23,22 @@ public interface GoogleDriveFileMutationService {
             Long connectionId,
             Long userId,
             String googleFileId,
+            String name
+    );
+
+    GoogleDriveFileResponse move(
+            Long connectionId,
+            Long userId,
+            String googleFileId,
+            String destinationParentGoogleFileId,
+            List<String> currentParentGoogleFileIds
+    );
+
+    GoogleDriveFileResponse copy(
+            Long connectionId,
+            Long userId,
+            String googleFileId,
+            String destinationParentGoogleFileId,
             String name
     );
 

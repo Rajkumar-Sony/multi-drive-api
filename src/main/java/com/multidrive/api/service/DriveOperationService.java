@@ -1,7 +1,9 @@
 package com.multidrive.api.service;
 
+import com.multidrive.api.dto.DriveCopyRequest;
 import com.multidrive.api.dto.DriveCreateFolderRequest;
 import com.multidrive.api.dto.DriveItemDetailsResponse;
+import com.multidrive.api.dto.DriveMoveRequest;
 import com.multidrive.api.dto.DriveRenameRequest;
 
 public interface DriveOperationService {
@@ -15,6 +17,18 @@ public interface DriveOperationService {
             String googleSubjectId,
             Long itemId,
             DriveRenameRequest request
+    );
+
+    DriveItemDetailsResponse move(
+            String googleSubjectId,
+            Long itemId,
+            DriveMoveRequest request
+    );
+
+    DriveItemDetailsResponse copy(
+            String googleSubjectId,
+            Long itemId,
+            DriveCopyRequest request
     );
 
     DriveItemDetailsResponse trash(

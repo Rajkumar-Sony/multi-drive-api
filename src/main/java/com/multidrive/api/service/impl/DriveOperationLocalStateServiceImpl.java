@@ -113,6 +113,27 @@ public class DriveOperationLocalStateServiceImpl
 
     @Override
     @Transactional
+    public Long createCopiedItem(
+            Long connectionId,
+            Long sourceId,
+            GoogleDriveItemSourceType sourceType,
+            String driveId,
+            GoogleDriveFileResponse remoteFile
+    ) {
+
+        return upsertCreatedItem(
+                connectionId,
+                sourceId,
+                sourceType,
+                driveId,
+                remoteFile,
+                null,
+                DEFAULT_BINARY_MIME_TYPE
+        );
+    }
+
+    @Override
+    @Transactional
     public void updateItem(
             Long itemId,
             GoogleDriveFileResponse remoteFile

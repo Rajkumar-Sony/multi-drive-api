@@ -2,6 +2,8 @@ package com.multidrive.api.service;
 
 import com.multidrive.api.entity.DriveOperationJobStatus;
 import com.multidrive.api.entity.DriveOperationType;
+import com.multidrive.api.entity.GoogleDriveSourceType;
+import com.multidrive.api.exception.DriveOperationCleanupRequiredException;
 import com.multidrive.api.model.DriveOperationJobExecutionSnapshot;
 import com.multidrive.api.model.DriveOperationStrategyType;
 import com.multidrive.api.repository.DriveOperationJobExecutionStore;
@@ -84,6 +86,29 @@ class DriveOperationJobRunnerTest {
 	}
 
 	@Test
+	void runMarksCleanupRequiredExceptionTerminalImmediately() {
+
+		DriveOperationJobExecutionStore store = mock(DriveOperationJobExecutionStore.class);
+		DriveOperationJobStateService stateService = mock(DriveOperationJobStateService.class);
+		DriveOperationLeaseHeartbeatService heartbeatService = mock(DriveOperationLeaseHeartbeatService.class);
+		DriveOperationJobExecutor executor = executor(DriveOperationStrategyType.NATIVE_COPY);
+		DriveOperationJobRunner runner = runner(store, stateService, heartbeatService, executor);
+		DriveOperationJobExecutionSnapshot job = new DriveOperationJobExecutionSnapshot(10L, 42L, "google-subject-123",
+				DriveOperationType.COPY, DriveOperationStrategyType.NATIVE_COPY, DriveOperationJobStatus.RUNNING, 123L,
+				20L, 30L, "file-id", "Source file", "application/pdf", 30L, 20L, GoogleDriveSourceType.MY_DRIVE, null,
+				null, "root-id", "Copy", 1, 3, false, null, LocalDateTime.parse("2026-08-17T00:00:00"));
+
+		when(store.findExecutionSnapshot(10L)).thenReturn(Optional.of(job), Optional.of(job));
+		doThrow(new DriveOperationCleanupRequiredException("COPY_MARKER_MISMATCH", "marker mismatch")).when(executor)
+			.execute(job, "worker-1");
+
+		runner.run(10L, "worker-1");
+
+		verify(stateService).fail(10L, "worker-1", DriveOperationJobStatus.CLEANUP_REQUIRED, "COPY_MARKER_MISMATCH",
+				"marker mismatch");
+	}
+
+	@Test
 	void constructorRejectsDuplicateStrategyExecutors() {
 
 		DriveOperationJobExecutor firstExecutor = executor(DriveOperationStrategyType.NATIVE_MOVE);
@@ -116,8 +141,9 @@ class DriveOperationJobRunnerTest {
 	private DriveOperationJobExecutionSnapshot job(DriveOperationJobStatus status, int attemptCount, int maxAttempts) {
 
 		return new DriveOperationJobExecutionSnapshot(10L, 42L, "google-subject-123", DriveOperationType.MOVE,
-				DriveOperationStrategyType.NATIVE_MOVE, status, 123L, 20L, 30L, "file-id", 30L, 20L, null, "root-id",
-				attemptCount, maxAttempts, false);
+				DriveOperationStrategyType.NATIVE_MOVE, status, 123L, 20L, 30L, "file-id", "Source file",
+				"application/pdf", 30L, 20L, GoogleDriveSourceType.MY_DRIVE, null, null, "root-id", null, attemptCount,
+				maxAttempts, false, null, LocalDateTime.parse("2026-08-17T00:00:00"));
 	}
 
 }

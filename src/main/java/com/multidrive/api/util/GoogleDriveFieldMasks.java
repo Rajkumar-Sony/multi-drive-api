@@ -18,7 +18,7 @@ public final class GoogleDriveFieldMasks {
 
 	public static final String FILE_RESOURCE = "id," + "name," + "mimeType," + "createdTime," + "modifiedTime,"
 			+ "parents," + "webViewLink," + "thumbnailLink," + "iconLink," + "size," + "driveId," + "trashed,"
-			+ "explicitlyTrashed," + "capabilities(" + FILE_CAPABILITIES + ")";
+			+ "explicitlyTrashed," + "appProperties," + "capabilities(" + FILE_CAPABILITIES + ")";
 
 	public static final String FILE_LIST = "nextPageToken," + "incompleteSearch," + "files(" + FILE_RESOURCE + ")";
 

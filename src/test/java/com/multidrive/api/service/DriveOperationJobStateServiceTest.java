@@ -124,6 +124,7 @@ class DriveOperationJobStateServiceTest {
 		service.markRootItemRunning(10L);
 		service.markRootItemVerifying(10L);
 		service.completeNativeMove(10L, "worker-1", 123L, "google-file-id");
+		service.completeNativeCopy(11L, "worker-1", 124L, "copy-google-file-id");
 
 		verify(driveOperationJobProgressPublisher).publish(10L, "Job claimed by background worker");
 		verify(driveOperationJobExecutionStore).markRootItemRunning(10L);
@@ -131,6 +132,9 @@ class DriveOperationJobStateServiceTest {
 		verify(driveOperationJobExecutionStore).completeNativeMove(eq(10L), eq("worker-1"), eq(123L),
 				eq("google-file-id"), any(LocalDateTime.class));
 		verify(driveOperationJobProgressPublisher).publish(10L, "Native Drive move completed");
+		verify(driveOperationJobExecutionStore).completeNativeCopy(eq(11L), eq("worker-1"), eq(124L),
+				eq("copy-google-file-id"), any(LocalDateTime.class));
+		verify(driveOperationJobProgressPublisher).publish(11L, "Native Drive copy completed");
 	}
 
 }

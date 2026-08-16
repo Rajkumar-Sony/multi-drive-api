@@ -52,7 +52,7 @@ public class DriveOperationJobDispatcher {
 
 			LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
-			Optional<Long> claimedJobId = driveOperationJobExecutionStore.claimNextNativeMove(workerId, now,
+			Optional<Long> claimedJobId = driveOperationJobExecutionStore.claimNextNativeOperation(workerId, now,
 					now.plus(DriveOperationJobStateService.LEASE_DURATION));
 
 			if (claimedJobId.isEmpty()) {

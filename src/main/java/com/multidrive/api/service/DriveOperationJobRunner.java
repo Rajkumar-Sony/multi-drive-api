@@ -1,6 +1,7 @@
 package com.multidrive.api.service;
 
 import com.multidrive.api.entity.DriveOperationJobStatus;
+import com.multidrive.api.exception.DriveOperationCleanupRequiredException;
 import com.multidrive.api.exception.DriveOperationLeaseLostException;
 import com.multidrive.api.model.DriveOperationJobExecutionSnapshot;
 import com.multidrive.api.model.DriveOperationStrategyType;
@@ -97,11 +98,21 @@ public class DriveOperationJobRunner {
 			return;
 		}
 
-		boolean retryable = driveOperationRetryPolicy.shouldRetry(exception);
-
 		String errorCode = driveOperationRetryPolicy.errorCode(exception);
 
 		String errorMessage = driveOperationRetryPolicy.errorMessage(exception);
+
+		Throwable rootCause = driveOperationRetryPolicy.unwrap(exception);
+
+		if (rootCause instanceof DriveOperationCleanupRequiredException) {
+
+			markTerminalFailure(jobId, workerId, DriveOperationJobStatus.CLEANUP_REQUIRED, errorCode, errorMessage,
+					exception);
+
+			return;
+		}
+
+		boolean retryable = driveOperationRetryPolicy.shouldRetry(exception);
 
 		if (retryable && current.attemptCount() < current.maxAttempts()) {
 
@@ -122,6 +133,12 @@ public class DriveOperationJobRunner {
 		}
 
 		DriveOperationJobStatus terminalStatus = determineTerminalStatus(current.status(), retryable);
+
+		markTerminalFailure(jobId, workerId, terminalStatus, errorCode, errorMessage, exception);
+	}
+
+	private void markTerminalFailure(Long jobId, String workerId, DriveOperationJobStatus terminalStatus,
+			String errorCode, String errorMessage, Exception exception) {
 
 		try {
 

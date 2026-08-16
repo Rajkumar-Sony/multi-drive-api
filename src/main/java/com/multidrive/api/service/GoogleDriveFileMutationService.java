@@ -3,6 +3,7 @@ package com.multidrive.api.service;
 import com.multidrive.api.dto.GoogleDriveFileResponse;
 
 import java.util.List;
+import java.util.Map;
 
 public interface GoogleDriveFileMutationService {
 
@@ -17,6 +18,9 @@ public interface GoogleDriveFileMutationService {
 
 	GoogleDriveFileResponse copy(Long connectionId, Long userId, String googleFileId,
 			String destinationParentGoogleFileId, String name);
+
+	GoogleDriveFileResponse copyWithAppProperties(Long connectionId, Long userId, String googleFileId,
+			String destinationParentGoogleFileId, String name, Map<String, String> appProperties);
 
 	GoogleDriveFileResponse trash(Long connectionId, Long userId, String googleFileId);
 

@@ -14,6 +14,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -89,6 +90,27 @@ class GoogleDriveFileMutationServiceImplTest {
 			.andRespond(withSuccess("{\"id\":\"copy-1\"}", MediaType.APPLICATION_JSON));
 
 		assertThat(service.copy(20L, 42L, "file-1", "dest-parent", " ").id()).isEqualTo("copy-1");
+		server.verify();
+	}
+
+	@Test
+	void copyWithAppPropertiesSendsPrivateMarkerMetadata() {
+
+		MockRestServiceServer server = bindMockServer();
+
+		server.expect(requestTo(containsString("/drive/v3/files/file-1/copy?")))
+			.andExpect(method(HttpMethod.POST))
+			.andExpect(content()
+				.string(allOf(containsString("\"parents\":[\"dest-parent\"]"), containsString("\"name\":\"Copy\""),
+						containsString("\"appProperties\":{\"multiDriveOp\":\"marker-1\"}"))))
+			.andRespond(withSuccess("{\"id\":\"copy-1\",\"appProperties\":{\"multiDriveOp\":\"marker-1\"}}",
+					MediaType.APPLICATION_JSON));
+
+		GoogleDriveFileResponse response = service.copyWithAppProperties(20L, 42L, "file-1", "dest-parent", " Copy ",
+				Map.of("multiDriveOp", "marker-1"));
+
+		assertThat(response.id()).isEqualTo("copy-1");
+		assertThat(response.appProperties()).containsEntry("multiDriveOp", "marker-1");
 		server.verify();
 	}
 

@@ -4,6 +4,7 @@ import com.multidrive.api.dto.GoogleDriveFileCapabilitiesResponse;
 import com.multidrive.api.dto.GoogleDriveFileResponse;
 import com.multidrive.api.entity.DriveOperationJobStatus;
 import com.multidrive.api.entity.DriveOperationType;
+import com.multidrive.api.entity.GoogleDriveSourceType;
 import com.multidrive.api.model.DriveOperationJobExecutionSnapshot;
 import com.multidrive.api.model.DriveOperationStrategyType;
 import com.multidrive.api.service.impl.NativeMoveDriveOperationJobExecutor;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.Mockito.never;
@@ -114,7 +116,8 @@ class NativeMoveDriveOperationJobExecutorTest {
 
 		return new DriveOperationJobExecutionSnapshot(JOB_ID, 99L, "google-subject-123", DriveOperationType.MOVE,
 				DriveOperationStrategyType.NATIVE_MOVE, DriveOperationJobStatus.VALIDATING, 123L, 20L, 30L, "file-1",
-				30L, 20L, 456L, "dest-parent", 1, 3, false);
+				"Source file", "application/pdf", 30L, 20L, GoogleDriveSourceType.MY_DRIVE, null, 456L, "dest-parent",
+				null, 1, 3, false, null, LocalDateTime.parse("2026-08-17T00:00:00"));
 	}
 
 	private GoogleDriveFileResponse file(String id, List<String> parents, boolean trashed,

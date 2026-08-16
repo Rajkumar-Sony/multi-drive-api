@@ -2,6 +2,9 @@ package com.multidrive.api.model;
 
 import com.multidrive.api.entity.DriveOperationJobStatus;
 import com.multidrive.api.entity.DriveOperationType;
+import com.multidrive.api.entity.GoogleDriveSourceType;
+
+import java.time.LocalDateTime;
 
 public record DriveOperationJobExecutionSnapshot(
 
@@ -25,17 +28,31 @@ public record DriveOperationJobExecutionSnapshot(
 
 		String sourceGoogleFileId,
 
+		String sourceName,
+
+		String sourceMimeType,
+
 		Long destinationSourceId,
 
 		Long destinationConnectionId,
+
+		GoogleDriveSourceType destinationSourceType,
+
+		String destinationGoogleDriveId,
 
 		Long destinationParentItemId,
 
 		String destinationParentGoogleFileId,
 
+		String requestedName,
+
 		Integer attemptCount,
 
 		Integer maxAttempts,
 
-		Boolean cancelRequested) {
+		Boolean cancelRequested,
+
+		String errorCode,
+
+		LocalDateTime createdAt) {
 }

@@ -83,6 +83,13 @@ public class DriveOperationJobStateService {
 		driveOperationJobProgressPublisher.publish(jobId, "Native Drive move completed");
 	}
 
+	public void completeNativeCopy(Long jobId, String workerId, Long resultItemId, String resultGoogleFileId) {
+
+		driveOperationJobExecutionStore.completeNativeCopy(jobId, workerId, resultItemId, resultGoogleFileId, now());
+
+		driveOperationJobProgressPublisher.publish(jobId, "Native Drive copy completed");
+	}
+
 	public void scheduleRetry(Long jobId, String workerId, LocalDateTime nextAttemptAt, String errorCode,
 			String errorMessage) {
 

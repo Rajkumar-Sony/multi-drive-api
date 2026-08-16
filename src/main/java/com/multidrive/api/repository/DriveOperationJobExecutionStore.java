@@ -3,6 +3,7 @@ package com.multidrive.api.repository;
 import com.multidrive.api.entity.DriveOperationItemStatus;
 import com.multidrive.api.entity.DriveOperationJobStatus;
 import com.multidrive.api.entity.DriveOperationType;
+import com.multidrive.api.entity.GoogleDriveSourceType;
 import com.multidrive.api.model.DriveOperationJobExecutionSnapshot;
 import com.multidrive.api.model.DriveOperationJobProgressSnapshot;
 import com.multidrive.api.model.DriveOperationStrategyType;
@@ -21,12 +22,15 @@ import java.util.Optional;
 @Repository
 public class DriveOperationJobExecutionStore {
 
-	private static final String CLAIM_NATIVE_MOVE_SQL = """
+	private static final String CLAIM_NATIVE_OPERATION_SQL = """
 			WITH candidate AS (
 			    SELECT id
 			    FROM drive_operation_jobs
 			    WHERE status = 'QUEUED'
-			      AND strategy_type = 'NATIVE_MOVE'
+			      AND strategy_type IN (
+			            'NATIVE_MOVE',
+			            'NATIVE_COPY'
+			      )
 			      AND cancel_requested = FALSE
 			      AND attempt_count < max_attempts
 			      AND (
@@ -45,8 +49,6 @@ public class DriveOperationJobExecutionStore {
 			    last_heartbeat_at = ?,
 			    started_at = COALESCE(started_at, ?),
 			    next_attempt_at = NULL,
-			    error_code = NULL,
-			    error_message = NULL,
 			    attempt_count = attempt_count + 1,
 			    updated_at = ?,
 			    version = version + 1
@@ -62,9 +64,9 @@ public class DriveOperationJobExecutionStore {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 
-	public Optional<Long> claimNextNativeMove(String workerId, LocalDateTime now, LocalDateTime leaseExpiresAt) {
+	public Optional<Long> claimNextNativeOperation(String workerId, LocalDateTime now, LocalDateTime leaseExpiresAt) {
 
-		List<Long> result = jdbcTemplate.query(CLAIM_NATIVE_MOVE_SQL, preparedStatement -> {
+		List<Long> result = jdbcTemplate.query(CLAIM_NATIVE_OPERATION_SQL, preparedStatement -> {
 
 			preparedStatement.setTimestamp(1, Timestamp.valueOf(now));
 
@@ -86,6 +88,11 @@ public class DriveOperationJobExecutionStore {
 		return Optional.of(result.getFirst());
 	}
 
+	public Optional<Long> claimNextNativeMove(String workerId, LocalDateTime now, LocalDateTime leaseExpiresAt) {
+
+		return claimNextNativeOperation(workerId, now, leaseExpiresAt);
+	}
+
 	public Optional<DriveOperationJobExecutionSnapshot> findExecutionSnapshot(Long jobId) {
 
 		String sql = """
@@ -100,16 +107,25 @@ public class DriveOperationJobExecutionStore {
 				    job.source_connection_id,
 				    job.source_source_id,
 				    job.source_google_file_id,
+				    job.source_name,
+				    job.source_mime_type,
 				    job.destination_source_id,
 				    job.destination_connection_id,
+				    destination_source.source_type AS destination_source_type,
+				    destination_source.google_drive_id AS destination_google_drive_id,
 				    job.destination_parent_item_id,
 				    job.destination_parent_google_file_id,
+				    job.requested_name,
 				    job.attempt_count,
 				    job.max_attempts,
-				    job.cancel_requested
+				    job.cancel_requested,
+				    job.error_code,
+				    job.created_at
 				FROM drive_operation_jobs job
 				JOIN users app_user
 				  ON app_user.id = job.user_id
+				JOIN google_drive_sources destination_source
+				  ON destination_source.id = job.destination_source_id
 				WHERE job.id = ?
 				""";
 
@@ -121,10 +137,15 @@ public class DriveOperationJobExecutionStore {
 						DriveOperationJobStatus.valueOf(resultSet.getString("status")),
 						resultSet.getLong("source_item_id"), resultSet.getLong("source_connection_id"),
 						resultSet.getLong("source_source_id"), resultSet.getString("source_google_file_id"),
+						resultSet.getString("source_name"), resultSet.getString("source_mime_type"),
 						resultSet.getLong("destination_source_id"), resultSet.getLong("destination_connection_id"),
+						GoogleDriveSourceType.valueOf(resultSet.getString("destination_source_type")),
+						resultSet.getString("destination_google_drive_id"),
 						getNullableLong(resultSet, "destination_parent_item_id"),
-						resultSet.getString("destination_parent_google_file_id"), resultSet.getInt("attempt_count"),
-						resultSet.getInt("max_attempts"), resultSet.getBoolean("cancel_requested")),
+						resultSet.getString("destination_parent_google_file_id"), resultSet.getString("requested_name"),
+						resultSet.getInt("attempt_count"), resultSet.getInt("max_attempts"),
+						resultSet.getBoolean("cancel_requested"), resultSet.getString("error_code"),
+						resultSet.getTimestamp("created_at").toLocalDateTime()),
 				jobId);
 
 		if (results.isEmpty()) {
@@ -283,6 +304,19 @@ public class DriveOperationJobExecutionStore {
 	public void completeNativeMove(Long jobId, String workerId, Long resultItemId, String resultGoogleFileId,
 			LocalDateTime now) {
 
+		completeSingleItemJob(jobId, workerId, resultItemId, resultGoogleFileId, now);
+	}
+
+	@Transactional
+	public void completeNativeCopy(Long jobId, String workerId, Long resultItemId, String resultGoogleFileId,
+			LocalDateTime now) {
+
+		completeSingleItemJob(jobId, workerId, resultItemId, resultGoogleFileId, now);
+	}
+
+	private void completeSingleItemJob(Long jobId, String workerId, Long resultItemId, String resultGoogleFileId,
+			LocalDateTime now) {
+
 		int itemUpdated = jdbcTemplate.update("""
 				UPDATE drive_operation_items
 				SET
@@ -291,6 +325,7 @@ public class DriveOperationJobExecutionStore {
 				    destination_google_file_id = ?,
 				    error_code = NULL,
 				    error_message = NULL,
+				    transferred_bytes = COALESCE(size_bytes, transferred_bytes),
 				    updated_at = ?
 				WHERE job_id = ?
 				  AND sequence_no = 0
@@ -309,6 +344,7 @@ public class DriveOperationJobExecutionStore {
 				    result_google_file_id = ?,
 				    completed_items = 1,
 				    failed_items = 0,
+				    transferred_bytes = COALESCE(total_bytes, transferred_bytes),
 				    completed_at = ?,
 				    worker_id = NULL,
 				    lease_expires_at = NULL,

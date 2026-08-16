@@ -13,6 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -132,6 +133,13 @@ public class GoogleDriveFileMutationServiceImpl implements GoogleDriveFileMutati
 	public GoogleDriveFileResponse copy(Long connectionId, Long userId, String googleFileId,
 			String destinationParentGoogleFileId, String name) {
 
+		return copyWithAppProperties(connectionId, userId, googleFileId, destinationParentGoogleFileId, name, null);
+	}
+
+	@Override
+	public GoogleDriveFileResponse copyWithAppProperties(Long connectionId, Long userId, String googleFileId,
+			String destinationParentGoogleFileId, String name, Map<String, String> appProperties) {
+
 		validateIdentifiers(connectionId, userId, googleFileId);
 
 		if (destinationParentGoogleFileId == null || destinationParentGoogleFileId.isBlank()) {
@@ -142,7 +150,8 @@ public class GoogleDriveFileMutationServiceImpl implements GoogleDriveFileMutati
 		String accessToken = googleTokenService.getValidAccessToken(connectionId, userId);
 
 		GoogleDriveFileMutationRequest request = new GoogleDriveFileMutationRequest(normalizeOptionalName(name), null,
-				List.of(destinationParentGoogleFileId), null);
+				List.of(destinationParentGoogleFileId), null,
+				appProperties == null || appProperties.isEmpty() ? null : Map.copyOf(appProperties));
 
 		URI uri = UriComponentsBuilder.fromUriString(GOOGLE_DRIVE_FILES_URL + "/" + googleFileId + "/copy")
 			.queryParam("supportsAllDrives", true)

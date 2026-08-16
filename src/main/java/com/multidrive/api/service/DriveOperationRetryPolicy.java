@@ -1,7 +1,9 @@
 package com.multidrive.api.service;
 
 import com.multidrive.api.exception.DriveItemNotFoundException;
+import com.multidrive.api.exception.DriveOperationCleanupRequiredException;
 import com.multidrive.api.exception.DriveOperationNotAllowedException;
+import com.multidrive.api.exception.DriveOperationReconciliationPendingException;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -19,6 +21,16 @@ public class DriveOperationRetryPolicy {
 	public boolean shouldRetry(Throwable throwable) {
 
 		Throwable cause = unwrap(throwable);
+
+		if (cause instanceof DriveOperationCleanupRequiredException) {
+
+			return false;
+		}
+
+		if (cause instanceof DriveOperationReconciliationPendingException) {
+
+			return true;
+		}
 
 		if (cause instanceof DriveOperationNotAllowedException) {
 
@@ -70,6 +82,16 @@ public class DriveOperationRetryPolicy {
 
 		Throwable cause = unwrap(throwable);
 
+		if (cause instanceof DriveOperationCleanupRequiredException cleanupRequiredException) {
+
+			return cleanupRequiredException.getErrorCode();
+		}
+
+		if (cause instanceof DriveOperationReconciliationPendingException) {
+
+			return "COPY_RECONCILIATION_PENDING";
+		}
+
 		if (cause instanceof DriveOperationNotAllowedException) {
 
 			return "OPERATION_NOT_ALLOWED";
@@ -117,7 +139,7 @@ public class DriveOperationRetryPolicy {
 		return message;
 	}
 
-	private Throwable unwrap(Throwable throwable) {
+	public Throwable unwrap(Throwable throwable) {
 
 		Throwable current = throwable;
 

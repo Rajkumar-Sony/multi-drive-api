@@ -1,6 +1,7 @@
 package com.multidrive.api.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -49,6 +50,16 @@ public class GoogleDriveItem {
             nullable = false
     )
     private GoogleDriveConnection connection;
+
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = false
+    )
+    @JoinColumn(
+            name = "source_id",
+            nullable = false
+    )
+    private GoogleDriveSource source;
 
     @Column(
             name = "google_file_id",
@@ -144,6 +155,9 @@ public class GoogleDriveItem {
     )
     private String syncRunId;
 
+    @Embedded
+    private GoogleDriveItemCapabilities capabilities;
+
     @Column(
             name = "created_at",
             nullable = false
@@ -174,6 +188,11 @@ public class GoogleDriveItem {
                     GoogleDriveItemSourceType.MY_DRIVE;
         }
 
+        if (capabilities == null) {
+            capabilities =
+                    new GoogleDriveItemCapabilities();
+        }
+
         createdAt = now;
         updatedAt = now;
     }
@@ -191,9 +210,7 @@ public class GoogleDriveItem {
         return id;
     }
 
-    public void setId(
-            Long id
-    ) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -205,6 +222,16 @@ public class GoogleDriveItem {
             GoogleDriveConnection connection
     ) {
         this.connection = connection;
+    }
+
+    public GoogleDriveSource getSource() {
+        return source;
+    }
+
+    public void setSource(
+            GoogleDriveSource source
+    ) {
+        this.source = source;
     }
 
     public String getGoogleFileId() {
@@ -355,6 +382,16 @@ public class GoogleDriveItem {
             String syncRunId
     ) {
         this.syncRunId = syncRunId;
+    }
+
+    public GoogleDriveItemCapabilities getCapabilities() {
+        return capabilities;
+    }
+
+    public void setCapabilities(
+            GoogleDriveItemCapabilities capabilities
+    ) {
+        this.capabilities = capabilities;
     }
 
     public LocalDateTime getCreatedAt() {

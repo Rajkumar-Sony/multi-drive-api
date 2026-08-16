@@ -6,8 +6,13 @@ import com.multidrive.api.entity.GoogleDriveConnection;
 import com.multidrive.api.entity.GoogleDriveItem;
 import com.multidrive.api.entity.GoogleDriveItemCategory;
 import com.multidrive.api.entity.GoogleDriveItemSourceType;
+import com.multidrive.api.entity.GoogleDriveSource;
+import com.multidrive.api.entity.GoogleDriveSourceStatus;
+import com.multidrive.api.entity.GoogleDriveSourceType;
 import com.multidrive.api.entity.GoogleDriveTrackerType;
+import com.multidrive.api.mapper.GoogleDriveCapabilityMapper;
 import com.multidrive.api.repository.GoogleDriveItemRepository;
+import com.multidrive.api.repository.GoogleDriveSourceRepository;
 import com.multidrive.api.service.GoogleDriveItemIndexService;
 
 import org.slf4j.Logger;
@@ -76,13 +81,31 @@ public class GoogleDriveItemIndexServiceImpl
     private final GoogleDriveItemRepository
             googleDriveItemRepository;
 
+    private final GoogleDriveSourceRepository
+            googleDriveSourceRepository;
+
+    private final GoogleDriveCapabilityMapper
+            googleDriveCapabilityMapper;
+
     public GoogleDriveItemIndexServiceImpl(
             GoogleDriveItemRepository
-                    googleDriveItemRepository
+                    googleDriveItemRepository,
+
+            GoogleDriveSourceRepository
+                    googleDriveSourceRepository,
+
+            GoogleDriveCapabilityMapper
+                    googleDriveCapabilityMapper
     ) {
 
         this.googleDriveItemRepository =
                 googleDriveItemRepository;
+
+        this.googleDriveSourceRepository =
+                googleDriveSourceRepository;
+
+        this.googleDriveCapabilityMapper =
+                googleDriveCapabilityMapper;
     }
 
     @Override
@@ -90,8 +113,8 @@ public class GoogleDriveItemIndexServiceImpl
     public int upsertItems(
             GoogleDriveConnection connection,
             List<GoogleDriveFileResponse> files,
-            GoogleDriveItemSourceType sourceType,
-            String driveId,
+            GoogleDriveItemSourceType requestedSourceType,
+            String requestedDriveId,
             String syncRunId
     ) {
 
@@ -99,7 +122,7 @@ public class GoogleDriveItemIndexServiceImpl
                 connection
         );
 
-        if (sourceType == null) {
+        if (requestedSourceType == null) {
 
             throw new IllegalArgumentException(
                     "sourceType is required"
@@ -114,23 +137,16 @@ public class GoogleDriveItemIndexServiceImpl
             );
         }
 
-        if (sourceType
-                == GoogleDriveItemSourceType.SHARED_DRIVE
-                && (
-                    driveId == null
-                    || driveId.isBlank()
-                )) {
-
-            throw new IllegalArgumentException(
-                    "driveId is required for Shared Drive items"
-            );
-        }
-
         if (files == null
                 || files.isEmpty()) {
 
             return 0;
         }
+
+        SourceLookup sourceLookup =
+                loadSourceLookup(
+                        connection.getId()
+                );
 
         Set<String> googleFileIds =
                 files
@@ -138,8 +154,9 @@ public class GoogleDriveItemIndexServiceImpl
                         .filter(
                                 file ->
                                         file != null
-                                                && file.id() != null
-                                                && !file.id().isBlank()
+                                                && hasText(
+                                                file.id()
+                                        )
                         )
                         .map(
                                 GoogleDriveFileResponse::id
@@ -175,11 +192,30 @@ public class GoogleDriveItemIndexServiceImpl
         for (GoogleDriveFileResponse file : files) {
 
             if (file == null
-                    || file.id() == null
-                    || file.id().isBlank()) {
+                    || !hasText(file.id())) {
 
                 continue;
             }
+
+            GoogleDriveItemSourceType effectiveSourceType =
+                    resolveInitialSyncSourceType(
+                            requestedSourceType,
+                            file
+                    );
+
+            String effectiveDriveId =
+                    resolveInitialSyncDriveId(
+                            requestedSourceType,
+                            requestedDriveId,
+                            file
+                    );
+
+            GoogleDriveSource source =
+                    resolveSource(
+                            sourceLookup,
+                            effectiveSourceType,
+                            effectiveDriveId
+                    );
 
             GoogleDriveItem item =
                     existingItems.getOrDefault(
@@ -190,15 +226,12 @@ public class GoogleDriveItemIndexServiceImpl
             populateItem(
                     item,
                     connection,
+                    source,
                     file,
-                    sourceType,
-                    driveId
+                    effectiveSourceType,
+                    effectiveDriveId
             );
 
-            /*
-             * Full synchronization marks every item
-             * with the current synchronization run.
-             */
             item.setSyncRunId(
                     syncRunId
             );
@@ -238,10 +271,7 @@ public class GoogleDriveItemIndexServiceImpl
 
         if (trackerType
                 == GoogleDriveTrackerType.SHARED_DRIVE
-                && (
-                    trackerDriveId == null
-                    || trackerDriveId.isBlank()
-                )) {
+                && !hasText(trackerDriveId)) {
 
             throw new IllegalArgumentException(
                     "trackerDriveId is required for Shared Drive changes"
@@ -254,21 +284,26 @@ public class GoogleDriveItemIndexServiceImpl
             return 0;
         }
 
+        SourceLookup sourceLookup =
+                loadSourceLookup(
+                        connection.getId()
+                );
+
         Set<String> fileIds =
                 changes
                         .stream()
                         .filter(
                                 change ->
                                         change != null
-                                                && isFileChange(change)
+                                                && isFileChange(
+                                                change
+                                        )
                         )
                         .map(
                                 this::resolveFileId
                         )
                         .filter(
-                                fileId ->
-                                        fileId != null
-                                                && !fileId.isBlank()
+                                this::hasText
                         )
                         .collect(
                                 Collectors.toSet()
@@ -296,13 +331,6 @@ public class GoogleDriveItemIndexServiceImpl
             );
         }
 
-        /*
-         * A single changes.list response can theoretically
-         * contain more than one update for the same file.
-         *
-         * These maps/sets represent the final action we
-         * want to perform for each file.
-         */
         Map<String, GoogleDriveItem> itemsToSave =
                 new HashMap<>();
 
@@ -325,8 +353,7 @@ public class GoogleDriveItemIndexServiceImpl
                             change
                     );
 
-            if (fileId == null
-                    || fileId.isBlank()) {
+            if (!hasText(fileId)) {
 
                 LOGGER.warn(
                         "Ignoring Google Drive file change "
@@ -336,12 +363,6 @@ public class GoogleDriveItemIndexServiceImpl
                 continue;
             }
 
-            /*
-             * removed=true means Google no longer exposes
-             * this file in this change log.
-             *
-             * Remove it from our unified local index.
-             */
             if (Boolean.TRUE.equals(
                     change.removed()
             )) {
@@ -384,30 +405,32 @@ public class GoogleDriveItemIndexServiceImpl
                     );
 
             GoogleDriveItemSourceType sourceType =
-                    resolveSourceType(
+                    resolveChangeSourceType(
                             trackerType,
                             file
                     );
 
             String driveId =
-                    resolveDriveId(
+                    resolveChangeDriveId(
                             trackerType,
                             trackerDriveId,
                             file
                     );
 
-            /*
-             * Preserve the previous full-sync marker.
-             *
-             * Incremental updates must not pretend they
-             * were part of a particular full sync run.
-             */
+            GoogleDriveSource source =
+                    resolveSource(
+                            sourceLookup,
+                            sourceType,
+                            driveId
+                    );
+
             String existingSyncRunId =
                     item.getSyncRunId();
 
             populateItem(
                     item,
                     connection,
+                    source,
                     file,
                     sourceType,
                     driveId
@@ -429,9 +452,6 @@ public class GoogleDriveItemIndexServiceImpl
             processedChangeCount++;
         }
 
-        /*
-         * Delete items that Google reports as removed.
-         */
         for (String fileId : itemsToDelete) {
 
             googleDriveItemRepository
@@ -441,10 +461,6 @@ public class GoogleDriveItemIndexServiceImpl
                     );
         }
 
-        /*
-         * Save created, renamed, moved, restored,
-         * trashed, or otherwise modified files.
-         */
         if (!itemsToSave.isEmpty()) {
 
             googleDriveItemRepository
@@ -482,8 +498,7 @@ public class GoogleDriveItemIndexServiceImpl
             );
         }
 
-        if (syncRunId == null
-                || syncRunId.isBlank()) {
+        if (!hasText(syncRunId)) {
 
             throw new IllegalArgumentException(
                     "syncRunId is required"
@@ -500,6 +515,7 @@ public class GoogleDriveItemIndexServiceImpl
     private void populateItem(
             GoogleDriveItem item,
             GoogleDriveConnection connection,
+            GoogleDriveSource source,
             GoogleDriveFileResponse file,
             GoogleDriveItemSourceType sourceType,
             String driveId
@@ -507,6 +523,10 @@ public class GoogleDriveItemIndexServiceImpl
 
         item.setConnection(
                 connection
+        );
+
+        item.setSource(
+                source
         );
 
         item.setGoogleFileId(
@@ -535,19 +555,12 @@ public class GoogleDriveItemIndexServiceImpl
                 sourceType
         );
 
-        if (sourceType
-                == GoogleDriveItemSourceType.SHARED_DRIVE) {
-
-            item.setDriveId(
-                    driveId
-            );
-
-        } else {
-
-            item.setDriveId(
-                    null
-            );
-        }
+        item.setDriveId(
+                sourceType
+                        == GoogleDriveItemSourceType.SHARED_DRIVE
+                        ? driveId
+                        : null
+        );
 
         item.setParentId(
                 extractParentId(
@@ -590,9 +603,144 @@ public class GoogleDriveItemIndexServiceImpl
                         file.trashed()
                 )
         );
+
+        item.setCapabilities(
+                googleDriveCapabilityMapper
+                        .toItemCapabilities(
+                                file.capabilities()
+                        )
+        );
     }
 
-    private GoogleDriveItemSourceType resolveSourceType(
+    private SourceLookup loadSourceLookup(
+            Long connectionId
+    ) {
+
+        List<GoogleDriveSource> sources =
+                googleDriveSourceRepository
+                        .findAllByConnection_IdAndStatusOrderBySourceTypeAscNameAsc(
+                                connectionId,
+                                GoogleDriveSourceStatus.ACTIVE
+                        );
+
+        GoogleDriveSource myDrive =
+                null;
+
+        Map<String, GoogleDriveSource> sharedDrives =
+                new HashMap<>();
+
+        for (GoogleDriveSource source : sources) {
+
+            if (source.getSourceType()
+                    == GoogleDriveSourceType.MY_DRIVE) {
+
+                myDrive =
+                        source;
+
+                continue;
+            }
+
+            if (source.getSourceType()
+                    == GoogleDriveSourceType.SHARED_DRIVE
+                    && hasText(source.getGoogleDriveId())) {
+
+                sharedDrives.put(
+                        source.getGoogleDriveId(),
+                        source
+                );
+            }
+        }
+
+        return new SourceLookup(
+                myDrive,
+                sharedDrives
+        );
+    }
+
+    private GoogleDriveSource resolveSource(
+            SourceLookup lookup,
+            GoogleDriveItemSourceType sourceType,
+            String driveId
+    ) {
+
+        if (sourceType
+                == GoogleDriveItemSourceType.MY_DRIVE) {
+
+            if (lookup.myDrive() == null) {
+
+                throw new IllegalStateException(
+                        "Active My Drive source was not found"
+                );
+            }
+
+            return lookup.myDrive();
+        }
+
+        if (!hasText(driveId)) {
+
+            throw new IllegalStateException(
+                    "Shared Drive ID is missing"
+            );
+        }
+
+        GoogleDriveSource source =
+                lookup.sharedDrives()
+                        .get(
+                                driveId
+                        );
+
+        if (source == null) {
+
+            throw new IllegalStateException(
+                    "Active Shared Drive source was not found: "
+                            + driveId
+            );
+        }
+
+        return source;
+    }
+
+    private GoogleDriveItemSourceType
+    resolveInitialSyncSourceType(
+            GoogleDriveItemSourceType requestedSourceType,
+            GoogleDriveFileResponse file
+    ) {
+
+        if (requestedSourceType
+                == GoogleDriveItemSourceType.SHARED_DRIVE) {
+
+            return GoogleDriveItemSourceType.SHARED_DRIVE;
+        }
+
+        if (hasText(file.driveId())) {
+
+            return GoogleDriveItemSourceType.SHARED_DRIVE;
+        }
+
+        return GoogleDriveItemSourceType.MY_DRIVE;
+    }
+
+    private String resolveInitialSyncDriveId(
+            GoogleDriveItemSourceType requestedSourceType,
+            String requestedDriveId,
+            GoogleDriveFileResponse file
+    ) {
+
+        if (requestedSourceType
+                == GoogleDriveItemSourceType.SHARED_DRIVE) {
+
+            return requestedDriveId;
+        }
+
+        if (hasText(file.driveId())) {
+
+            return file.driveId();
+        }
+
+        return null;
+    }
+
+    private GoogleDriveItemSourceType resolveChangeSourceType(
             GoogleDriveTrackerType trackerType,
             GoogleDriveFileResponse file
     ) {
@@ -603,8 +751,7 @@ public class GoogleDriveItemIndexServiceImpl
             return GoogleDriveItemSourceType.SHARED_DRIVE;
         }
 
-        if (file.driveId() != null
-                && !file.driveId().isBlank()) {
+        if (hasText(file.driveId())) {
 
             return GoogleDriveItemSourceType.SHARED_DRIVE;
         }
@@ -612,14 +759,13 @@ public class GoogleDriveItemIndexServiceImpl
         return GoogleDriveItemSourceType.MY_DRIVE;
     }
 
-    private String resolveDriveId(
+    private String resolveChangeDriveId(
             GoogleDriveTrackerType trackerType,
             String trackerDriveId,
             GoogleDriveFileResponse file
     ) {
 
-        if (file.driveId() != null
-                && !file.driveId().isBlank()) {
+        if (hasText(file.driveId())) {
 
             return file.driveId();
         }
@@ -646,15 +792,13 @@ public class GoogleDriveItemIndexServiceImpl
             GoogleDriveChangeResponse change
     ) {
 
-        if (change.fileId() != null
-                && !change.fileId().isBlank()) {
+        if (hasText(change.fileId())) {
 
             return change.fileId();
         }
 
         if (change.file() != null
-                && change.file().id() != null
-                && !change.file().id().isBlank()) {
+                && hasText(change.file().id())) {
 
             return change.file().id();
         }
@@ -666,8 +810,7 @@ public class GoogleDriveItemIndexServiceImpl
             String mimeType
     ) {
 
-        if (mimeType == null
-                || mimeType.isBlank()) {
+        if (!hasText(mimeType)) {
 
             return GoogleDriveItemCategory.OTHER;
         }
@@ -727,9 +870,7 @@ public class GoogleDriveItemIndexServiceImpl
             String size
     ) {
 
-        if (size == null
-                || size.isBlank()) {
-
+        if (!hasText(size)) {
             return null;
         }
 
@@ -749,9 +890,7 @@ public class GoogleDriveItemIndexServiceImpl
             String value
     ) {
 
-        if (value == null
-                || value.isBlank()) {
-
+        if (!hasText(value)) {
             return null;
         }
 
@@ -771,8 +910,7 @@ public class GoogleDriveItemIndexServiceImpl
             String name
     ) {
 
-        if (name == null
-                || name.isBlank()) {
+        if (!hasText(name)) {
 
             return "Untitled";
         }
@@ -784,8 +922,7 @@ public class GoogleDriveItemIndexServiceImpl
             String mimeType
     ) {
 
-        if (mimeType == null
-                || mimeType.isBlank()) {
+        if (!hasText(mimeType)) {
 
             return "application/octet-stream";
         }
@@ -804,5 +941,21 @@ public class GoogleDriveItemIndexServiceImpl
                     "Google Drive connection is required"
             );
         }
+    }
+
+    private boolean hasText(
+            String value
+    ) {
+
+        return value != null
+                && !value.isBlank();
+    }
+
+    private record SourceLookup(
+
+            GoogleDriveSource myDrive,
+
+            Map<String, GoogleDriveSource> sharedDrives
+    ) {
     }
 }

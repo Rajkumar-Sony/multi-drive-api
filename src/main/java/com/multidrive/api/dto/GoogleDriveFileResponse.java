@@ -29,6 +29,8 @@ public record GoogleDriveFileResponse(
 
         String driveId,
 
-        Boolean trashed
+        Boolean trashed,
+
+        GoogleDriveFileCapabilitiesResponse capabilities
 ) {
 }

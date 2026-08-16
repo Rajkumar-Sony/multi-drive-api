@@ -1,6 +1,7 @@
 package com.multidrive.api.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -14,6 +15,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
@@ -74,6 +76,22 @@ public class GoogleDriveSource {
     private GoogleDriveSourceStatus status;
 
     @Column(
+            name = "hidden"
+    )
+    private Boolean hidden;
+
+    @Column(
+            name = "google_created_time"
+    )
+    private Instant googleCreatedTime;
+
+    @Embedded
+    private GoogleDriveSourceCapabilities capabilities;
+
+    @Embedded
+    private GoogleDriveSourceRestrictions restrictions;
+
+    @Column(
             name = "discovery_run_id",
             length = 36
     )
@@ -107,6 +125,16 @@ public class GoogleDriveSource {
         if (status == null) {
             status =
                     GoogleDriveSourceStatus.ACTIVE;
+        }
+
+        if (capabilities == null) {
+            capabilities =
+                    new GoogleDriveSourceCapabilities();
+        }
+
+        if (restrictions == null) {
+            restrictions =
+                    new GoogleDriveSourceRestrictions();
         }
 
         if (createdAt == null) {
@@ -193,6 +221,46 @@ public class GoogleDriveSource {
             GoogleDriveSourceStatus status
     ) {
         this.status = status;
+    }
+
+    public Boolean getHidden() {
+        return hidden;
+    }
+
+    public void setHidden(
+            Boolean hidden
+    ) {
+        this.hidden = hidden;
+    }
+
+    public Instant getGoogleCreatedTime() {
+        return googleCreatedTime;
+    }
+
+    public void setGoogleCreatedTime(
+            Instant googleCreatedTime
+    ) {
+        this.googleCreatedTime = googleCreatedTime;
+    }
+
+    public GoogleDriveSourceCapabilities getCapabilities() {
+        return capabilities;
+    }
+
+    public void setCapabilities(
+            GoogleDriveSourceCapabilities capabilities
+    ) {
+        this.capabilities = capabilities;
+    }
+
+    public GoogleDriveSourceRestrictions getRestrictions() {
+        return restrictions;
+    }
+
+    public void setRestrictions(
+            GoogleDriveSourceRestrictions restrictions
+    ) {
+        this.restrictions = restrictions;
     }
 
     public String getDiscoveryRunId() {

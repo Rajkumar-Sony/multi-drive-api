@@ -5,6 +5,7 @@ import com.multidrive.api.dto.GoogleDriveRootResponse;
 import com.multidrive.api.dto.GoogleSharedDrivesResponse;
 import com.multidrive.api.service.GoogleDriveService;
 import com.multidrive.api.service.GoogleTokenService;
+import com.multidrive.api.util.GoogleDriveFieldMasks;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -149,11 +150,7 @@ public class GoogleDriveServiceImpl
                         )
                         .queryParam(
                                 "fields",
-                                "nextPageToken,"
-                                        + "drives("
-                                        + "id,"
-                                        + "name"
-                                        + ")"
+                                GoogleDriveFieldMasks.SHARED_DRIVE_LIST
                         );
 
         if (pageToken != null
@@ -215,7 +212,7 @@ public class GoogleDriveServiceImpl
                         )
                         .queryParam(
                                 "fields",
-                                "id,name"
+                                GoogleDriveFieldMasks.MY_DRIVE_ROOT
                         )
                         .build()
                         .encode()
@@ -295,7 +292,7 @@ public class GoogleDriveServiceImpl
                         )
                         .queryParam(
                                 "fields",
-                                buildFileFields()
+                                GoogleDriveFieldMasks.FILE_LIST
                         );
 
         if (corpora != null
@@ -352,26 +349,6 @@ public class GoogleDriveServiceImpl
         }
 
         return response;
-    }
-
-    private String buildFileFields() {
-
-        return "nextPageToken,"
-                + "incompleteSearch,"
-                + "files("
-                + "id,"
-                + "name,"
-                + "mimeType,"
-                + "createdTime,"
-                + "modifiedTime,"
-                + "parents,"
-                + "webViewLink,"
-                + "thumbnailLink,"
-                + "iconLink,"
-                + "size,"
-                + "driveId,"
-                + "trashed"
-                + ")";
     }
 
     private int normalizeFilePageSize(

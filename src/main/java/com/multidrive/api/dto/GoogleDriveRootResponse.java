@@ -2,13 +2,15 @@ package com.multidrive.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@JsonIgnoreProperties(
-        ignoreUnknown = true
-)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record GoogleDriveRootResponse(
 
         String id,
 
-        String name
+        String name,
+
+        String createdTime,
+
+        GoogleDriveFileCapabilitiesResponse capabilities
 ) {
 }

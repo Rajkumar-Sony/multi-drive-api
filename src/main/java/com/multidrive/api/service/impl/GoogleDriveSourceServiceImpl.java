@@ -6,8 +6,10 @@ import com.multidrive.api.dto.GoogleSharedDriveResponse;
 import com.multidrive.api.dto.GoogleSharedDrivesResponse;
 import com.multidrive.api.entity.GoogleDriveConnection;
 import com.multidrive.api.entity.GoogleDriveSource;
+import com.multidrive.api.entity.GoogleDriveSourceRestrictions;
 import com.multidrive.api.entity.GoogleDriveSourceStatus;
 import com.multidrive.api.entity.GoogleDriveSourceType;
+import com.multidrive.api.mapper.GoogleDriveCapabilityMapper;
 import com.multidrive.api.repository.GoogleDriveConnectionRepository;
 import com.multidrive.api.repository.GoogleDriveSourceRepository;
 import com.multidrive.api.service.GoogleDriveService;
@@ -21,8 +23,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -51,6 +55,9 @@ public class GoogleDriveSourceServiceImpl
     private final GoogleDriveService
             googleDriveService;
 
+    private final GoogleDriveCapabilityMapper
+            googleDriveCapabilityMapper;
+
     private final TransactionTemplate
             transactionTemplate;
 
@@ -64,6 +71,9 @@ public class GoogleDriveSourceServiceImpl
             GoogleDriveService
                     googleDriveService,
 
+            GoogleDriveCapabilityMapper
+                    googleDriveCapabilityMapper,
+
             PlatformTransactionManager
                     transactionManager
     ) {
@@ -76,6 +86,9 @@ public class GoogleDriveSourceServiceImpl
 
         this.googleDriveService =
                 googleDriveService;
+
+        this.googleDriveCapabilityMapper =
+                googleDriveCapabilityMapper;
 
         this.transactionTemplate =
                 new TransactionTemplate(
@@ -94,10 +107,6 @@ public class GoogleDriveSourceServiceImpl
                 userId
         );
 
-        /*
-         * Validate ownership before making Google API
-         * calls.
-         */
         googleDriveConnectionRepository
                 .findByIdAndUserId(
                         connectionId,
@@ -109,13 +118,6 @@ public class GoogleDriveSourceServiceImpl
                         )
                 );
 
-        /*
-         * Remote Google calls happen BEFORE the write
-         * transaction.
-         *
-         * We don't want to hold a PostgreSQL transaction
-         * open while waiting for network requests.
-         */
         GoogleDriveRootResponse myDriveRoot =
                 googleDriveService
                         .getMyDriveRoot(
@@ -398,6 +400,27 @@ public class GoogleDriveSourceServiceImpl
                 )
         );
 
+        myDriveSource.setHidden(
+                null
+        );
+
+        myDriveSource.setGoogleCreatedTime(
+                parseInstant(
+                        myDriveRoot.createdTime()
+                )
+        );
+
+        myDriveSource.setCapabilities(
+                googleDriveCapabilityMapper
+                        .toMyDriveSourceCapabilities(
+                                myDriveRoot.capabilities()
+                        )
+        );
+
+        myDriveSource.setRestrictions(
+                new GoogleDriveSourceRestrictions()
+        );
+
         myDriveSource.setStatus(
                 GoogleDriveSourceStatus.ACTIVE
         );
@@ -436,10 +459,6 @@ public class GoogleDriveSourceServiceImpl
                     drive.id()
             );
 
-            /*
-             * Google documents that the Shared Drive ID
-             * is also the ID of its top-level folder.
-             */
             source.setRootFolderId(
                     drive.id()
             );
@@ -449,6 +468,30 @@ public class GoogleDriveSourceServiceImpl
                             drive.name(),
                             source.getName()
                     )
+            );
+
+            source.setHidden(
+                    drive.hidden()
+            );
+
+            source.setGoogleCreatedTime(
+                    parseInstant(
+                            drive.createdTime()
+                    )
+            );
+
+            source.setCapabilities(
+                    googleDriveCapabilityMapper
+                            .toSharedDriveSourceCapabilities(
+                                    drive.capabilities()
+                            )
+            );
+
+            source.setRestrictions(
+                    googleDriveCapabilityMapper
+                            .toSharedDriveRestrictions(
+                                    drive.restrictions()
+                            )
             );
 
             source.setStatus(
@@ -473,10 +516,6 @@ public class GoogleDriveSourceServiceImpl
                         sourcesToSave
                 );
 
-        /*
-         * Flush before the bulk update so the current
-         * discoveryRunId values are visible.
-         */
         googleDriveSourceRepository
                 .flush();
 
@@ -506,6 +545,33 @@ public class GoogleDriveSourceServiceImpl
                         connectionId,
                         GoogleDriveSourceStatus.ACTIVE
                 );
+    }
+
+    private Instant parseInstant(
+            String value
+    ) {
+
+        if (value == null
+                || value.isBlank()) {
+
+            return null;
+        }
+
+        try {
+
+            return Instant.parse(
+                    value
+            );
+
+        } catch (DateTimeParseException exception) {
+
+            LOGGER.warn(
+                    "Unable to parse Google Drive timestamp: {}",
+                    value
+            );
+
+            return null;
+        }
     }
 
     private String normalizeName(

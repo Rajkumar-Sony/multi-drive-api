@@ -9,6 +9,7 @@ import com.multidrive.api.repository.GoogleDriveChangeTrackerRepository;
 import com.multidrive.api.service.GoogleDriveChangeProcessingService;
 import com.multidrive.api.service.GoogleDriveItemIndexService;
 import com.multidrive.api.service.GoogleTokenService;
+import com.multidrive.api.util.GoogleDriveFieldMasks;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -182,10 +183,6 @@ public class GoogleDriveChangeProcessingServiceImpl
                 );
             }
 
-            /*
-             * Google returns nextPageToken while
-             * additional change pages remain.
-             */
             if (response.nextPageToken() != null
                     && !response.nextPageToken().isBlank()) {
 
@@ -195,11 +192,6 @@ public class GoogleDriveChangeProcessingServiceImpl
                 continue;
             }
 
-            /*
-             * newStartPageToken is returned only once
-             * the end of the current change list has
-             * been reached.
-             */
             if (response.newStartPageToken() != null
                     && !response.newStartPageToken().isBlank()) {
 
@@ -219,13 +211,6 @@ public class GoogleDriveChangeProcessingServiceImpl
             );
         }
 
-        /*
-         * Update our unified local file index BEFORE
-         * moving the synchronization token forward.
-         *
-         * If indexing fails, the transaction rolls back
-         * and this page token is not consumed.
-         */
         int indexedChangeCount =
                 googleDriveItemIndexService
                         .applyChanges(
@@ -235,10 +220,6 @@ public class GoogleDriveChangeProcessingServiceImpl
                                 allChanges
                         );
 
-        /*
-         * Only after the local index is successfully
-         * updated do we advance the change cursor.
-         */
         tracker.setPageToken(
                 newStartPageToken
         );
@@ -253,11 +234,6 @@ public class GoogleDriveChangeProcessingServiceImpl
                 .save(
                         tracker
                 );
-
-        logChanges(
-                tracker,
-                allChanges
-        );
 
         LOGGER.info(
                 "Google Drive changes processed successfully. "
@@ -312,33 +288,7 @@ public class GoogleDriveChangeProcessingServiceImpl
                         )
                         .queryParam(
                                 "fields",
-                                "nextPageToken,"
-                                        + "newStartPageToken,"
-                                        + "changes("
-                                        + "removed,"
-                                        + "fileId,"
-                                        + "time,"
-                                        + "driveId,"
-                                        + "changeType,"
-                                        + "file("
-                                        + "id,"
-                                        + "name,"
-                                        + "mimeType,"
-                                        + "createdTime,"
-                                        + "modifiedTime,"
-                                        + "parents,"
-                                        + "webViewLink,"
-                                        + "thumbnailLink,"
-                                        + "iconLink,"
-                                        + "size,"
-                                        + "driveId,"
-                                        + "trashed"
-                                        + "),"
-                                        + "drive("
-                                        + "id,"
-                                        + "name"
-                                        + ")"
-                                        + ")"
+                                GoogleDriveFieldMasks.CHANGE_LIST
                         );
 
         if (tracker.getTrackerType()
@@ -385,78 +335,5 @@ public class GoogleDriveChangeProcessingServiceImpl
         }
 
         return response;
-    }
-
-    private void logChanges(
-            GoogleDriveChangeTracker tracker,
-            List<GoogleDriveChangeResponse> changes
-    ) {
-
-        for (GoogleDriveChangeResponse change : changes) {
-
-            if (change == null) {
-                continue;
-            }
-
-            if (Boolean.TRUE.equals(
-                    change.removed()
-            )) {
-
-                LOGGER.info(
-                        "Google Drive file removed from local index. "
-                                + "trackerId={}, fileId={}, driveId={}",
-                        tracker.getId(),
-                        change.fileId(),
-                        change.driveId()
-                );
-
-                continue;
-            }
-
-            if ("file".equalsIgnoreCase(
-                    change.changeType()
-            )) {
-
-                if (change.file() != null) {
-
-                    LOGGER.info(
-                            "Google Drive file indexed. "
-                                    + "trackerId={}, fileId={}, "
-                                    + "name={}, mimeType={}, trashed={}",
-                            tracker.getId(),
-                            change.fileId(),
-                            change.file().name(),
-                            change.file().mimeType(),
-                            change.file().trashed()
-                    );
-
-                } else {
-
-                    LOGGER.info(
-                            "Google Drive file changed. "
-                                    + "trackerId={}, fileId={}",
-                            tracker.getId(),
-                            change.fileId()
-                    );
-                }
-
-                continue;
-            }
-
-            if ("drive".equalsIgnoreCase(
-                    change.changeType()
-            )) {
-
-                LOGGER.info(
-                        "Google Shared Drive changed. "
-                                + "trackerId={}, driveId={}, driveName={}",
-                        tracker.getId(),
-                        change.driveId(),
-                        change.drive() != null
-                                ? change.drive().name()
-                                : null
-                );
-            }
-        }
     }
 }

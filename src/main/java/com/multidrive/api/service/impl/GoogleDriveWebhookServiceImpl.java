@@ -1,9 +1,13 @@
 package com.multidrive.api.service.impl;
 
 import com.multidrive.api.dto.GoogleDriveChangeResponse;
+import com.multidrive.api.dto.GoogleDriveRealtimeEventResponse;
+import com.multidrive.api.entity.GoogleDriveChangeTracker;
+import com.multidrive.api.entity.GoogleDriveConnection;
 import com.multidrive.api.entity.GoogleDriveWatchChannel;
 import com.multidrive.api.repository.GoogleDriveWatchChannelRepository;
 import com.multidrive.api.service.GoogleDriveChangeProcessingService;
+import com.multidrive.api.service.GoogleDriveSseService;
 import com.multidrive.api.service.GoogleDriveWebhookService;
 
 import org.slf4j.Logger;
@@ -11,10 +15,13 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
@@ -42,12 +49,18 @@ public class GoogleDriveWebhookServiceImpl
     private final GoogleDriveChangeProcessingService
             googleDriveChangeProcessingService;
 
+    private final GoogleDriveSseService
+            googleDriveSseService;
+
     public GoogleDriveWebhookServiceImpl(
             GoogleDriveWatchChannelRepository
                     googleDriveWatchChannelRepository,
 
             GoogleDriveChangeProcessingService
-                    googleDriveChangeProcessingService
+                    googleDriveChangeProcessingService,
+
+            GoogleDriveSseService
+                    googleDriveSseService
     ) {
 
         this.googleDriveWatchChannelRepository =
@@ -55,6 +68,9 @@ public class GoogleDriveWebhookServiceImpl
 
         this.googleDriveChangeProcessingService =
                 googleDriveChangeProcessingService;
+
+        this.googleDriveSseService =
+                googleDriveSseService;
     }
 
     @Override
@@ -82,9 +98,9 @@ public class GoogleDriveWebhookServiceImpl
                         );
 
         /*
-         * Google's initial sync notification can reach
-         * the webhook before changes.watch returns and
-         * before the channel has been saved locally.
+         * Google's initial sync notification can arrive
+         * before changes.watch has returned and before
+         * the channel row is saved.
          */
         if (optionalChannel.isEmpty()) {
 
@@ -137,10 +153,8 @@ public class GoogleDriveWebhookServiceImpl
                 );
 
         /*
-         * Ignore an already handled notification.
-         *
-         * Message numbers increase, although they do not
-         * have to be consecutive.
+         * Ignore duplicate or already processed
+         * notification messages.
          */
         if (channel.getLastMessageNumber() != null
                 && parsedMessageNumber
@@ -157,10 +171,10 @@ public class GoogleDriveWebhookServiceImpl
         }
 
         /*
-         * Google's first message for a new watch channel
-         * is normally the sync notification.
+         * The initial Google notification is normally
+         * resourceState=sync.
          *
-         * No changes.list call is needed for that message.
+         * There is no actual Drive change to process yet.
          */
         if ("sync".equalsIgnoreCase(
                 resourceState
@@ -187,18 +201,50 @@ public class GoogleDriveWebhookServiceImpl
             return;
         }
 
+        GoogleDriveChangeTracker tracker =
+                channel.getTracker();
+
+        if (tracker == null
+                || tracker.getId() == null) {
+
+            throw new IllegalStateException(
+                    "Google Drive tracker is missing"
+            );
+        }
+
+        GoogleDriveConnection connection =
+                tracker.getConnection();
+
+        if (connection == null
+                || connection.getId() == null) {
+
+            throw new IllegalStateException(
+                    "Google Drive connection is missing"
+            );
+        }
+
+        if (connection.getUser() == null
+                || connection.getUser().getId() == null) {
+
+            throw new IllegalStateException(
+                    "Google Drive connection user is missing"
+            );
+        }
+
         Long trackerId =
-                channel
-                        .getTracker()
+                tracker.getId();
+
+        Long connectionId =
+                connection.getId();
+
+        Long userId =
+                connection
+                        .getUser()
                         .getId();
 
         /*
-         * Important:
-         *
-         * Process changes BEFORE saving the message number.
-         *
-         * If changes.list fails, the transaction fails
-         * and this notification is not marked as handled.
+         * Process Google changes before marking the
+         * webhook message as completed.
          */
         List<GoogleDriveChangeResponse> changes =
                 googleDriveChangeProcessingService
@@ -207,9 +253,8 @@ public class GoogleDriveWebhookServiceImpl
                         );
 
         /*
-         * Only mark this notification as processed after
-         * changes.list completed successfully and the new
-         * page token was saved.
+         * Only update the message number after
+         * changes.list completed successfully.
          */
         channel.setLastMessageNumber(
                 parsedMessageNumber
@@ -220,6 +265,32 @@ public class GoogleDriveWebhookServiceImpl
                         channel
                 );
 
+        GoogleDriveRealtimeEventResponse realtimeEvent =
+                new GoogleDriveRealtimeEventResponse(
+                        "DRIVE_CHANGES",
+                        connectionId,
+                        trackerId,
+                        tracker.getTrackerType(),
+                        tracker.getDriveId(),
+                        changes.size(),
+                        Instant.now()
+                );
+
+        /*
+         * Important:
+         *
+         * Send the SSE message only AFTER the database
+         * transaction commits successfully.
+         *
+         * This prevents the browser from refreshing
+         * before our new page token/message number has
+         * actually been committed.
+         */
+        publishAfterCommit(
+                userId,
+                realtimeEvent
+        );
+
         LOGGER.info(
                 "Google Drive webhook processed successfully. "
                         + "channelId={}, trackerId={}, "
@@ -229,6 +300,40 @@ public class GoogleDriveWebhookServiceImpl
                 parsedMessageNumber,
                 changes.size()
         );
+    }
+
+    private void publishAfterCommit(
+            Long userId,
+            GoogleDriveRealtimeEventResponse event
+    ) {
+
+        if (TransactionSynchronizationManager
+                .isSynchronizationActive()) {
+
+            TransactionSynchronizationManager
+                    .registerSynchronization(
+                            new TransactionSynchronization() {
+
+                                @Override
+                                public void afterCommit() {
+
+                                    googleDriveSseService
+                                            .publishDriveChanges(
+                                                    userId,
+                                                    event
+                                            );
+                                }
+                            }
+                    );
+
+            return;
+        }
+
+        googleDriveSseService
+                .publishDriveChanges(
+                        userId,
+                        event
+                );
     }
 
     private void validateChannelToken(
@@ -244,11 +349,6 @@ public class GoogleDriveWebhookServiceImpl
             );
         }
 
-        String incomingHash =
-                hashChannelToken(
-                        channelToken
-                );
-
         if (channel.getChannelToken() == null
                 || channel.getChannelToken().isBlank()) {
 
@@ -256,6 +356,11 @@ public class GoogleDriveWebhookServiceImpl
                     "Stored Google Drive channel token is missing"
             );
         }
+
+        String incomingHash =
+                hashChannelToken(
+                        channelToken
+                );
 
         byte[] expected =
                 channel

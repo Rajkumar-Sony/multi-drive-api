@@ -5,7 +5,7 @@ import com.multidrive.api.entity.GoogleDriveItemSourceType;
 
 import java.time.Instant;
 
-public record UnifiedDriveItemResponse(
+public record DriveItemDetailsResponse(
 
         Long id,
 
@@ -17,7 +17,15 @@ public record UnifiedDriveItemResponse(
 
         String sourceName,
 
+        GoogleDriveItemSourceType sourceType,
+
+        String googleDriveId,
+
+        String rootFolderId,
+
         String googleFileId,
+
+        String parentId,
 
         String name,
 
@@ -25,11 +33,9 @@ public record UnifiedDriveItemResponse(
 
         GoogleDriveItemCategory category,
 
-        GoogleDriveItemSourceType sourceType,
+        boolean folder,
 
-        String parentId,
-
-        String driveId,
+        boolean trashed,
 
         String webViewLink,
 

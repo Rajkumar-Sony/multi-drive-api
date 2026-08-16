@@ -5,7 +5,6 @@ import com.multidrive.api.entity.GoogleDriveItemCategory;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -64,6 +63,33 @@ public interface GoogleDriveItemRepository
     void deleteByConnection_IdAndGoogleFileId(
             Long connectionId,
             String googleFileId
+    );
+
+    /*
+     * N+1-safe item lookup.
+     *
+     * connection + application owner + source are loaded
+     * in the same SQL query.
+     *
+     * Capabilities are embedded columns on the item, so
+     * they require no extra query.
+     */
+    @Query("""
+            SELECT item
+            FROM GoogleDriveItem item
+            JOIN FETCH item.connection conn
+            JOIN FETCH conn.user owner
+            JOIN FETCH item.source source
+            WHERE item.id = :itemId
+              AND owner.googleSubjectId = :googleSubjectId
+            """)
+    Optional<GoogleDriveItem>
+    findOwnedItemForDetails(
+            @Param("itemId")
+            Long itemId,
+
+            @Param("googleSubjectId")
+            String googleSubjectId
     );
 
     @Modifying

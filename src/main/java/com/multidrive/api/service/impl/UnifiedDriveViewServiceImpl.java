@@ -5,9 +5,12 @@ import com.multidrive.api.dto.UnifiedDriveItemsPageResponse;
 import com.multidrive.api.entity.GoogleDriveConnection;
 import com.multidrive.api.entity.GoogleDriveItem;
 import com.multidrive.api.entity.GoogleDriveItemCategory;
+import com.multidrive.api.entity.GoogleDriveSource;
+import com.multidrive.api.mapper.DriveItemCapabilityResponseMapper;
 import com.multidrive.api.repository.GoogleDriveItemRepository;
 import com.multidrive.api.service.UnifiedDriveViewService;
 
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 import org.springframework.data.domain.Page;
@@ -38,12 +41,22 @@ public class UnifiedDriveViewServiceImpl
     private final GoogleDriveItemRepository
             googleDriveItemRepository;
 
+    private final DriveItemCapabilityResponseMapper
+            driveItemCapabilityResponseMapper;
+
     public UnifiedDriveViewServiceImpl(
-            GoogleDriveItemRepository googleDriveItemRepository
+            GoogleDriveItemRepository
+                    googleDriveItemRepository,
+
+            DriveItemCapabilityResponseMapper
+                    driveItemCapabilityResponseMapper
     ) {
 
         this.googleDriveItemRepository =
                 googleDriveItemRepository;
+
+        this.driveItemCapabilityResponseMapper =
+                driveItemCapabilityResponseMapper;
     }
 
     @Override
@@ -219,16 +232,28 @@ public class UnifiedDriveViewServiceImpl
                 criteriaBuilder
         ) -> {
 
+            /*
+             * Fetch only to-one associations required by
+             * the response.
+             *
+             * Do not add fetch joins to the count query.
+             */
+            if (!isCountQuery(query.getResultType())) {
+
+                root.fetch(
+                        "connection",
+                        JoinType.INNER
+                );
+
+                root.fetch(
+                        "source",
+                        JoinType.INNER
+                );
+            }
+
             List<Predicate> predicates =
                     new ArrayList<>();
 
-            /*
-             * Security / ownership:
-             *
-             * Only return files belonging to Google Drive
-             * connections owned by the currently logged-in
-             * application user.
-             */
             predicates.add(
                     criteriaBuilder.equal(
                             root
@@ -239,9 +264,6 @@ public class UnifiedDriveViewServiceImpl
                     )
             );
 
-            /*
-             * Unified views never show trashed files.
-             */
             predicates.add(
                     criteriaBuilder.isFalse(
                             root.<Boolean>get(
@@ -250,12 +272,6 @@ public class UnifiedDriveViewServiceImpl
                     )
             );
 
-            /*
-             * Dashboard has category == null,
-             * therefore it returns every category.
-             *
-             * Docs / Gallery / Videos provide a category.
-             */
             if (category != null) {
 
                 predicates.add(
@@ -268,9 +284,6 @@ public class UnifiedDriveViewServiceImpl
                 );
             }
 
-            /*
-             * Optional connected Google account filter.
-             */
             if (connectionId != null) {
 
                 predicates.add(
@@ -283,13 +296,6 @@ public class UnifiedDriveViewServiceImpl
                 );
             }
 
-            /*
-             * Optional folder navigation.
-             *
-             * parentId means:
-             * return the children of this Google Drive
-             * folder.
-             */
             if (normalizedParentId != null) {
 
                 predicates.add(
@@ -302,19 +308,6 @@ public class UnifiedDriveViewServiceImpl
                 );
             }
 
-            /*
-             * Optional case-insensitive search.
-             *
-             * The key fix:
-             *
-             * We add this predicate ONLY when q exists.
-             *
-             * We no longer send NULL into:
-             *
-             * LOWER(CONCAT('%', :searchQuery, '%'))
-             *
-             * so PostgreSQL never tries lower(bytea).
-             */
             if (normalizedSearchQuery != null) {
 
                 predicates.add(
@@ -337,6 +330,18 @@ public class UnifiedDriveViewServiceImpl
                     )
             );
         };
+    }
+
+    private boolean isCountQuery(
+            Class<?> resultType
+    ) {
+
+        return Long.class.equals(
+                resultType
+        )
+                || long.class.equals(
+                resultType
+        );
     }
 
     private Pageable createPageable(
@@ -419,23 +424,51 @@ public class UnifiedDriveViewServiceImpl
         GoogleDriveConnection connection =
                 item.getConnection();
 
+        GoogleDriveSource source =
+                item.getSource();
+
         return new UnifiedDriveItemResponse(
+
                 item.getId(),
+
                 connection.getId(),
+
                 connection.getGoogleEmail(),
+
+                source.getId(),
+
+                source.getName(),
+
                 item.getGoogleFileId(),
+
                 item.getName(),
+
                 item.getMimeType(),
+
                 item.getCategory(),
+
                 item.getSourceType(),
+
                 item.getParentId(),
+
                 item.getDriveId(),
+
                 item.getWebViewLink(),
+
                 item.getThumbnailLink(),
+
                 item.getIconLink(),
+
                 item.getSizeBytes(),
+
                 item.getGoogleCreatedTime(),
-                item.getGoogleModifiedTime()
+
+                item.getGoogleModifiedTime(),
+
+                driveItemCapabilityResponseMapper
+                        .toResponse(
+                                item.getCapabilities()
+                        )
         );
     }
 

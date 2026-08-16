@@ -19,6 +19,9 @@ as complete.
 - Prefer clear multiline Java formatting consistent with the current codebase.
 - Use Lombok only where it improves readability without hiding important
   behavior.
+- Treat premium code quality as a baseline: clear names, small cohesive methods,
+  explicit validation, predictable error handling, focused tests, no hidden side
+  effects, no speculative abstractions, and no duplicated business rules.
 - Run project verification before finishing backend work:
 
 ```bash

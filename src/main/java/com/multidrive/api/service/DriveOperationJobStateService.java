@@ -32,6 +32,11 @@ public class DriveOperationJobStateService {
 		driveOperationJobProgressPublisher.publish(jobId, "Job claimed by background worker");
 	}
 
+	public void publishProgress(Long jobId, String message) {
+
+		driveOperationJobProgressPublisher.publish(jobId, message);
+	}
+
 	public void transition(Long jobId, String workerId, DriveOperationJobStatus status, String message) {
 
 		LocalDateTime now = now();
@@ -88,6 +93,13 @@ public class DriveOperationJobStateService {
 		driveOperationJobExecutionStore.completeNativeCopy(jobId, workerId, resultItemId, resultGoogleFileId, now());
 
 		driveOperationJobProgressPublisher.publish(jobId, "Native Drive copy completed");
+	}
+
+	public void completeRecursiveCopy(Long jobId, String workerId, Long resultItemId, String resultGoogleFileId) {
+
+		driveOperationJobExecutionStore.completeRecursiveCopy(jobId, workerId, resultItemId, resultGoogleFileId, now());
+
+		driveOperationJobProgressPublisher.publish(jobId, "Recursive Drive folder copy completed");
 	}
 
 	public void scheduleRetry(Long jobId, String workerId, LocalDateTime nextAttemptAt, String errorCode,

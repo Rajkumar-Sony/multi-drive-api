@@ -35,13 +35,18 @@ class DriveOperationMarkerFactoryTest {
 
 		assertThat(factory.create(job(10L, "file-1"))).isNotEqualTo(factory.create(job(11L, "file-1")));
 		assertThat(factory.create(job(10L, "file-1"))).isNotEqualTo(factory.create(job(10L, "file-2")));
+		assertThat(factory.create(job(10L, "file-1"), "child-file-1"))
+			.isNotEqualTo(factory.create(job(10L, "file-1"), "child-file-2"));
 	}
 
 	@Test
 	void createRejectsIncompleteMarkerInformation() {
 
 		assertThatThrownBy(() -> factory.create(null)).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Operation job marker information is incomplete");
+			.hasMessage("job is required");
+
+		assertThatThrownBy(() -> factory.create(job(10L, "file-1"), " ")).isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("Operation marker information is incomplete");
 	}
 
 	private DriveOperationJobExecutionSnapshot job(Long jobId, String sourceGoogleFileId) {

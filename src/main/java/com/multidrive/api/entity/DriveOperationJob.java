@@ -141,6 +141,9 @@ public class DriveOperationJob {
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;
 
+	@Column(name = "planned_at")
+	private LocalDateTime plannedAt;
+
 	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;
 
@@ -343,6 +346,10 @@ public class DriveOperationJob {
 
 	public void setCompletedAt(LocalDateTime completedAt) {
 		this.completedAt = completedAt;
+	}
+
+	public void setPlannedAt(LocalDateTime plannedAt) {
+		this.plannedAt = plannedAt;
 	}
 
 }

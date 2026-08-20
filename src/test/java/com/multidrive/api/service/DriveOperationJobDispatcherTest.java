@@ -30,7 +30,7 @@ class DriveOperationJobDispatcherTest {
 				executor);
 
 		when(workerIdentity.getWorkerId()).thenReturn("worker-1");
-		when(store.claimNextNativeOperation(eq("worker-1"), any(LocalDateTime.class), any(LocalDateTime.class)))
+		when(store.claimNextExecutableOperation(eq("worker-1"), any(LocalDateTime.class), any(LocalDateTime.class)))
 			.thenReturn(Optional.of(10L), Optional.empty());
 
 		dispatcher.dispatch();
@@ -49,7 +49,7 @@ class DriveOperationJobDispatcherTest {
 				executor);
 
 		when(workerIdentity.getWorkerId()).thenReturn("worker-1");
-		when(store.claimNextNativeOperation(eq("worker-1"), any(LocalDateTime.class), any(LocalDateTime.class)))
+		when(store.claimNextExecutableOperation(eq("worker-1"), any(LocalDateTime.class), any(LocalDateTime.class)))
 			.thenReturn(Optional.of(10L));
 		doThrow(new TaskRejectedException("queue full")).when(executor).execute(any(Runnable.class));
 

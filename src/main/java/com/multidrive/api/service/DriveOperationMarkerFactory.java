@@ -16,13 +16,24 @@ public class DriveOperationMarkerFactory {
 
 	public String create(DriveOperationJobExecutionSnapshot job) {
 
-		if (job == null || job.jobId() == null || job.createdAt() == null || job.sourceGoogleFileId() == null) {
+		if (job == null) {
 
-			throw new IllegalArgumentException("Operation job marker information is incomplete");
+			throw new IllegalArgumentException("job is required");
 		}
 
-		String rawValue = job.userId() + "|" + job.jobId() + "|" + job.createdAt() + "|" + job.sourceGoogleFileId()
-				+ "|" + job.destinationSourceId();
+		return create(job, job.sourceGoogleFileId());
+	}
+
+	public String create(DriveOperationJobExecutionSnapshot job, String sourceGoogleFileId) {
+
+		if (job == null || job.jobId() == null || job.userId() == null || job.createdAt() == null
+				|| job.destinationSourceId() == null || sourceGoogleFileId == null || sourceGoogleFileId.isBlank()) {
+
+			throw new IllegalArgumentException("Operation marker information is incomplete");
+		}
+
+		String rawValue = job.userId() + "|" + job.jobId() + "|" + job.createdAt() + "|" + sourceGoogleFileId + "|"
+				+ job.destinationSourceId();
 
 		try {
 

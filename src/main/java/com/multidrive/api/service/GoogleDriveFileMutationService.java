@@ -11,6 +11,9 @@ public interface GoogleDriveFileMutationService {
 
 	GoogleDriveFileResponse createFolder(Long connectionId, Long userId, String parentGoogleFileId, String name);
 
+	GoogleDriveFileResponse createFolderWithAppProperties(Long connectionId, Long userId, String parentGoogleFileId,
+			String name, Map<String, String> appProperties);
+
 	GoogleDriveFileResponse rename(Long connectionId, Long userId, String googleFileId, String name);
 
 	GoogleDriveFileResponse move(Long connectionId, Long userId, String googleFileId,

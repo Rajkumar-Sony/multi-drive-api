@@ -54,6 +54,13 @@ public class GoogleDriveFileMutationServiceImpl implements GoogleDriveFileMutati
 	public GoogleDriveFileResponse createFolder(Long connectionId, Long userId, String parentGoogleFileId,
 			String name) {
 
+		return createFolderWithAppProperties(connectionId, userId, parentGoogleFileId, name, null);
+	}
+
+	@Override
+	public GoogleDriveFileResponse createFolderWithAppProperties(Long connectionId, Long userId,
+			String parentGoogleFileId, String name, Map<String, String> appProperties) {
+
 		validateIdentifiers(connectionId, userId, parentGoogleFileId);
 
 		String normalizedName = normalizeName(name);
@@ -61,7 +68,7 @@ public class GoogleDriveFileMutationServiceImpl implements GoogleDriveFileMutati
 		String accessToken = googleTokenService.getValidAccessToken(connectionId, userId);
 
 		GoogleDriveFileMutationRequest request = new GoogleDriveFileMutationRequest(normalizedName,
-				GOOGLE_FOLDER_MIME_TYPE, List.of(parentGoogleFileId), null);
+				GOOGLE_FOLDER_MIME_TYPE, List.of(parentGoogleFileId), null, normalizeAppProperties(appProperties));
 
 		URI uri = UriComponentsBuilder.fromUriString(GOOGLE_DRIVE_FILES_URL)
 			.queryParam("supportsAllDrives", true)
@@ -150,8 +157,7 @@ public class GoogleDriveFileMutationServiceImpl implements GoogleDriveFileMutati
 		String accessToken = googleTokenService.getValidAccessToken(connectionId, userId);
 
 		GoogleDriveFileMutationRequest request = new GoogleDriveFileMutationRequest(normalizeOptionalName(name), null,
-				List.of(destinationParentGoogleFileId), null,
-				appProperties == null || appProperties.isEmpty() ? null : Map.copyOf(appProperties));
+				List.of(destinationParentGoogleFileId), null, normalizeAppProperties(appProperties));
 
 		URI uri = UriComponentsBuilder.fromUriString(GOOGLE_DRIVE_FILES_URL + "/" + googleFileId + "/copy")
 			.queryParam("supportsAllDrives", true)
@@ -224,6 +230,16 @@ public class GoogleDriveFileMutationServiceImpl implements GoogleDriveFileMutati
 			.body(GoogleDriveFileResponse.class);
 
 		return requireFileResponse(response, emptyResponseMessage);
+	}
+
+	private Map<String, String> normalizeAppProperties(Map<String, String> appProperties) {
+
+		if (appProperties == null || appProperties.isEmpty()) {
+
+			return null;
+		}
+
+		return Map.copyOf(appProperties);
 	}
 
 	private String buildRemoveParents(List<String> currentParents, String destinationParent) {

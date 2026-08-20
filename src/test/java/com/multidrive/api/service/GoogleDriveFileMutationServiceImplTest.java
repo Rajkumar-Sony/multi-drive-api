@@ -115,6 +115,28 @@ class GoogleDriveFileMutationServiceImplTest {
 	}
 
 	@Test
+	void createFolderWithAppPropertiesSendsPrivateMarkerMetadata() {
+
+		MockRestServiceServer server = bindMockServer();
+
+		server.expect(requestTo(containsString("/drive/v3/files?")))
+			.andExpect(method(HttpMethod.POST))
+			.andExpect(content().string(allOf(containsString("\"name\":\"Folder\""),
+					containsString("\"mimeType\":\"application/vnd.google-apps.folder\""),
+					containsString("\"parents\":[\"dest-parent\"]"),
+					containsString("\"appProperties\":{\"multiDriveOp\":\"marker-1\"}"))))
+			.andRespond(withSuccess("{\"id\":\"folder-1\",\"appProperties\":{\"multiDriveOp\":\"marker-1\"}}",
+					MediaType.APPLICATION_JSON));
+
+		GoogleDriveFileResponse response = service.createFolderWithAppProperties(20L, 42L, "dest-parent", " Folder ",
+				Map.of("multiDriveOp", "marker-1"));
+
+		assertThat(response.id()).isEqualTo("folder-1");
+		assertThat(response.appProperties()).containsEntry("multiDriveOp", "marker-1");
+		server.verify();
+	}
+
+	@Test
 	void mutationsValidateRequiredArgumentsAndEmptyResponses() {
 
 		assertThatThrownBy(() -> service.rename(20L, 42L, "file-1", " ")).isInstanceOf(IllegalArgumentException.class)

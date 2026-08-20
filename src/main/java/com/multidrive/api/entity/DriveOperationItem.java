@@ -84,6 +84,9 @@ public class DriveOperationItem {
 	@Column(name = "error_message", columnDefinition = "TEXT")
 	private String errorMessage;
 
+	@Column(name = "mutation_started", nullable = false)
+	private Boolean mutationStarted;
+
 	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;
 
@@ -105,6 +108,10 @@ public class DriveOperationItem {
 
 		if (attemptCount == null) {
 			attemptCount = 0;
+		}
+
+		if (mutationStarted == null) {
+			mutationStarted = false;
 		}
 
 		if (createdAt == null) {
@@ -190,6 +197,10 @@ public class DriveOperationItem {
 
 	public void setErrorMessage(String errorMessage) {
 		this.errorMessage = errorMessage;
+	}
+
+	public void setMutationStarted(Boolean mutationStarted) {
+		this.mutationStarted = mutationStarted;
 	}
 
 }

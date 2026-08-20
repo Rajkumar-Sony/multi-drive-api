@@ -263,6 +263,7 @@ public class DriveOperationJobServiceImpl implements DriveOperationJobService {
 		operationItem.setSizeBytes(sourceItem.getSizeBytes());
 		operationItem.setTransferredBytes(0L);
 		operationItem.setAttemptCount(0);
+		operationItem.setMutationStarted(false);
 
 		driveOperationItemRepository.save(operationItem);
 
